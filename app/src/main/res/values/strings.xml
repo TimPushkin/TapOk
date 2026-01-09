@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">TapOk</string>
+
+    <string name="agent_service_name">TapOk Agent</string>
+    <string name="agent_service_description">Performs tasks according to the rules specified in the settings.</string>
+
+    <string name="scanner_service_name">TapOk Scanner</string>
+    <string name="scanner_service_description">Allows to scan the screen content for parts that can be referenced in the rules for TapOk Agent.</string>
+
+    <string name="scan_screenshot_description">Screenshot</string>
+
+    <string name="scan_screen">Scan screen</string>
+
+    <string name="help">Help</string>
+    <string name="rules">Rules</string>
+    <string name="scans">Scans</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+
+    <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
+
+    <string name="create_rule">Create rule</string>
+    <string name="edit_rule">Edit rule</string>
+
+    <string name="rule_name">Rule name</string>
+    <string name="package_name">Package name</string>
+    <string name="view_name">View name</string>
+    <string name="action">Action</string>
+
+    <string name="rule_name_placeholder">My rule</string>
+    <string name="package_name_placeholder">com.example.app</string>
+    <string name="view_name_placeholder">some_button</string>
+    <string name="click">Click</string>
+    <string name="mute_when_present">Mute when present</string>
+
+    <string name="package_name_error_illegal_segment">Illegal package segment name</string>
+    <string name="package_name_error_not_enough_segments">At least two dot-separated segments required</string>
+    <string name="view_name_error_illegal_start">Illegal first character</string>
+    <string name="view_name_error_illegal_part">Illegal non-first character</string>
+
+    <string name="view_scans_here">Here you can view scans obtained with the scanner service</string>
+</resources>
