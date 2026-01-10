@@ -1,6 +1,5 @@
 package com.github.timpushkin.tapok.ui.activity.scans
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -27,17 +27,24 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toIntSize
 import androidx.compose.ui.unit.toSize
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
-import com.github.timpushkin.tapok.data.scans.Scan
 
 @Composable
-fun ScanViewer(
-    scan: Scan,
-    nodes: List<Node>,
-    screenshot: Bitmap,
-    modifier: Modifier = Modifier
+fun ScanInspector(
+    scanId: Long,
+    modifier: Modifier = Modifier,
+    vm: ScanDetailViewModel = hiltViewModel { f: ScanDetailViewModelFactory -> f.create(scanId) }
 ) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    if (uiState is ScanDetailUiState.Loading) {
+        // TODO
+        return
+    }
+
+    val (scan, screenshot, nodes, selectedNode) = uiState as ScanDetailUiState.Loaded
     BoxWithConstraints(modifier = modifier) {
         val alignment = Alignment.Center
         val contentScale = ContentScale.Fit

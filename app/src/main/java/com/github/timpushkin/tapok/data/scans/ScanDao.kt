@@ -11,10 +11,11 @@ abstract class ScanDao : ScanRepo {
     @Query("SELECT * FROM scan")
     abstract override fun loadAllScans(): Flow<List<Scan>>
 
-    @Query("SELECT * FROM node WHERE node.scan_id = :scanId")
-    protected abstract suspend fun loadNodesOfScan(scanId: Long): List<Node>
+    @Query("SELECT * FROM scan JOIN node ON node.scan_id = scan.id WHERE scan.id = :scanId")
+    protected abstract suspend fun loadScanWithNodesAsMap(scanId: Long): Map<Scan, List<Node>>
 
-    override suspend fun loadNodesOfScan(scan: Scan): List<Node> = loadNodesOfScan(scan.id)
+    override suspend fun loadScanWithNodes(scanId: Long): Pair<Scan, List<Node>>? =
+        loadScanWithNodesAsMap(scanId).entries.firstOrNull()?.toPair()
 
     @Insert
     abstract override suspend fun insertScan(scan: Scan): Long
