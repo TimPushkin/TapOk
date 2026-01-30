@@ -48,7 +48,7 @@ fun ScanList(
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     if (uiState.scans.isNotEmpty()) {
-        ScanList(
+        ScanLazyColumn(
             uiState.scans.sortedByDescending { it.timestamp },
             onClick = onSelectScan,
             onDelete = {
@@ -60,8 +60,6 @@ fun ScanList(
     } else {
         NoScansBanner(modifier = modifier)
     }
-
-    // TODO: if scanner service is disabled, show a button to enable it (open the corresponding Settings page)
 }
 
 @Composable
@@ -81,7 +79,7 @@ private fun NoScansBanner(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ScanList(
+private fun ScanLazyColumn(
     scans: List<Scan>,
     onClick: (Scan) -> Unit,
     onDelete: (Scan) -> Unit,

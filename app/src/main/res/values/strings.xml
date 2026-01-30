@@ -21,6 +21,8 @@
 
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
 
+    <string name="open_system_settings">Open Settings</string>
+
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
 

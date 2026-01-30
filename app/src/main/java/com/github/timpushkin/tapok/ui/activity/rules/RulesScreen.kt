@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,10 +36,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,35 +71,6 @@ import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedList
 @Composable
 fun RulesScreen(modifier: Modifier = Modifier, vm: RulesViewModel = hiltViewModel()) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
-    Scaffold(
-        modifier = modifier,
-        floatingActionButton = { AddRuleFab { vm.startRuleEditing(null) } },
-        contentWindowInsets = WindowInsets() // Outer Scaffold adds the insets
-    ) { paddingValues ->
-        if (uiState.rules.isEmpty()) {
-            NoRulesBanner(modifier = Modifier.padding(paddingValues))
-            return@Scaffold
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .padding(paddingValues)
-                .padding(horizontal = 8.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
-        ) {
-            val count = uiState.rules.size
-            itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
-                RuleItem(
-                    index,
-                    count,
-                    rule,
-                    onClick = { vm.startRuleEditing(rule) },
-                    onDelete = { vm.deleteRule(rule) }
-                )
-            }
-        }
-    }
 
     uiState.ruleEditorState?.let {
         RuleEditingDialog(
@@ -115,16 +83,28 @@ fun RulesScreen(modifier: Modifier = Modifier, vm: RulesViewModel = hiltViewMode
             vm::cancelRuleEditing
         )
     }
-}
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun AddRuleFab(onClick: () -> Unit) {
-    MediumFloatingActionButton(onClick = onClick) {
-        Icon(
-            painterResource(R.drawable.add),
-            contentDescription = stringResource(R.string.create_rule)
-        )
+    if (uiState.rules.isEmpty()) {
+        NoRulesBanner(modifier)
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier
+            .padding(horizontal = 8.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
+    ) {
+        val count = uiState.rules.size
+        itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
+            RuleItem(
+                index,
+                count,
+                rule,
+                onClick = { vm.startRuleEditing(rule) },
+                onDelete = { vm.deleteRule(rule) }
+            )
+        }
     }
 }
 
