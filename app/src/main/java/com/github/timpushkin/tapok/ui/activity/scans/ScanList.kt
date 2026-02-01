@@ -5,26 +5,19 @@ import android.graphics.drawable.Drawable
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -32,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
+import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import java.time.DateTimeException
 import java.time.ZoneId
@@ -58,22 +52,7 @@ fun ScanList(
             modifier = modifier.padding(horizontal = 8.dp)
         )
     } else {
-        NoScansBanner(modifier = modifier)
-    }
-}
-
-@Composable
-private fun NoScansBanner(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            stringResource(R.string.view_scans_here),
-            modifier = Modifier.fillMaxWidth(0.66f),
-            textAlign = TextAlign.Center,
-            style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-        )
+        PanePlaceholderText(stringResource(R.string.scans_will_be_here), modifier = modifier)
     }
 }
 

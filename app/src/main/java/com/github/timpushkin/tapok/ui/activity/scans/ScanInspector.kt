@@ -31,6 +31,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
+import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 
 @Composable
 fun ScanInspector(
@@ -99,4 +100,9 @@ private fun NodeView(node: Node, offset: IntOffset, scale: ScaleFactor) {
     ) {
         Text(node.idResourceName ?: "null")
     }
+}
+
+@Composable
+fun ScanInspectorPlaceholder(modifier: Modifier = Modifier) {
+    PanePlaceholderText(stringResource(R.string.select_scan_to_inspect), modifier = modifier)
 }

@@ -40,7 +40,8 @@
     <string name="view_name_error_illegal_start">Illegal first character</string>
     <string name="view_name_error_illegal_part">Illegal non-first character</string>
 
-    <string name="view_scans_here">Here you can view scans obtained with the scanner service</string>
+    <string name="scans_will_be_here">Scans obtained with the scanner service will be listed here</string>
+    <string name="select_scan_to_inspect">Select a scan to inspect</string>
 
     <string name="enable_scanner">Enable scanner</string>
 </resources>

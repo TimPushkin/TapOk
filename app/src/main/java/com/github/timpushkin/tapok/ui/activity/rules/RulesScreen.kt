@@ -34,7 +34,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -55,7 +54,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -66,6 +64,7 @@ import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.ViewNameValidity
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
+import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -85,7 +84,7 @@ fun RulesScreen(modifier: Modifier = Modifier, vm: RulesViewModel = hiltViewMode
     }
 
     if (uiState.rules.isEmpty()) {
-        NoRulesBanner(modifier)
+        PanePlaceholderText(stringResource(R.string.manage_rules_here), modifier = modifier)
         return
     }
 
@@ -105,21 +104,6 @@ fun RulesScreen(modifier: Modifier = Modifier, vm: RulesViewModel = hiltViewMode
                 onDelete = { vm.deleteRule(rule) }
             )
         }
-    }
-}
-
-@Composable
-private fun NoRulesBanner(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            stringResource(R.string.manage_rules_here),
-            modifier = Modifier.fillMaxWidth(0.66f),
-            textAlign = TextAlign.Center,
-            style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-        )
     }
 }
 

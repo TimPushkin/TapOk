@@ -86,7 +86,13 @@ object ScansModule {
     @Provides
     @ElementsIntoSet
     fun provideNavKeyDescriptors(): Set<TapOkNavKeyDescriptor> = setOf(
-        TapOkNavKeyDescriptor.OfInstance(ScanListKey, ListDetailSceneStrategy.listPane()),
-        TapOkNavKeyDescriptor.OfClass(ScanInspectorKey::class, ListDetailSceneStrategy.detailPane())
+        TapOkNavKeyDescriptor.OfInstance(
+            ScanListKey,
+            ListDetailSceneStrategy.listPane(detailPlaceholder = { ScanInspectorPlaceholder() })
+        ),
+        TapOkNavKeyDescriptor.OfClass(
+            ScanInspectorKey::class,
+            ListDetailSceneStrategy.detailPane()
+        )
     )
 }
