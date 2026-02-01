@@ -21,8 +21,6 @@
 
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
 
-    <string name="open_system_settings">Open Settings</string>
-
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
 
@@ -43,4 +41,6 @@
     <string name="view_name_error_illegal_part">Illegal non-first character</string>
 
     <string name="view_scans_here">Here you can view scans obtained with the scanner service</string>
+
+    <string name="enable_scanner">Enable scanner</string>
 </resources>
