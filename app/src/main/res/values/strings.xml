@@ -18,8 +18,11 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="navigate_back">Navigate back</string>
+    <string name="done">Done!</string>
 
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
+    <string name="select_rule_or_create_one">Select a rule to edit or create a new one</string>
 
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
@@ -40,7 +43,7 @@
     <string name="view_name_error_illegal_start">Illegal first character</string>
     <string name="view_name_error_illegal_part">Illegal non-first character</string>
 
-    <string name="scans_will_be_here">Scans obtained with the scanner service will be listed here</string>
+    <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
     <string name="select_scan_to_inspect">Select a scan to inspect</string>
 
     <string name="enable_scanner">Enable scanner</string>

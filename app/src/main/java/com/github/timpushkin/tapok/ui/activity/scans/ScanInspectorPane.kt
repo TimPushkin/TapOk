@@ -1,5 +1,6 @@
 package com.github.timpushkin.tapok.ui.activity.scans
 
+import android.content.pm.PackageManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -17,6 +19,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -32,21 +35,46 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
+import com.github.timpushkin.tapok.ui.activity.components.TitledPane
 
 @Composable
-fun ScanInspector(
+fun ScanInspectorPane(
     scanId: Long,
+    onClose: () -> Unit,
+    directive: PaneScaffoldDirective,
     modifier: Modifier = Modifier,
-    vm: ScanDetailViewModel = hiltViewModel { f: ScanDetailViewModelFactory -> f.create(scanId) }
+    vm: ScanInspectorViewModel = hiltViewModel(
+        key = scanId.toString()
+    ) { f: ScanInspectorViewModelFactory -> f.create(scanId) }
 ) {
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-    if (uiState is ScanDetailUiState.Loading) {
-        // TODO
-        return
-    }
+    val state by vm.uiState.collectAsStateWithLifecycle()
 
-    val (scan, screenshot, nodes, selectedNode) = uiState as ScanDetailUiState.Loaded
-    BoxWithConstraints(modifier = modifier) {
+    TitledPane(
+        title = {
+            Text(
+                (state as? ScanInspectorUiState.Loaded)?.run {
+                    LocalContext.current.packageManager.getAppLabel(scan.appPackage)
+                        ?: scan.appPackage
+                } ?: ""
+            )
+        },
+        onClose = onClose,
+        directive = directive,
+        modifier = modifier
+    ) {
+        ScanInspector(state)
+    }
+}
+
+@Composable
+private fun ScanInspector(state: ScanInspectorUiState) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        if (state !is ScanInspectorUiState.Loaded) {
+            return@BoxWithConstraints
+        }
+
+        val (_, screenshot, nodes, _) = state
+
         val alignment = Alignment.Center
         val contentScale = ContentScale.Fit
         Image(
@@ -102,7 +130,19 @@ private fun NodeView(node: Node, offset: IntOffset, scale: ScaleFactor) {
     }
 }
 
+private fun PackageManager.getAppLabel(appPackage: String): String? {
+    val appInfo = try {
+        getApplicationInfo(appPackage, 0)
+    } catch (_: PackageManager.NameNotFoundException) {
+        return null
+    }
+    return getApplicationLabel(appInfo).toString()
+}
+
 @Composable
 fun ScanInspectorPlaceholder(modifier: Modifier = Modifier) {
-    PanePlaceholderText(stringResource(R.string.select_scan_to_inspect), modifier = modifier)
+    PanePlaceholderText(
+        stringResource(R.string.select_scan_to_inspect),
+        modifier = modifier.fillMaxSize()
+    )
 }

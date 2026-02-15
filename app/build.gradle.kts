@@ -60,6 +60,7 @@ dependencies {
 
     implementation(libs.androidx.lifecycle.runtimeKtx)
     implementation(libs.androidx.lifecycle.service)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hiltCompiler)
@@ -71,6 +72,9 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material3.navigationsuite)
+    implementation(libs.androidx.compose.material3.adaptive)
+    implementation(libs.androidx.compose.material3.adaptive.layout)
     implementation(libs.androidx.compose.material3.adaptive.navigation3)
 
     implementation(libs.androidx.navigation3.ui)

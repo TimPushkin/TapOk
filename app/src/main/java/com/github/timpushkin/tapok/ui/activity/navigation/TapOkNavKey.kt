@@ -1,49 +1,30 @@
-package com.github.timpushkin.tapok.ui.activity
+package com.github.timpushkin.tapok.ui.activity.navigation
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlin.reflect.KClass
 
 @Serializable
-sealed class TapOkNavKey : NavKey {
+sealed interface TapOkNavKey : NavKey {
     @Composable
-    abstract fun Label()
-
-    @Composable
-    abstract fun Content(backStack: NavBackStack<NavKey>)
+    fun Content(directive: PaneScaffoldDirective, backStack: NavBackStack<NavKey>)
 
     @Serializable
-    abstract class Primary : TapOkNavKey() {
-        /**
-         * Order by which primary destinations are sorted in navigation UIs.
-         */
-        abstract val order: Int
-
-        @Composable
-        abstract fun Icon(selected: Boolean)
-
-        @Composable
-        open fun Fab(backStack: NavBackStack<NavKey>) {
-        }
-    }
+    sealed class Primary(
+        /** Order by which primary destinations are sorted in navigation UIs. */
+        val order: Int,
+        @StringRes val label: Int,
+        @DrawableRes val icon: Int,
+        @DrawableRes val iconSelected: Int
+    ) : TapOkNavKey
 
     @Serializable
-    abstract class Secondary : TapOkNavKey() {
-        abstract val parent: Primary
-
-        /**
-         * Whether [Label] composable has content.
-         */
-        @Transient
-        open val hasLabel = false
-
-        @Composable
-        override fun Label() {
-        }
-    }
+    sealed class Secondary(val parent: Primary) : TapOkNavKey
 }
 
 sealed interface TapOkNavKeyDescriptor {

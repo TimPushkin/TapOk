@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.github.timpushkin.tapok.ui.activity.ActivityUi
-import com.github.timpushkin.tapok.ui.activity.TapOkNavKeyDescriptor
+import com.github.timpushkin.tapok.ui.activity.navigation.TapOkNavKeyDescriptor
 import com.github.timpushkin.tapok.ui.theme.TapOkTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject

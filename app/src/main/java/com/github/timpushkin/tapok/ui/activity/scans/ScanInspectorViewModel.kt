@@ -20,24 +20,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-sealed interface ScanDetailUiState {
-    object Loading : ScanDetailUiState
+sealed interface ScanInspectorUiState {
+    object Loading : ScanInspectorUiState
 
     data class Loaded(
         val scan: Scan,
         val screenshot: Bitmap,
         val nodes: List<Node>,
         val selectedNode: Node?
-    ) : ScanDetailUiState
+    ) : ScanInspectorUiState
 }
 
-@HiltViewModel(assistedFactory = ScanDetailViewModelFactory::class)
-class ScanDetailViewModel @AssistedInject constructor(
+@HiltViewModel(assistedFactory = ScanInspectorViewModelFactory::class)
+class ScanInspectorViewModel @AssistedInject constructor(
     application: Application,
     private val scanRepo: ScanRepo,
     @Assisted scanId: Long
 ) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow<ScanDetailUiState>(ScanDetailUiState.Loading)
+    private val _uiState = MutableStateFlow<ScanInspectorUiState>(ScanInspectorUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -48,13 +48,13 @@ class ScanDetailViewModel @AssistedInject constructor(
             val screenshot = withContext(Dispatchers.IO) {
                 BitmapFactory.decodeFile(application.screenshotFile(scan.screenshotFile).path)
             }
-            _uiState.value = ScanDetailUiState.Loaded(scan, screenshot, nodes, null)
+            _uiState.value = ScanInspectorUiState.Loaded(scan, screenshot, nodes, null)
         }
     }
 
     fun selectNode(node: Node?) {
         _uiState.update {
-            check(it is ScanDetailUiState.Loaded) { "Node selected from not-yet-loaded scan" }
+            check(it is ScanInspectorUiState.Loaded) { "Node selected from not-yet-loaded scan" }
             check(node == null || node in it.nodes) { "$node not in ${it.nodes}" }
             it.copy(selectedNode = node)
         }
@@ -62,6 +62,6 @@ class ScanDetailViewModel @AssistedInject constructor(
 }
 
 @AssistedFactory
-fun interface ScanDetailViewModelFactory {
-    fun create(scanId: Long): ScanDetailViewModel
+fun interface ScanInspectorViewModelFactory {
+    fun create(scanId: Long): ScanInspectorViewModel
 }

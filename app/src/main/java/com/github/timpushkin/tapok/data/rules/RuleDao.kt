@@ -10,7 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RuleDao : RuleRepo {
     @Query("SELECT * FROM rule")
-    override suspend fun loadAllRules(): List<Rule>
+    override fun loadAllRules(): Flow<List<Rule>>
+
+    @Query("SELECT * FROM rule WHERE rule.id = :ruleId")
+    override suspend fun loadRule(ruleId: Long): Rule
 
     @Query("SELECT * FROM rule")
     override fun loadAllRulesByPackage(): Flow<Map<@MapColumn("package_name") String, List<Rule>>>

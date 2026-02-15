@@ -10,39 +10,34 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MediumExtendedFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.bundleOf
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ScannerService
 
-private const val TAG = "ScannerEnablingSuggestionFab"
+private const val TAG = "EnableScannerTextButton"
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun ScannerEnablingSuggestionFab() {
+fun EnableScannerTextButton(modifier: Modifier = Modifier) {
     val isScannerRunning by isScannerRunningAsState()
     if (isScannerRunning) {
         return
     }
 
     val context = LocalContext.current
-    MediumExtendedFloatingActionButton(
-        text = { Text(stringResource(R.string.enable_scanner)) },
-        icon = { Icon(painterResource(R.drawable.settings_filled), contentDescription = null) },
-        onClick = { context.openScannerServiceSettings() }
-    )
+    TextButton(onClick = { context.openScannerServiceSettings() }, modifier = modifier) {
+        Text(stringResource(R.string.enable_scanner))
+    }
 }
 
 @Composable
@@ -67,7 +62,6 @@ private fun isScannerRunningAsState(): State<Boolean> {
 }
 
 private fun Context.isScannerServiceEnabled(): Boolean {
-    Log.d(TAG, "Stack: ${Log.getStackTraceString(Throwable())}")
     // The format of ENABLED_ACCESSIBILITY_SERVICES string is not documented so relying on internals
     // here. Using AccessibilityManager.getEnabledAccessibilityServiceList() would be better in this
     // sense but it returns stale values sometimes.

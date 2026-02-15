@@ -3,7 +3,9 @@ package com.github.timpushkin.tapok.data.rules
 import kotlinx.coroutines.flow.Flow
 
 interface RuleRepo {
-    suspend fun loadAllRules(): List<Rule>
+    fun loadAllRules(): Flow<List<Rule>>
+
+    suspend fun loadRule(ruleId: Long): Rule
 
     fun loadAllRulesByPackage(): Flow<Map<String, List<Rule>>>
 

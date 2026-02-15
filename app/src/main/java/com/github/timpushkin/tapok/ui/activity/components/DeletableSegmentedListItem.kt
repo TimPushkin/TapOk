@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
@@ -34,10 +35,12 @@ fun DeletableSegmentedListItem(
     count: Int,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    selected: Boolean = false,
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     overlineContent: @Composable (() -> Unit)? = null,
     supportingContent: @Composable (() -> Unit)? = null,
+    colors: ListItemColors = ListItemDefaults.segmentedColors(),
     content: @Composable (() -> Unit)
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
@@ -55,10 +58,9 @@ fun DeletableSegmentedListItem(
             trailingContent = trailingContent,
             overlineContent = overlineContent,
             supportingContent = supportingContent,
+            selected = selected,
             shapes = ListItemDefaults.segmentedShapes(index, count),
-            colors = ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
+            colors = colors
         )
     }
 }
