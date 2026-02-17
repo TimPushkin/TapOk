@@ -27,6 +27,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Scan
+import com.github.timpushkin.tapok.ui.activity.ThreePaneScaffoldRole
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
@@ -64,6 +65,7 @@ fun ScanListPane(
 
     SegmentedListPane(
         directive,
+        lowestActiveRole = ThreePaneScaffoldRole.PRIMARY,
         modifier = modifier.thenIf(!directive.isPartitionedHorizontally()) {
             windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
         }

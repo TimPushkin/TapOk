@@ -6,6 +6,6 @@ import androidx.compose.ui.Modifier
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 
 @Composable
-fun HelpScreen() {
+fun HelpPane() {
     PanePlaceholderText("TODO", modifier = Modifier.fillMaxSize())
 }

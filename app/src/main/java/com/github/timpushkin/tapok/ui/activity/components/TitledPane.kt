@@ -39,17 +39,13 @@ fun TitledPane(
     directive: PaneScaffoldDirective,
     modifier: Modifier = Modifier,
     actions: @Composable (RowScope.() -> Unit) = {},
+    role: ThreePaneScaffoldRole = ThreePaneScaffoldRole.SECONDARY,
+    lowestActiveRole: ThreePaneScaffoldRole = ThreePaneScaffoldRole.SECONDARY,
     content: @Composable (BoxScope.() -> Unit)
 ) {
     Column(
         modifier = modifier
-            .padding(
-                calculatePaddingInThreePaneScaffold(
-                    directive,
-                    ThreePaneScaffoldRole.SECONDARY,
-                    lowestActiveRole = ThreePaneScaffoldRole.SECONDARY
-                )
-            )
+            .padding(calculatePaddingInThreePaneScaffold(directive, role, lowestActiveRole))
             .fillMaxSize()
             .thenIf(directive.isPartitionedHorizontally()) {
                 background(

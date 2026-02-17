@@ -2,10 +2,9 @@ package com.github.timpushkin.tapok.ui.activity.navigation
 
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
-import com.github.timpushkin.tapok.ui.activity.help.HelpScreen
+import com.github.timpushkin.tapok.ui.activity.help.HelpPane
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,15 +13,15 @@ import dagger.multibindings.IntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object HelpKey : TapOkNavKey.Primary(
+data object HelpKey : Pane.Primary(
     order = 1,
     label = R.string.help,
     icon = R.drawable.help_outlined,
     iconSelected = R.drawable.help_filled
 ) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: NavBackStack<NavKey>) {
-        HelpScreen()
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
+        HelpPane()
     }
 }
 
@@ -31,6 +30,5 @@ data object HelpKey : TapOkNavKey.Primary(
 object HelpModule {
     @Provides
     @IntoSet
-    fun provideNavKeyDescriptors(): TapOkNavKeyDescriptor =
-        TapOkNavKeyDescriptor.OfInstance(HelpKey)
+    fun provideNavDescriptors(): NavDescriptor<*> = NavDescriptor.OfInstance(HelpKey)
 }

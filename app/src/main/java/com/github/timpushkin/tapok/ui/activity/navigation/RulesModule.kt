@@ -4,7 +4,6 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ui.activity.rules.RuleEditorPane
@@ -18,14 +17,14 @@ import dagger.multibindings.ElementsIntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object RuleListKey : TapOkNavKey.Primary(
+data object RuleListKey : Pane.Primary(
     order = 2,
     label = R.string.rules,
     icon = R.drawable.settings_outlined,
     iconSelected = R.drawable.settings_filled
 ) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: NavBackStack<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
         RuleListPane(
             selectedRuleId = (backStack.findLast { it is RuleEditorKey } as RuleEditorKey?)?.ruleId,
             onEditRule = { backStack.addSecondary(RuleEditorKey(it?.id)) },
@@ -38,9 +37,9 @@ data object RuleListKey : TapOkNavKey.Primary(
 }
 
 @Serializable
-data class RuleEditorKey(val ruleId: Long?) : TapOkNavKey.Secondary(parent = RuleListKey) {
+data class RuleEditorKey(val ruleId: Long?) : Pane.Secondary(parent = RuleListKey) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: NavBackStack<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
         RuleEditorPane(
             ruleId,
             onClose = { backStack.remove(this) },
@@ -55,12 +54,12 @@ object RulesModule {
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     @Provides
     @ElementsIntoSet
-    fun provideNavKeyDescriptors(): Set<TapOkNavKeyDescriptor> = setOf(
-        TapOkNavKeyDescriptor.OfInstance(
+    fun provideNavDescriptors(): Set<NavDescriptor<*>> = setOf(
+        NavDescriptor.OfInstance(
             RuleListKey,
             ListDetailSceneStrategy.listPane(sceneKey = toString()) { RuleEditorPlaceholder() }
         ),
-        TapOkNavKeyDescriptor.OfClass(
+        NavDescriptor.OfClass(
             RuleEditorKey::class,
             ListDetailSceneStrategy.detailPane(sceneKey = toString())
         )

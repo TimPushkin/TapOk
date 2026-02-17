@@ -21,6 +21,7 @@ nav3 = "1.0.1"
 
 accompanist = "0.37.3"
 
+telephoto = "0.18.0"
 
 [libraries]
 
@@ -49,6 +50,8 @@ androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runt
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3" }
 
 google-accompanist-drawablepainter = { group = "com.google.accompanist", name = "accompanist-drawablepainter", version.ref = "accompanist" }
+
+saket-telephoto-zoomable = { group = "me.saket.telephoto", name = "zoomable", version.ref = "telephoto" }
 
 [plugins]
 

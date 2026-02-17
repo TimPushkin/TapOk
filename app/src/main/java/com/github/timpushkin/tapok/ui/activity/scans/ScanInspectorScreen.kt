@@ -6,11 +6,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,6 +28,7 @@ import androidx.compose.ui.layout.times
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
@@ -34,14 +41,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
-import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
-import com.github.timpushkin.tapok.ui.activity.components.TitledPane
+import me.saket.telephoto.zoomable.rememberZoomableState
+import me.saket.telephoto.zoomable.zoomable
 
 @Composable
-fun ScanInspectorPane(
+@OptIn(ExperimentalMaterial3Api::class)
+fun ScanInspectorScreen(
     scanId: Long,
     onClose: () -> Unit,
-    directive: PaneScaffoldDirective,
     modifier: Modifier = Modifier,
     vm: ScanInspectorViewModel = hiltViewModel(
         key = scanId.toString()
@@ -49,26 +56,46 @@ fun ScanInspectorPane(
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
-    TitledPane(
-        title = {
-            Text(
-                (state as? ScanInspectorUiState.Loaded)?.run {
-                    LocalContext.current.packageManager.getAppLabel(scan.appPackage)
-                        ?: scan.appPackage
-                } ?: ""
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        (state as? ScanInspectorUiState.Loaded)?.run {
+                            LocalContext.current.packageManager.getAppLabel(scan.appPackage)
+                                ?: scan.appPackage
+                        } ?: ""
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            painterResource(R.drawable.arrow_back),
+                            contentDescription = stringResource(R.string.navigate_back)
+                        )
+                    }
+                }
             )
         },
-        onClose = onClose,
-        directive = directive,
         modifier = modifier
-    ) {
-        ScanInspector(state)
+    ) { paddingValues ->
+        ScanInspector(
+            state,
+            modifier = Modifier
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+        )
     }
 }
 
 @Composable
-private fun ScanInspector(state: ScanInspectorUiState) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+private fun ScanInspector(state: ScanInspectorUiState, modifier: Modifier = Modifier) {
+    val zoomState = rememberZoomableState()
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize()
+            .zoomable(zoomState)
+    ) {
         if (state !is ScanInspectorUiState.Loaded) {
             return@BoxWithConstraints
         }
@@ -137,12 +164,4 @@ private fun PackageManager.getAppLabel(appPackage: String): String? {
         return null
     }
     return getApplicationLabel(appInfo).toString()
-}
-
-@Composable
-fun ScanInspectorPlaceholder(modifier: Modifier = Modifier) {
-    PanePlaceholderText(
-        stringResource(R.string.select_scan_to_inspect),
-        modifier = modifier.fillMaxSize()
-    )
 }

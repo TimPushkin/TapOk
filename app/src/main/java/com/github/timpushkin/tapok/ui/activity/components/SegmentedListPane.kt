@@ -20,17 +20,15 @@ import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
 fun SegmentedListPane(
     directive: PaneScaffoldDirective,
     modifier: Modifier = Modifier,
+    role: ThreePaneScaffoldRole = ThreePaneScaffoldRole.PRIMARY,
+    lowestActiveRole: ThreePaneScaffoldRole = ThreePaneScaffoldRole.SECONDARY,
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = if (directive.isPartitionedHorizontally()) {
-            calculatePaddingInThreePaneScaffold(
-                directive,
-                ThreePaneScaffoldRole.PRIMARY,
-                lowestActiveRole = ThreePaneScaffoldRole.SECONDARY
-            )
+            calculatePaddingInThreePaneScaffold(directive, role, lowestActiveRole)
         } else {
             PaddingValues(16.dp)
         },
