@@ -1,8 +1,6 @@
 package com.github.timpushkin.tapok.ui.activity.scans
 
 import android.app.Application
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.timpushkin.tapok.data.scans.Node
@@ -19,13 +17,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 sealed interface ScanInspectorUiState {
     object Loading : ScanInspectorUiState
 
     data class Loaded(
         val scan: Scan,
-        val screenshot: Bitmap,
+        val screenshotFile: File,
         val nodes: List<Node>,
         val selectedNode: Node?
     ) : ScanInspectorUiState
@@ -42,21 +41,19 @@ class ScanInspectorViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            // If the scan has been deleted concurrently the VM won't be used
             val (scan, nodes) = withContext(Dispatchers.IO) { scanRepo.loadScanWithNodes(scanId) }
-                ?: return@launch
-            val screenshot = withContext(Dispatchers.IO) {
-                BitmapFactory.decodeFile(application.screenshotFile(scan.screenshotFile).path)
+                ?: return@launch // If the scan has been deleted concurrently the VM won't be used
+            val screenshotFile = withContext(Dispatchers.IO) {
+                application.screenshotFile(scan.screenshotFile)
             }
-            _uiState.value = ScanInspectorUiState.Loaded(scan, screenshot, nodes, null)
+            _uiState.value = ScanInspectorUiState.Loaded(scan, screenshotFile, nodes, null)
         }
     }
 
     fun selectNode(node: Node?) {
-        _uiState.update {
-            check(it is ScanInspectorUiState.Loaded) { "Node selected from not-yet-loaded scan" }
-            check(node == null || node in it.nodes) { "$node not in ${it.nodes}" }
-            it.copy(selectedNode = node)
+        _uiState.update { state ->
+            check(state is ScanInspectorUiState.Loaded) { "Node selected from not-yet-loaded scan" }
+            state.copy(selectedNode = node.takeIf { it != state.selectedNode })
         }
     }
 }

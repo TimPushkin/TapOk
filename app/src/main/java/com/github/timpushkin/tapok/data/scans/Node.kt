@@ -1,5 +1,6 @@
 package com.github.timpushkin.tapok.data.scans
 
+import androidx.compose.ui.geometry.Rect
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -32,4 +33,10 @@ data class Node(
         val right: Int,
         val bottom: Int
     )
+
+    val boundsRect by lazy {
+        with(bounds) {
+            Rect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+        }
+    }
 }

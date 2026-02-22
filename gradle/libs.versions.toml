@@ -52,6 +52,7 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 google-accompanist-drawablepainter = { group = "com.google.accompanist", name = "accompanist-drawablepainter", version.ref = "accompanist" }
 
 saket-telephoto-zoomable = { group = "me.saket.telephoto", name = "zoomable", version.ref = "telephoto" }
+saket-telephoto-sub-sampling-image = { group = "me.saket.telephoto", name = "sub-sampling-image", version.ref = "telephoto" }
 
 [plugins]
 
