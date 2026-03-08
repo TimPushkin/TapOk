@@ -16,6 +16,7 @@
     <string name="scans">Scans</string>
 
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="navigate_back">Navigate back</string>
@@ -47,4 +48,15 @@
     <string name="select_scan_to_inspect">Select a scan to inspect</string>
 
     <string name="enable_scanner">Enable scanner</string>
+
+    <string name="unlabeled_element">Unlabeled element</string>
+    <string name="clickable_element">Clickable element</string>
+    <string name="non_clickable_element">Non-clickable element</string>
+
+    <string name="clazz">Class</string>
+    <string name="bounds">Bounds</string>
+    <string name="clickable">Clickable</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

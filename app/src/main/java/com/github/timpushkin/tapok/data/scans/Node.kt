@@ -22,9 +22,9 @@ data class Node(
     @PrimaryKey(autoGenerate = true) val id: Long,
     @ColumnInfo(name = "scan_id", index = true) val scanId: Long,
     @ColumnInfo(name = "package_name") val packageName: String,
+    @ColumnInfo(name = "view_name") val viewName: String?,
     @ColumnInfo(name = "class_name") val className: String,
     @Embedded(prefix = "bound_") val bounds: Bounds,
-    @ColumnInfo(name = "id_resource_name") val idResourceName: String?,
     @ColumnInfo(name = "is_clickable") val isClickable: Boolean
 ) {
     data class Bounds(
@@ -33,6 +33,8 @@ data class Node(
         val right: Int,
         val bottom: Int
     )
+
+    val viewId by lazy { viewName?.let { "$packageName:id/$it" } }
 
     val boundsRect by lazy {
         with(bounds) {

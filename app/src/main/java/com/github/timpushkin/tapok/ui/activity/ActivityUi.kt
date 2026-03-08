@@ -54,7 +54,11 @@ fun ActivityUi(navDescriptors: Iterable<NavDescriptor<*>>) {
                 navDescriptors.partitionByDescribedKeyType<Screen, Pane>()
             for (descriptor in screenDescriptors) addScreenEntry(descriptor, backStack)
             entry(PaneScreenKey) { PaneScreen(paneDescriptors, backStack) }
-        }
+        },
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        )
     )
 }
 

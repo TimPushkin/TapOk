@@ -51,9 +51,9 @@ class ScanInspectorViewModel @AssistedInject constructor(
     }
 
     fun selectNode(node: Node?) {
-        _uiState.update { state ->
-            check(state is ScanInspectorUiState.Loaded) { "Node selected from not-yet-loaded scan" }
-            state.copy(selectedNode = node.takeIf { it != state.selectedNode })
+        _uiState.update {
+            check(it is ScanInspectorUiState.Loaded) { "Node selected from not-yet-loaded scan" }
+            it.copy(selectedNode = node)
         }
     }
 }
