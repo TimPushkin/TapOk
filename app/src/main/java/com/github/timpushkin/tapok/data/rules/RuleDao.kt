@@ -19,7 +19,7 @@ interface RuleDao : RuleRepo {
     override fun loadAllRulesByPackage(): Flow<Map<@MapColumn("package_name") String, List<Rule>>>
 
     @Upsert
-    override suspend fun insertOrUpdateRule(rule: Rule)
+    override suspend fun insertOrUpdateRule(rule: Rule): Long
 
     @Delete
     override suspend fun deleteRule(rule: Rule)

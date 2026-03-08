@@ -45,8 +45,8 @@ sealed interface RuleEditorUiState {
         val viewNameValidity: ViewNameValidity? = null
     ) : RuleEditorUiState {
         fun allowsSaving() = ruleNameValidity == RuleNameValidity.OK &&
-            packageNameValidity == PackageNameValidity.OK &&
-            viewNameValidity == ViewNameValidity.OK
+                packageNameValidity == PackageNameValidity.OK &&
+                viewNameValidity == ViewNameValidity.OK
     }
 }
 
@@ -120,9 +120,10 @@ class RuleEditorViewModel @AssistedInject constructor(
         _uiState.updateWhenLoaded { it.copy(action = action) }
     }
 
-    suspend fun save() {
+    suspend fun save(): Rule {
         val state = withContext(Dispatchers.Main.immediate) { _uiState.value }
         check(state is RuleEditorUiState.Loaded && state.allowsSaving())
+
         val rule = Rule(
             state.originalRule?.id ?: 0,
             ruleNameState.text.toString(),
@@ -131,8 +132,16 @@ class RuleEditorViewModel @AssistedInject constructor(
             state.action
         )
         Log.d(TAG, "Saving $rule")
-        withContext(Dispatchers.IO) { ruleRepo.insertOrUpdateRule(rule) }
-        Log.d(TAG, "Saved $rule")
+        val savedId = withContext(Dispatchers.IO) { ruleRepo.insertOrUpdateRule(rule) }
+
+        return if (savedId != -1L) {
+            rule.copy(id = savedId).also { saved ->
+                Log.d(TAG, "Saved $saved (new)")
+                _uiState.updateWhenLoaded { it.copy(originalRule = saved) }
+            }
+        } else {
+            rule.also { saved -> Log.d(TAG, "Saved $saved (update)") }
+        }
     }
 }
 

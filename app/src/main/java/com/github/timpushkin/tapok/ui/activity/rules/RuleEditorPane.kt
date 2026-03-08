@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 fun RuleEditorPane(
     ruleId: Long?,
     onClose: () -> Unit,
+    onCreated: (Long) -> Unit,
     directive: PaneScaffoldDirective,
     modifier: Modifier = Modifier,
     vm: RuleEditorViewModel = hiltViewModel(
@@ -73,10 +74,8 @@ fun RuleEditorPane(
             SaveButton(
                 canSave = (state as? RuleEditorUiState.Loaded)?.allowsSaving() == true,
                 onSave = {
-                    vm.save()
-                    if (!directive.isPartitionedHorizontally()) {
-                        onClose()
-                    }
+                    val rule = vm.save()
+                    if (!directive.isPartitionedHorizontally()) onClose() else onCreated(rule.id)
                 },
                 animate = directive.isPartitionedHorizontally()
             )

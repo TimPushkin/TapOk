@@ -43,6 +43,11 @@ data class RuleEditorKey(val ruleId: Long?) : Pane.Secondary(parent = RuleListKe
         RuleEditorPane(
             ruleId,
             onClose = { backStack.remove(this) },
+            onCreated = { id ->
+                backStack.replaceAll {
+                    if (it is RuleEditorKey && it.ruleId == ruleId) RuleEditorKey(id) else it
+                }
+            },
             directive
         )
     }
