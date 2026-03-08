@@ -34,28 +34,27 @@ fun RuleListPane(
     modifier: Modifier = Modifier,
     vm: RuleListViewModel = hiltViewModel()
 ) {
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-
-    if (uiState.rules.isEmpty()) {
-        PanePlaceholderText(
-            stringResource(R.string.manage_rules_here),
-            modifier = modifier.fillMaxSize()
-        )
-        return
-    }
-
     Scaffold(
         // TODO: hide FAB on content scroll
         floatingActionButton = { CreateRuleFab(onClick = { onEditRule(null) }) },
         containerColor = Color.Transparent,
         modifier = modifier
     ) { paddingValues ->
-        SegmentedListPane(
-            directive,
-            modifier = Modifier
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-        ) {
+        val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+        val paddingModifier = Modifier
+            .padding(paddingValues)
+            .consumeWindowInsets(paddingValues)
+
+        if (uiState.rules.isEmpty()) {
+            PanePlaceholderText(
+                stringResource(R.string.manage_rules_here),
+                modifier = paddingModifier.fillMaxSize()
+            )
+            return@Scaffold
+        }
+
+        SegmentedListPane(directive, modifier = paddingModifier) {
             val count = uiState.rules.size
             itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
                 RuleItem(
