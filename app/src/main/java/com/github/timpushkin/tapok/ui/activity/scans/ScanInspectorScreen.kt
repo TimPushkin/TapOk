@@ -44,7 +44,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -93,7 +97,6 @@ import me.saket.telephoto.zoomable.zoomable
 import okio.Path.Companion.toOkioPath
 import java.io.File
 
-// TODO: don't show unlabeled nodes by default
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScanInspectorScreen(
@@ -118,15 +121,15 @@ fun ScanInspectorScreen(
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         val loadedUiState = uiState as? ScanInspectorUiState.Loaded
 
-        loadedUiState?.let { (_, screenshot, nodes, selectedNode) ->
+        loadedUiState?.let { state ->
             ScanDisplay(
-                screenshot,
-                nodes,
-                selectedNode,
+                state.screenshotFile,
+                state.shownNodes,
+                state.selectedNode,
                 onNodeClick = { node ->
-                    if (node != selectedNode) { // Clicked on deselected node
+                    if (node != state.selectedNode) { // Clicked on deselected node
                         vm.selectNode(node)
-                    } else if (selectedNode != null) { // Clicked on selected node
+                    } else if (state.selectedNode != null) { // Clicked on selected node
                         vm.selectNode(null)
                     } else { // Clicked on empty area when no node is selected
                         showBars = !showBars
@@ -147,12 +150,14 @@ fun ScanInspectorScreen(
                 TopBar(
                     visible = showBars,
                     appPackage = loadedUiState?.run { scan.appPackage },
-                    onBack = onClose
+                    showUnlabeledNodes = uiState.showUnlabeledNodes,
+                    onBack = onClose,
+                    onSwitchShowUnlabeledNodes = vm::switchShowUnlabeledNodes
                 )
             },
             sheetContent = {
-                loadedUiState?.let { (_, _, nodes, selectedNode) ->
-                    NodeBottomSheet(nodes, selectedNode, onClick = vm::selectNode)
+                loadedUiState?.let { state ->
+                    NodeBottomSheet(state.shownNodes, state.selectedNode, onClick = vm::selectNode)
                 }
             },
             sheetDragHandle = {
@@ -276,7 +281,13 @@ private fun ScanDisplay(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun TopBar(visible: Boolean, appPackage: String?, onBack: () -> Unit) {
+private fun TopBar(
+    visible: Boolean,
+    appPackage: String?,
+    showUnlabeledNodes: Boolean,
+    onBack: () -> Unit,
+    onSwitchShowUnlabeledNodes: () -> Unit
+) {
     AnimatedVisibility(
         visible,
         enter = fadeIn(spring(stiffness = Spring.StiffnessLow)),
@@ -298,6 +309,9 @@ private fun TopBar(visible: Boolean, appPackage: String?, onBack: () -> Unit) {
                     )
                 }
             },
+            actions = {
+                ShowUnlabeledNodesSwitch(showUnlabeledNodes, onSwitchShowUnlabeledNodes)
+            },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent
             ),
@@ -317,6 +331,30 @@ private fun PackageManager.getAppLabel(appPackage: String): String? {
         return null
     }
     return getApplicationLabel(appInfo).toString()
+}
+
+@Composable
+private fun ShowUnlabeledNodesSwitch(
+    showUnlabeledNodes: Boolean,
+    onSwitchShowUnlabeledNodes: () -> Unit
+) {
+    val iconRes = if (showUnlabeledNodes) {
+        R.drawable.visibility_filled
+    } else {
+        R.drawable.visibility_off_outlined
+    }
+    val descriptionRes = R.string.show_hide_elements_that_cannot_be_referenced
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Below
+        ),
+        tooltip = { Text(stringResource(descriptionRes)) },
+        state = rememberTooltipState()
+    ) {
+        IconButton(onClick = onSwitchShowUnlabeledNodes) {
+            Icon(painterResource(iconRes), stringResource(descriptionRes))
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -20,14 +20,21 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 sealed interface ScanInspectorUiState {
-    object Loading : ScanInspectorUiState
+    val showUnlabeledNodes: Boolean
+
+    data class Loading(override val showUnlabeledNodes: Boolean = false) : ScanInspectorUiState
 
     data class Loaded(
         val scan: Scan,
         val screenshotFile: File,
         val nodes: List<Node>,
-        val selectedNode: Node?
-    ) : ScanInspectorUiState
+        val selectedNode: Node?,
+        override val showUnlabeledNodes: Boolean
+    ) : ScanInspectorUiState {
+        val shownNodes by lazy {
+            if (showUnlabeledNodes) nodes else nodes.filter { it.viewId != null }
+        }
+    }
 }
 
 @HiltViewModel(assistedFactory = ScanInspectorViewModelFactory::class)
@@ -36,7 +43,7 @@ class ScanInspectorViewModel @AssistedInject constructor(
     private val scanRepo: ScanRepo,
     @Assisted scanId: Long
 ) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow<ScanInspectorUiState>(ScanInspectorUiState.Loading)
+    private val _uiState = MutableStateFlow<ScanInspectorUiState>(ScanInspectorUiState.Loading())
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -46,7 +53,33 @@ class ScanInspectorViewModel @AssistedInject constructor(
             val screenshotFile = withContext(Dispatchers.IO) {
                 application.screenshotFile(scan.screenshotFile)
             }
-            _uiState.value = ScanInspectorUiState.Loaded(scan, screenshotFile, nodes, null)
+            _uiState.update {
+                ScanInspectorUiState.Loaded(
+                    scan,
+                    screenshotFile,
+                    nodes,
+                    null,
+                    it.showUnlabeledNodes
+                )
+            }
+        }
+    }
+
+    fun switchShowUnlabeledNodes() {
+        _uiState.update { prev ->
+            val showUnlabeledNodes = !prev.showUnlabeledNodes
+            when (prev) {
+                is ScanInspectorUiState.Loading -> prev.copy(
+                    showUnlabeledNodes = showUnlabeledNodes
+                )
+
+                is ScanInspectorUiState.Loaded -> prev.copy(
+                    showUnlabeledNodes = showUnlabeledNodes,
+                    selectedNode = prev.selectedNode?.takeIf {
+                        showUnlabeledNodes || it.viewId != null
+                    }
+                )
+            }
         }
     }
 

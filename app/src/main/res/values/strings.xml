@@ -49,6 +49,8 @@
 
     <string name="enable_scanner">Enable scanner</string>
 
+    <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
+
     <string name="unlabeled_element">Unlabeled element</string>
     <string name="clickable_element">Clickable element</string>
     <string name="non_clickable_element">Non-clickable element</string>
