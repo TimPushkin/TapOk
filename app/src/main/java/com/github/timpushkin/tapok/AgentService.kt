@@ -34,9 +34,7 @@ class AgentService : AccessibilityService() {
 
     @Inject
     /* private */ lateinit var ruleRepo: RuleRepo
-
-    private val rulesByPackage: StateFlow<Map<String, List<Rule>>> =
-        ruleRepo.loadAllRulesByPackage().stateIn(ioScope, SharingStarted.Eagerly, emptyMap())
+    private lateinit var rulesByPackage: StateFlow<Map<String, List<Rule>>>
 
     private lateinit var audioManager: AudioManager
 
@@ -47,6 +45,9 @@ class AgentService : AccessibilityService() {
 
     override fun onCreate() {
         super.onCreate()
+        rulesByPackage = ruleRepo.loadAllRulesByPackage().stateIn(
+            ioScope, SharingStarted.Eagerly, emptyMap()
+        )
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
     }
 
@@ -85,7 +86,9 @@ class AgentService : AccessibilityService() {
                     .filter { it.isClickable }
                     .forEach {
                         Log.i(TAG, "Applying ${rule.toShortString()}: click $it")
-                        it.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        if (!it.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+                            Log.w(TAG, "Failed to click $it")
+                        }
                     }
                 Rule.Action.MUTE_WHEN_PRESENT -> {
                     val matches = root.findAccessibilityNodeInfosByViewId(rule.viewId)
