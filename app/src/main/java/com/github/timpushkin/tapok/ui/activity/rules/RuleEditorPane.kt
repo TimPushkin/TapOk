@@ -41,10 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
-import com.github.timpushkin.tapok.data.rules.PackageNameValidity
 import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.data.rules.RuleNameValidity
-import com.github.timpushkin.tapok.data.rules.ViewNameValidity
+import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.TitledPane
 import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
@@ -86,8 +85,7 @@ fun RuleEditorPane(
         EditableFields(
             state,
             vm.ruleNameState,
-            vm.packageNameState,
-            vm.viewNameState,
+            vm.viewIdState,
             vm::selectAction,
             contentPadding = PaddingValues(
                 vertical = if (!directive.isPartitionedHorizontally()) 24.dp else 0.dp
@@ -133,8 +131,7 @@ private fun SaveButton(canSave: Boolean, onSave: suspend () -> Unit, animate: Bo
 private fun EditableFields(
     state: RuleEditorUiState,
     ruleNameState: TextFieldState,
-    packageNameState: TextFieldState,
-    viewNameState: TextFieldState,
+    viewIdState: TextFieldState,
     onSelectAction: (Rule.Action) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
@@ -155,18 +152,10 @@ private fun EditableFields(
         }
         item {
             RuleTextField(
-                packageNameState,
-                stringResource(R.string.package_name),
-                stringResource(R.string.package_name_placeholder),
-                loadedState?.packageNameValidity?.toErrorText()
-            )
-        }
-        item {
-            RuleTextField(
-                viewNameState,
-                stringResource(R.string.view_name),
-                stringResource(R.string.view_name_placeholder),
-                loadedState?.viewNameValidity?.toErrorText()
+                viewIdState,
+                stringResource(R.string.view_id),
+                stringResource(R.string.view_id_placeholder),
+                loadedState?.viewIdValidity?.toErrorText()
             )
         }
         item {
@@ -188,21 +177,14 @@ private fun RuleNameValidity.toErrorText() = when (this) {
 }
 
 @Composable
-private fun PackageNameValidity.toErrorText(): String? {
+private fun ViewIdValidity.toErrorText(): String? {
     val resId = when (this) {
-        PackageNameValidity.OK -> return null
-        PackageNameValidity.ILLEGAL_SEGMENT -> R.string.package_name_error_illegal_segment
-        PackageNameValidity.NOT_ENOUGH_SEGMENTS -> R.string.package_name_error_not_enough_segments
-    }
-    return stringResource(resId)
-}
-
-@Composable
-private fun ViewNameValidity.toErrorText(): String? {
-    val resId = when (this) {
-        ViewNameValidity.OK, ViewNameValidity.EMPTY -> return null
-        ViewNameValidity.ILLEGAL_START -> R.string.view_name_error_illegal_start
-        ViewNameValidity.ILLEGAL_PART -> R.string.view_name_error_illegal_part
+        ViewIdValidity.OK -> return null
+        ViewIdValidity.NO_DIVIDER -> R.string.view_id_error_no_divider
+        ViewIdValidity.PACKAGE_ILLEGAL_SEGMENT -> R.string.view_id_error_illegal_package_segment
+        ViewIdValidity.PACKAGE_NOT_ENOUGH_SEGMENTS -> R.string.view_id_error_not_enough_package_segments
+        ViewIdValidity.VIEW_ILLEGAL_START -> R.string.view_id_error_illegal_name_start
+        ViewIdValidity.VIEW_ILLEGAL_PART -> R.string.view_id_error_illegal_name_part
     }
     return stringResource(resId)
 }

@@ -33,9 +33,9 @@ data class Rule(
     }
 
     /**
-     * Fully-qualified targeted view's ID's resource name.
+     * See [com.github.timpushkin.tapok.data.scans.Node.viewId].
      */
     val viewId by lazy { "$packageName:id/$viewName" }
 
-    fun toShortString() = "Rule(action: $action, id: $viewName)"
+    fun toShortString() = "Rule($name: $action $viewId)"
 }

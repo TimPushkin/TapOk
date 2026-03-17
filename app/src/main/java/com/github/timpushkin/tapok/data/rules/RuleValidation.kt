@@ -11,64 +11,71 @@ enum class RuleNameValidity {
 fun validateRuleName(str: CharSequence): RuleNameValidity =
     if (str.isEmpty()) RuleNameValidity.EMPTY else RuleNameValidity.OK
 
-enum class PackageNameValidity {
+enum class ViewIdValidity {
     /** Is valid. */
     OK,
 
+    /** No :id/ part. */
+    NO_DIVIDER,
+
     /**
-     * has a segment that is either empty, contains non-alphanumeric characters, or starts with a
+     * Has a segment that is either empty, contains non-alphanumeric characters, or starts with a
      * non-letter character.
      */
-    ILLEGAL_SEGMENT,
+    PACKAGE_ILLEGAL_SEGMENT,
 
     /** Has less than two segments. */
-    NOT_ENOUGH_SEGMENTS,
+    PACKAGE_NOT_ENOUGH_SEGMENTS,
+
+    /** First character is not a "Java letter", including when there is no first character. */
+    VIEW_ILLEGAL_START,
+
+    /** Character other than first is not a "Java letter-or-digit". */
+    VIEW_ILLEGAL_PART,
 }
 
-fun validatePackageName(str: CharSequence): PackageNameValidity {
+fun validateViewId(str: CharSequence): ViewIdValidity {
+    val (packageName, viewName) = str.split(":id/", limit = 2).apply {
+        if (size < 2) return ViewIdValidity.NO_DIVIDER
+    }
+    val packageValidity = validatePackageName(packageName)
+    if (packageValidity != ViewIdValidity.OK) {
+        return packageValidity
+    }
+    val viewValidity = validateViewName(viewName)
+    if (viewValidity != ViewIdValidity.OK) {
+        return viewValidity
+    }
+    return ViewIdValidity.OK
+}
+
+private fun validatePackageName(str: CharSequence): ViewIdValidity {
     var numSegments = 0
     for (segment in str.splitToSequence('.')) {
         numSegments++
         if (segment.isEmpty()) {
-            return PackageNameValidity.ILLEGAL_SEGMENT
+            return ViewIdValidity.PACKAGE_ILLEGAL_SEGMENT
         }
         segment.forEachIndexed { i, c ->
             if ((i == 0 && !c.isLetter()) || (i > 0 && !c.isLetterOrDigit() && c != '_')) {
-                return PackageNameValidity.ILLEGAL_SEGMENT
+                return ViewIdValidity.PACKAGE_ILLEGAL_SEGMENT
             }
         }
     }
     if (numSegments < 2) {
-        return PackageNameValidity.NOT_ENOUGH_SEGMENTS
+        return ViewIdValidity.PACKAGE_NOT_ENOUGH_SEGMENTS
     }
-    return PackageNameValidity.OK
+    return ViewIdValidity.OK
 }
 
-enum class ViewNameValidity {
-    /** Is valid. */
-    OK,
-
-    /** Is empty. */
-    EMPTY,
-
-    /** First character is not a "Java letter". */
-    ILLEGAL_START,
-
-    /** Character other than first is not a "Java letter-or-digit". */
-    ILLEGAL_PART,
-}
-
-fun validateViewName(str: CharSequence): ViewNameValidity {
-    if (str.isEmpty()) {
-        return ViewNameValidity.EMPTY
-    }
-    if (!str.first().isJavaIdentifierStart()) {
-        return ViewNameValidity.ILLEGAL_START
+private fun validateViewName(str: CharSequence): ViewIdValidity {
+    if (str.isEmpty() || !str.first().isJavaIdentifierStart()) {
+        return ViewIdValidity.VIEW_ILLEGAL_START
     }
     for (c in str.subSequence(1..<str.length)) {
         if (!c.isJavaIdentifierPart()) {
-            return ViewNameValidity.ILLEGAL_PART
+            return ViewIdValidity.VIEW_ILLEGAL_PART
         }
     }
-    return ViewNameValidity.OK
+    return ViewIdValidity.OK
 }

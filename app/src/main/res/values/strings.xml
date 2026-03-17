@@ -17,6 +17,7 @@
 
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
+    <string name="copy">Copy</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="navigate_back">Navigate back</string>
@@ -29,20 +30,19 @@
     <string name="edit_rule">Edit rule</string>
 
     <string name="rule_name">Rule name</string>
-    <string name="package_name">Package name</string>
-    <string name="view_name">View name</string>
+    <string name="view_id">View ID</string>
     <string name="action">Action</string>
 
     <string name="rule_name_placeholder">My rule</string>
-    <string name="package_name_placeholder">com.example.app</string>
-    <string name="view_name_placeholder">some_button</string>
+    <string name="view_id_placeholder">com.example.app:id/some_button</string>
     <string name="click">Click</string>
     <string name="mute_when_present">Mute when present</string>
 
-    <string name="package_name_error_illegal_segment">Illegal package segment name</string>
-    <string name="package_name_error_not_enough_segments">At least two dot-separated segments required</string>
-    <string name="view_name_error_illegal_start">Illegal first character</string>
-    <string name="view_name_error_illegal_part">Illegal non-first character</string>
+    <string name="view_id_error_no_divider">:id/ is missing</string>
+    <string name="view_id_error_illegal_package_segment">Illegal package segment name</string>
+    <string name="view_id_error_not_enough_package_segments">At least two dot-separated segments required in package name</string>
+    <string name="view_id_error_illegal_name_start">Illegal or missing first character in view name</string>
+    <string name="view_id_error_illegal_name_part">Illegal non-first character in view name</string>
 
     <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
     <string name="select_scan_to_inspect">Select a scan to inspect</string>

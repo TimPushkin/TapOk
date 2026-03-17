@@ -187,26 +187,10 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
         val nodes = List(recordedNodes.size) { i ->
             val nodeInfo = recordedNodes[i]
             nodeInfo.getBoundsInWindow(bounds)
-            val viewName = nodeInfo.viewIdResourceName?.let { viewId ->
-                // View ID format is view_package:id/view_name
-                val viewIdParts = viewId.split(":id/")
-                if (viewIdParts.size != 2) {
-                    Log.e(TAG, "Unexpected view ID format: $viewId")
-                }
-                if (viewIdParts.first() != nodeInfo.packageName) {
-                    Log.e(
-                        TAG,
-                        "View package ${viewIdParts.first()} " +
-                                "differs from node package ${nodeInfo.packageName}"
-                    )
-                }
-                viewIdParts.last()
-            }
             Node(
                 0,
                 scanId,
-                nodeInfo.packageName.toString(),
-                viewName,
+                nodeInfo.viewIdResourceName,
                 nodeInfo.className.toString(),
                 with(bounds) { Node.Bounds(left, top, right, bottom) },
                 nodeInfo.isClickable

@@ -1,19 +1,19 @@
 package com.github.timpushkin.tapok.ui.activity.rules
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.timpushkin.tapok.data.rules.PackageNameValidity
+import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.RuleRepo
-import com.github.timpushkin.tapok.data.rules.ViewNameValidity
-import com.github.timpushkin.tapok.data.rules.validatePackageName
+import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.data.rules.validateRuleName
-import com.github.timpushkin.tapok.data.rules.validateViewName
+import com.github.timpushkin.tapok.data.rules.validateViewId
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -41,17 +41,16 @@ sealed interface RuleEditorUiState {
         val originalRule: Rule? = null,
         val action: Rule.Action = Rule.Action.CLICK,
         val ruleNameValidity: RuleNameValidity? = null,
-        val packageNameValidity: PackageNameValidity? = null,
-        val viewNameValidity: ViewNameValidity? = null
+        val viewIdValidity: ViewIdValidity? = null
     ) : RuleEditorUiState {
         fun allowsSaving() = ruleNameValidity == RuleNameValidity.OK &&
-                packageNameValidity == PackageNameValidity.OK &&
-                viewNameValidity == ViewNameValidity.OK
+                viewIdValidity == ViewIdValidity.OK
     }
 }
 
 @HiltViewModel(assistedFactory = RuleEditorViewModelFactory::class)
 class RuleEditorViewModel @AssistedInject constructor(
+    application: Application,
     private val ruleRepo: RuleRepo,
     @Assisted ruleId: Long?
 ) : ViewModel() {
@@ -61,8 +60,7 @@ class RuleEditorViewModel @AssistedInject constructor(
     val uiState = _uiState.asStateFlow()
 
     val ruleNameState = TextFieldState()
-    val packageNameState = TextFieldState()
-    val viewNameState = TextFieldState()
+    val viewIdState = TextFieldState()
 
     @OptIn(FlowPreview::class)
     private fun <T> launchTextValidationFlow(
@@ -89,11 +87,13 @@ class RuleEditorViewModel @AssistedInject constructor(
                 Log.d(TAG, "Editing $rule")
                 _uiState.value = RuleEditorUiState.Loaded(rule, rule.action)
                 ruleNameState.setTextAndPlaceCursorAtEnd(rule.name)
-                packageNameState.setTextAndPlaceCursorAtEnd(rule.packageName)
-                viewNameState.setTextAndPlaceCursorAtEnd(rule.viewName)
+                viewIdState.setTextAndPlaceCursorAtEnd(rule.viewId)
             } else {
                 Log.d(TAG, "Creating new rule")
                 _uiState.value = RuleEditorUiState.Loaded()
+                ruleNameState.setTextAndPlaceCursorAtEnd(
+                    application.resources.getString(R.string.rule_name_placeholder)
+                )
             }
             launchTextValidationFlow(
                 ruleNameState,
@@ -102,16 +102,10 @@ class RuleEditorViewModel @AssistedInject constructor(
                 { copy(ruleNameValidity = it) }
             )
             launchTextValidationFlow(
-                packageNameState,
-                ::validatePackageName,
-                { copy(packageNameValidity = null) },
-                { copy(packageNameValidity = it) }
-            )
-            launchTextValidationFlow(
-                viewNameState,
-                ::validateViewName,
-                { copy(viewNameValidity = null) },
-                { copy(viewNameValidity = it) }
+                viewIdState,
+                ::validateViewId,
+                { copy(viewIdValidity = null) },
+                { copy(viewIdValidity = it) }
             )
         }
     }
@@ -124,11 +118,12 @@ class RuleEditorViewModel @AssistedInject constructor(
         val state = withContext(Dispatchers.Main.immediate) { _uiState.value }
         check(state is RuleEditorUiState.Loaded && state.allowsSaving())
 
+        val (packageName, viewName) = viewIdState.text.split(":id/", limit = 2)
         val rule = Rule(
             state.originalRule?.id ?: 0,
             ruleNameState.text.toString(),
-            packageNameState.text.toString(),
-            viewNameState.text.toString(),
+            packageName,
+            viewName,
             state.action
         )
         Log.d(TAG, "Saving $rule")
