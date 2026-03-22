@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.FloatRange
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -12,7 +11,6 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -46,6 +44,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -53,10 +52,13 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -93,13 +95,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.times
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
@@ -138,6 +140,8 @@ fun ScanInspectorScreen(
             onDispose { if (!showBars) insetsController?.show(systemBars) }
         }
 
+        val bottomSheetState = rememberBottomSheetStateWrapper()
+
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         val loadedUiState = uiState as? ScanInspectorUiState.Loaded
 
@@ -149,10 +153,13 @@ fun ScanInspectorScreen(
                 onNodeClick = { node ->
                     if (node != selectedNode) { // Clicked on deselected node
                         vm.selectNode(node)
+                        with(bottomSheetState) { if (node != null) expand() else shrink() }
                     } else if (selectedNode != null) { // Clicked on selected node
                         vm.selectNode(null)
+                        bottomSheetState.shrink()
                     } else { // Clicked on empty area when no node is selected
                         showBars = !showBars
+                        bottomSheetState.shrink()
                     }
                 },
                 onZoomIn = { showBars = false }
@@ -160,13 +167,14 @@ fun ScanInspectorScreen(
         }
 
         val sheetPeekHeight by animateDpAsState(
-            when {
-                loadedUiState == null -> 0.dp
-                loadedUiState.selectedNode == null -> BottomSheetDefaults.SheetPeekHeight
-                else -> 2 * BottomSheetDefaults.SheetPeekHeight
+            if (loadedUiState == null) {
+                0.dp
+            } else {
+                maxOf(BottomSheetDefaults.SheetPeekHeight, WindowInsets.safeContentBottomDp())
             }
         )
         BottomSheetScaffold(
+            scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState.bottomSheetState),
             topBar = {
                 TopBar(
                     visible = showBars,
@@ -178,7 +186,10 @@ fun ScanInspectorScreen(
             },
             sheetContent = {
                 loadedUiState?.let { state ->
-                    NodeBottomSheet(state.shownNodes, state.selectedNode, onClick = vm::selectNode)
+                    NodeBottomSheet(state.shownNodes, state.selectedNode) { node ->
+                        vm.selectNode(node)
+                        with(bottomSheetState) { if (node != null) expand() else shrink() }
+                    }
                 }
             },
             sheetDragHandle = { BottomSheetHandle() },
@@ -218,6 +229,30 @@ private fun Modifier.dottedBackground(
 @Composable
 private fun WindowInsets.Companion.safeContentBottomDp() = with(LocalDensity.current) {
     safeContent.getBottom(density = this).toDp()
+}
+
+@Stable
+@OptIn(ExperimentalMaterial3Api::class)
+private data class BottomSheetStateWrapper(
+    val bottomSheetState: SheetState,
+    val coroutineScope: CoroutineScope
+) {
+    fun expand() {
+        coroutineScope.launch { bottomSheetState.expand() }
+    }
+
+    fun shrink() {
+        coroutineScope.launch { bottomSheetState.partialExpand() }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun rememberBottomSheetStateWrapper(
+    bottomSheetState: SheetState = rememberStandardBottomSheetState(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
+) = remember(bottomSheetState, coroutineScope) {
+    BottomSheetStateWrapper(bottomSheetState, coroutineScope)
 }
 
 @Composable
@@ -447,12 +482,10 @@ private fun BottomSheetHandle() {
 
 @Composable
 private fun NodeBottomSheet(nodes: List<Node>, selectedNode: Node?, onClick: (Node?) -> Unit) {
-    AnimatedContent(selectedNode, transitionSpec = { fadeIn().togetherWith(fadeOut()) }) { node ->
-        if (node == null) {
-            NodeList(nodes, onNodeClick = onClick)
-        } else {
-            NodeDescription(node, onClose = { onClick(null) })
-        }
+    if (selectedNode == null) {
+        NodeList(nodes, onNodeClick = onClick)
+    } else {
+        NodeDescription(selectedNode, onClose = { onClick(null) })
     }
 }
 
