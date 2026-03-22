@@ -244,9 +244,7 @@ private fun ScanDisplay(
                         CoordinateSpace.ZoomableContent
                     )
                 }
-                // Relies on scanned nodes being sorted from outer to inner
-                val node = updatableNodes.lastOrNull { it.boundsRect.contains(offsetInContent) }
-                updatableOnNodeClick(node)
+                updatableOnNodeClick(updatableNodes.findClicked(offsetInContent))
             }
         )
     ) {
@@ -342,6 +340,21 @@ private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
     val center = SpatialOffset(rect.center, CoordinateSpace.ZoomableContent)
     zoomTo(factor, ZoomFocalPoint.moveToViewportCenter(center))
 }
+
+// Originally, scanned nodes are sorted from outer to inner. But the user does not see this
+// 3rd dimension and expects the "smaller" node or the node the center of which is closer to be
+// selected.
+private fun Iterable<Node>.findClicked(click: Offset): Node? =
+    filter { it.boundsRect.contains(click) }
+        .mapIndexed { i, node -> i to node }
+        .sortedWith(
+            compareBy<Pair<Int, Node>> { (_, node) -> node.boundsRect.area() }
+                .thenBy { (_, node) -> (node.boundsRect.center - click).getDistanceSquared() }
+                .thenBy { (i, _) -> i }
+        )
+        .firstOrNull()?.second
+
+private fun Rect.area() = width * height
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
