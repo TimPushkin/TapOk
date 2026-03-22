@@ -31,10 +31,10 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -145,7 +145,7 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
     }
 
     private suspend fun captureScreenshot(root: AccessibilityNodeInfo, name: String): String? {
-        val bitmap: Bitmap? = suspendCoroutine { continuation ->
+        val bitmap: Bitmap? = suspendCancellableCoroutine { continuation ->
             val executor = Dispatchers.Default.asExecutor()
             val callback = object : TakeScreenshotCallback {
                 override fun onFailure(errorCode: Int) {

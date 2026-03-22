@@ -1,9 +1,12 @@
 package com.github.timpushkin.tapok.ui.activity.scans
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.data.scans.ScanRepo
+import com.github.timpushkin.tapok.data.screenshotFile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +21,10 @@ import javax.inject.Inject
 data class ScanListUiState(val scans: List<Scan>)
 
 @HiltViewModel
-class ScanListViewModel @Inject constructor(private val scanRepo: ScanRepo) : ViewModel() {
+class ScanListViewModel @Inject constructor(
+    application: Application,
+    private val scanRepo: ScanRepo
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(ScanListUiState(emptyList()))
     val uiState = _uiState.asStateFlow()
 
@@ -30,6 +36,9 @@ class ScanListViewModel @Inject constructor(private val scanRepo: ScanRepo) : Vi
     }
 
     fun deleteScan(scan: Scan) {
-        viewModelScope.launch(Dispatchers.IO) { scanRepo.deleteScan(scan) }
+        viewModelScope.launch(Dispatchers.IO) {
+            scanRepo.deleteScan(scan)
+            application.screenshotFile(scan.screenshotFile).delete()
+        }
     }
 }
