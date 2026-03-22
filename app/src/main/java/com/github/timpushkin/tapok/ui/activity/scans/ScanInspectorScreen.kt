@@ -77,6 +77,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -260,9 +261,16 @@ private fun ScanDisplay(
         }
         viewportSize = with(LocalDensity.current) { Size(maxWidth.toPx(), maxHeight.toPx()) }
 
+        val defaultNodeStroke = Stroke(with(LocalDensity.current) { 1.dp.toPx() })
         val selectedNodeStroke = Stroke(with(LocalDensity.current) { 4.dp.toPx() })
-        val defaultNodeStroke = Stroke(Stroke.HairlineWidth)
-        Canvas(Modifier.matchParentSize()) {
+        // White color + difference blending mode = inversion of underlying pixels. A graphicsLayer
+        // is needed to have the blending mode applied to all rectangles together, if the mode would
+        // be set for each rectangle separately the inversion would cancel out on intersections.
+        Canvas(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { blendMode = BlendMode.Difference }
+        ) {
             // Transformations need to be applied manually because SubSamplingImage disables
             // auto-application
             withTransform({
@@ -276,13 +284,19 @@ private fun ScanDisplay(
                 }
             }) {
                 for (node in nodes) {
-                    // White color + difference blending mode = inversion of underlying pixels
                     drawRect(
                         Color.White,
                         node.boundsRect.topLeft,
                         node.boundsRect.size,
-                        style = if (node == selectedNode) selectedNodeStroke else defaultNodeStroke,
-                        blendMode = BlendMode.Difference
+                        style = defaultNodeStroke
+                    )
+                }
+                selectedNode?.run {
+                    drawRect(
+                        Color.White,
+                        boundsRect.topLeft,
+                        boundsRect.size,
+                        style = selectedNodeStroke
                     )
                 }
             }
@@ -318,7 +332,7 @@ private fun ScanDisplay(
 @OptIn(ExperimentalTelephotoApi::class)
 private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
     // ContentScale.Fit is uniform so scaleX == scaleY
-    val factor = ContentScale.Fit.computeScaleFactor(rect.size, viewportSize).scaleX
+    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize).scaleX * 0.9f)
         .takeUnless { it.isNaN() }
         // Larger values make it hard to understand the surroundings, user can zoom more if needed
         ?.coerceAtMost(3f)
