@@ -31,7 +31,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.github.timpushkin.tapok.ui.activity.navigation.HelpKey
+import com.github.timpushkin.tapok.ui.activity.navigation.InfoKey
 import com.github.timpushkin.tapok.ui.activity.navigation.NavDescriptor
 import com.github.timpushkin.tapok.ui.activity.navigation.Pane
 import com.github.timpushkin.tapok.ui.activity.navigation.PaneScreenKey
@@ -44,7 +44,7 @@ import com.github.timpushkin.tapok.ui.utils.thenIf
 
 @Composable
 fun ActivityUi(navDescriptors: Iterable<NavDescriptor<*>>) {
-    val backStack = rememberNavBackStack(PaneScreenKey, HelpKey)
+    val backStack = rememberNavBackStack(PaneScreenKey, InfoKey)
     val screenBackStack by remember { derivedStateOf { backStack.filterIsInstance<Screen>() } }
     NavDisplay(
         backStack = screenBackStack as List<NavKey>,
@@ -144,8 +144,8 @@ private fun Iterable<NavDescriptor<*>>.primaries(): List<Pane.Primary> = mapNotN
 
 private fun NavigationSuiteType.isHorizontal() =
     this == NavigationSuiteType.NavigationBar ||
-        this == NavigationSuiteType.ShortNavigationBarCompact ||
-        this == NavigationSuiteType.ShortNavigationBarMedium
+            this == NavigationSuiteType.ShortNavigationBarCompact ||
+            this == NavigationSuiteType.ShortNavigationBarMedium
 
 @Composable
 private fun PrimaryIcon(primary: Pane.Primary, selected: Boolean) {

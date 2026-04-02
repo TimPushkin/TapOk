@@ -1,10 +1,7 @@
 package com.github.timpushkin.tapok.ui.activity.scans
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
@@ -21,9 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.os.bundleOf
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ScannerService
+import com.github.timpushkin.tapok.ui.utils.openScannerServiceSettings
 
 private const val TAG = "EnableScannerTextButton"
 
@@ -74,30 +71,5 @@ private fun Context.isScannerServiceEnabled(): Boolean {
     }
     return names.split(':').any { it == nameFull || it == nameShort }.also {
         Log.d(TAG, "${if (it) "Found" else "Not found"} '$nameFull' / '$nameShort' in '$names'")
-    }
-}
-
-private fun Context.openScannerServiceSettings() {
-    // TODO: review other accessibility-related actions
-    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).run {
-        if (this@openScannerServiceSettings !is Activity) {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        // Undocumented feature of Settings app from AOSP to highlight the particular
-        // accessibility service. May be ignored on some vendors.
-        val componentName = ComponentName(
-            this@openScannerServiceSettings,
-            ScannerService::class.java
-        ).flattenToString()
-        putExtra(
-            ":settings:show_fragment_args",
-            bundleOf(":settings:fragment_args_key" to componentName)
-        )
-    }
-    try {
-        startActivity(intent)
-    } catch (ex: ActivityNotFoundException) {
-        // TODO: toast?
-        Log.e(TAG, "Failed to open accessibility settings: $ex")
     }
 }

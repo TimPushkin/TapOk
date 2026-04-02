@@ -11,7 +11,7 @@
 
     <string name="scan_screen">Scan screen</string>
 
-    <string name="help">Help</string>
+    <string name="info">Info</string>
     <string name="rules">Rules</string>
     <string name="scans">Scans</string>
 
@@ -61,4 +61,38 @@
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <string name="skip_tutorial">Skip tutorial</string>
+    <string name="complete_tutorial">Complete tutorial</string>
+
+    <string name="tutorial_intro_headline">Welcome!</string>
+    <string name="tutorial_intro_body_1">TapOk helps you automate taps and other actions in Android apps.</string>
+    <string name="tutorial_intro_body_2">Follow these 5 steps to create your first automation.</string>
+
+    <string name="tutorial_step1_headline">Step 1: turn on Scanner</string>
+    <string name="tutorial_step1_body_1">TapOk Scanner lets you capture the current window to find elements that TapOk can interact with.</string>
+    <string name="tutorial_step1_body_2_1">Open Accessibility settings</string>
+    <string name="tutorial_step1_body_2_2">" and enable it."</string>
+
+    <string name="tutorial_step2_headline">Step 2: capture the screen</string>
+    <string name="tutorial_step2_body_1">When Scanner is on, you can see a floating button.</string>
+    <string name="tutorial_step2_body_2">Open the app you want to automate, then tap the button to save a scan of the active screen.</string>
+    <string name="tutorial_step2_body_3_1">"You can "</string>
+    <string name="tutorial_step2_body_3_2">turn Scanner off</string>
+    <string name="tutorial_step2_body_3_3">" anytime to hide the button."</string>
+
+    <string name="tutorial_step3_headline">Step 3: find a target</string>
+    <string name="tutorial_step3_body_1">Go to the Scans tab and open your scan.</string>
+    <string name="tutorial_step3_body_2">TapOk can target elements with a view ID. They will be highlighted on the scan.</string>
+    <string name="tutorial_step3_body_3">Tap an element you want to automate, such as a button, and copy its view ID.</string>
+
+    <string name="tutorial_step4_headline">Step 4: create a rule</string>
+    <string name="tutorial_step4_body_1">Open the Rules tab and create a new automation rule.</string>
+    <string name="tutorial_step4_body_2">Enter the view ID you found, then choose what TapOk should do when it sees it.</string>
+
+    <string name="tutorial_step5_headline">Step 5: turn on Agent</string>
+    <string name="tutorial_step5_body_1">TapOk Agent watches the active window and applies your rules automatically.</string>
+    <string name="tutorial_step5_body_2_1">Open Accessibility settings</string>
+    <string name="tutorial_step5_body_2_2">" and enable it."</string>
+    <string name="tutorial_step5_body_3">Now TapOk automates actions according to your rules!</string>
 </resources>

@@ -4,7 +4,7 @@ import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
-import com.github.timpushkin.tapok.ui.activity.help.HelpPane
+import com.github.timpushkin.tapok.ui.activity.info.TutorialPane
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,22 +13,22 @@ import dagger.multibindings.IntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object HelpKey : Pane.Primary(
+data object InfoKey : Pane.Primary(
     order = 1,
-    label = R.string.help,
-    icon = R.drawable.help_outlined,
-    iconSelected = R.drawable.help_filled
+    label = R.string.info,
+    icon = R.drawable.info_outlined,
+    iconSelected = R.drawable.info_filled
 ) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
-        HelpPane()
+        TutorialPane(onDone = { backStack.remove(this) }, directive)
     }
 }
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-object HelpModule {
+object InfoModule {
     @Provides
     @IntoSet
-    fun provideNavDescriptors(): NavDescriptor<*> = NavDescriptor.OfInstance(HelpKey)
+    fun provideNavDescriptors(): NavDescriptor<*> = NavDescriptor.OfInstance(InfoKey)
 }
