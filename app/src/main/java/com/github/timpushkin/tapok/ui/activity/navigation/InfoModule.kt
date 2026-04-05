@@ -4,12 +4,13 @@ import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
+import com.github.timpushkin.tapok.ui.activity.info.InfoPane
 import com.github.timpushkin.tapok.ui.activity.info.TutorialPane
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
-import dagger.multibindings.IntoSet
+import dagger.multibindings.ElementsIntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -21,6 +22,14 @@ data object InfoKey : Pane.Primary(
 ) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
+        InfoPane(openTutorial = { backStack.addSecondary(TutorialKey) }, directive)
+    }
+}
+
+@Serializable
+data object TutorialKey : Pane.Secondary(parent = InfoKey) {
+    @Composable
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
         TutorialPane(onDone = { backStack.remove(this) }, directive)
     }
 }
@@ -29,6 +38,9 @@ data object InfoKey : Pane.Primary(
 @InstallIn(ActivityRetainedComponent::class)
 object InfoModule {
     @Provides
-    @IntoSet
-    fun provideNavDescriptors(): NavDescriptor<*> = NavDescriptor.OfInstance(InfoKey)
+    @ElementsIntoSet
+    fun provideNavDescriptors(): Set<NavDescriptor<*>> = setOf(
+        NavDescriptor.OfInstance(InfoKey),
+        NavDescriptor.OfInstance(TutorialKey)
+    )
 }

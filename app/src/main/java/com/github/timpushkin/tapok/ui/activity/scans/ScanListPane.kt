@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,12 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
+import com.github.timpushkin.tapok.ScannerService
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.ui.activity.ThreePaneScaffoldRole
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
+import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
+import com.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 import com.github.timpushkin.tapok.ui.utils.thenIf
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import java.time.DateTimeException
@@ -160,4 +164,17 @@ private fun Instant.toFormattedString(): String {
     val hh = if (DateFormat.is24HourFormat(LocalContext.current)) "HH" else "hh"
     val format = DateFormat.getBestDateTimePattern(locale, "yyyyMMMdd${hh}mmss")
     return DateFormat.format(format, timestampZonedMillis).toString()
+}
+
+@Composable
+private fun EnableScannerTextButton(modifier: Modifier = Modifier) {
+    if (!rememberIsAccessibilityServiceEnabled(ScannerService::class)) {
+        val context = LocalContext.current
+        TextButton(
+            onClick = { context.openAccessibilityServiceSettings(ScannerService::class) },
+            modifier = modifier
+        ) {
+            Text(stringResource(R.string.enable_scanner))
+        }
+    }
 }

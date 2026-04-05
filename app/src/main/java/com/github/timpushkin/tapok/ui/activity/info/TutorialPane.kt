@@ -42,9 +42,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
+import com.github.timpushkin.tapok.AgentService
 import com.github.timpushkin.tapok.R
-import com.github.timpushkin.tapok.ui.utils.openAgentServiceSettings
-import com.github.timpushkin.tapok.ui.utils.openScannerServiceSettings
+import com.github.timpushkin.tapok.ScannerService
+import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
 import androidx.compose.ui.unit.lerp as lerpUnit
@@ -198,9 +199,11 @@ private fun Step1(modifier: Modifier = Modifier) {
         appendParagraphSpacer()
 
         val context = LocalContext.current
-        withLink(LinkAnnotation.Clickable(LINK_SCANNER) { context.openScannerServiceSettings() }) {
-            append(stringResource(R.string.tutorial_step1_body_2_1))
-        }
+        withLink(
+            LinkAnnotation.Clickable(LINK_SCANNER) {
+                context.openAccessibilityServiceSettings(ScannerService::class)
+            }
+        ) { append(stringResource(R.string.tutorial_step1_body_2_1)) }
         append(stringResource(R.string.tutorial_step1_body_2_2))
     }
 }
@@ -216,7 +219,11 @@ private fun Step2(modifier: Modifier = Modifier) {
 
         append(stringResource(R.string.tutorial_step2_body_3_1))
         val context = LocalContext.current
-        withLink(LinkAnnotation.Clickable(LINK_SCANNER) { context.openScannerServiceSettings() }) {
+        withLink(
+            LinkAnnotation.Clickable(LINK_SCANNER) {
+                context.openAccessibilityServiceSettings(ScannerService::class)
+            }
+        ) {
             append(stringResource(R.string.tutorial_step2_body_3_2))
         }
         append(stringResource(R.string.tutorial_step2_body_3_3))
@@ -253,7 +260,11 @@ private fun Step5(modifier: Modifier = Modifier) {
         appendParagraphSpacer()
 
         val context = LocalContext.current
-        withLink(LinkAnnotation.Clickable(LINK_AGENT) { context.openAgentServiceSettings() }) {
+        withLink(
+            LinkAnnotation.Clickable(LINK_AGENT) {
+                context.openAccessibilityServiceSettings(AgentService::class)
+            }
+        ) {
             append(stringResource(R.string.tutorial_step5_body_2_1))
         }
         append(stringResource(R.string.tutorial_step5_body_2_2))

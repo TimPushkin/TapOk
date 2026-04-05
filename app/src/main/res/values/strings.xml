@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">TapOk</string>
 
+    <string name="agent_service">Agent service</string>
     <string name="agent_service_name">TapOk Agent</string>
     <string name="agent_service_description">Performs tasks according to the rules specified in the settings.</string>
 
+    <string name="scanner_service">Scanner service</string>
     <string name="scanner_service_name">TapOk Scanner</string>
     <string name="scanner_service_description">Allows to scan the screen content for parts that can be referenced in the rules for TapOk Agent.</string>
-
-    <string name="scan_screenshot_description">Screenshot</string>
 
     <string name="scan_screen">Scan screen</string>
 
@@ -22,6 +22,10 @@
     <string name="delete">Delete</string>
     <string name="navigate_back">Navigate back</string>
     <string name="done">Done!</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
 
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
     <string name="select_rule_or_create_one">Select a rule to edit or create a new one</string>
@@ -59,8 +63,9 @@
     <string name="bounds">Bounds</string>
     <string name="clickable">Clickable</string>
 
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="tutorial_suggestion_1">"Confused about these services? "</string>
+    <string name="tutorial_suggestion_2">Re-visit the tutorial</string>
+    <string name="tutorial_suggestion_3">.</string>
 
     <string name="skip_tutorial">Skip tutorial</string>
     <string name="complete_tutorial">Complete tutorial</string>
