@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.times
 import com.github.timpushkin.tapok.AgentService
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ScannerService
+import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
@@ -54,12 +54,9 @@ private val TUTORIAL_PAGES: List<@Composable (Modifier) -> Unit> = listOf(
     ::Intro, ::Step1, ::Step2, ::Step3, ::Step4, ::Step5
 )
 
-// TODO: window insets (better to do that in the main UI)
 @Composable
-fun TutorialPane(
-    onDone: () -> Unit, directive: PaneScaffoldDirective, modifier: Modifier = Modifier
-) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+fun TutorialPane(onDone: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val state = rememberPagerState { TUTORIAL_PAGES.size }
 
         Column(
@@ -69,10 +66,7 @@ fun TutorialPane(
         ) {
             HorizontalPager(state, modifier = Modifier.weight(1f, fill = false)) { i ->
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TUTORIAL_PAGES[i](
-                        Modifier
-                            .padding(directive.horizontalPartitionSpacerSize.coerceAtLeast(16.dp))
-                    )
+                    TUTORIAL_PAGES[i](Modifier.padding(DefaultPaneSpacing))
                 }
             }
             PageIndicator(state)
@@ -84,7 +78,10 @@ fun TutorialPane(
 
 @Composable
 private fun PageIndicator(state: PagerState) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.padding(DefaultPaneSpacing)
+    ) {
         repeat(state.pageCount) { page ->
             // How close is this page to being the current, from 0 to 1, 1 means being the current
             val progressToCurrent by remember {
@@ -115,7 +112,7 @@ private fun DoneButton(completed: Boolean, onClick: () -> Unit) {
     Crossfade(
         completed, modifier = Modifier
             .width(256.dp)
-            .padding(vertical = 16.dp)
+            .padding(vertical = DefaultPaneSpacing)
     ) { completed ->
         if (completed) {
             Button(onClick, modifier = Modifier.fillMaxWidth()) {

@@ -101,6 +101,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
+import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -124,12 +125,11 @@ import java.io.File
 fun ScanInspectorScreen(
     scanId: Long,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier,
     vm: ScanInspectorViewModel = hiltViewModel(
         key = scanId.toString()
     ) { f: ScanInspectorViewModelFactory -> f.create(scanId) }
 ) {
-    Box(modifier = modifier.dottedBackground()) {
+    Box(modifier = Modifier.dottedBackground()) {
         var showBars by rememberSaveable { mutableStateOf(true) }
         val insetsController = LocalActivity.current?.window?.let { window ->
             WindowCompat.getInsetsController(window, LocalView.current)
@@ -473,7 +473,7 @@ private fun ShowUnlabeledNodesSwitch(
 private fun BottomSheetHandle() {
     Surface(
         modifier = Modifier
-            .padding(vertical = 8.dp)
+            .padding(vertical = DefaultSpacing)
             .size(width = 32.dp, height = 4.dp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = MaterialTheme.shapes.extraLarge
@@ -549,10 +549,10 @@ private fun NodeIcon(node: Node) {
 @Composable
 private fun NodeDescription(node: Node, onClose: () -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(DefaultSpacing / 2),
         modifier = Modifier
             .padding(bottom = WindowInsets.safeContentBottomDp())
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = DefaultSpacing * 2)
     ) {
         NodeDescriptionHeader(node.className.substringAfterLast('.'), onClose)
         NodeDescriptionElement(

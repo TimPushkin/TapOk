@@ -22,7 +22,7 @@ data object InfoKey : Pane.Primary(
 ) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
-        InfoPane(openTutorial = { backStack.addSecondary(TutorialKey) }, directive)
+        InfoPane(openTutorial = { backStack.addSecondary(TutorialKey) })
     }
 }
 
@@ -30,7 +30,7 @@ data object InfoKey : Pane.Primary(
 data object TutorialKey : Pane.Secondary(parent = InfoKey) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
-        TutorialPane(onDone = { backStack.remove(this) }, directive)
+        TutorialPane(onDone = { backStack.remove(this) })
     }
 }
 

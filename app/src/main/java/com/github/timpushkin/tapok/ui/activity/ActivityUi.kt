@@ -1,10 +1,12 @@
 package com.github.timpushkin.tapok.ui.activity
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
@@ -18,11 +20,11 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -31,6 +33,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.github.timpushkin.tapok.ui.activity.components.PaneExpansionDragHandle
 import com.github.timpushkin.tapok.ui.activity.navigation.InfoKey
 import com.github.timpushkin.tapok.ui.activity.navigation.NavDescriptor
 import com.github.timpushkin.tapok.ui.activity.navigation.Pane
@@ -95,7 +98,10 @@ private fun PaneScreen(
         }
     ) {
         val paneBackStack by remember { derivedStateOf { backStack.filterIsInstance<Pane>() } }
-        val strategy = rememberListDetailSceneStrategy<NavKey>()
+        val strategy = rememberListDetailSceneStrategy<NavKey>(
+            paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) }
+        )
+        val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
         NavDisplay(
             backStack = paneBackStack as List<NavKey>,
             onBack = { backStack.removeLastOrNull() },
@@ -111,27 +117,16 @@ private fun PaneScreen(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .thenIf(navSuiteType.isHorizontal()) {
-                    // Make pane container cover whole screen, must be done before applying
-                    // insets
-                    background(MaterialTheme.colorScheme.surfaceContainer)
-                }
-                .thenIf(strategy.directive.isPartitionedHorizontally()) {
-                    // Panes do not apply insets themselves
-                    windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
-                }
+                // Horizontal navigation => background is a rectangle
+                // Vertical navigation => background has two rounded corners
+                .thenIf(navSuiteType.isHorizontal()) { background(backgroundColor) }
+                .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
                 .thenIf(!navSuiteType.isHorizontal()) {
-                    // Now that insets are applied, if background has not been colored do that
                     background(
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        shape = if (strategy.directive.isPartitionedHorizontally()) {
-                            // Make panes look like they are on a surface above the navigation
-                            MaterialTheme.shapes.extraLarge.copy(
-                                topEnd = CornerSize(0), bottomEnd = CornerSize(0)
-                            )
-                        } else {
-                            RectangleShape
-                        }
+                        color = backgroundColor,
+                        shape = MaterialTheme.shapes.extraLarge.copy(
+                            topEnd = ZeroCornerSize, bottomEnd = ZeroCornerSize
+                        )
                     )
                 }
         )

@@ -6,32 +6,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.github.timpushkin.tapok.ui.activity.ThreePaneScaffoldRole
-import com.github.timpushkin.tapok.ui.activity.calculatePaddingInThreePaneScaffold
-import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
+import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun SegmentedListPane(
-    directive: PaneScaffoldDirective,
-    modifier: Modifier = Modifier,
-    role: ThreePaneScaffoldRole = ThreePaneScaffoldRole.PRIMARY,
-    lowestActiveRole: ThreePaneScaffoldRole = ThreePaneScaffoldRole.SECONDARY,
-    content: LazyListScope.() -> Unit
-) {
+fun SegmentedListPane(modifier: Modifier = Modifier, content: LazyListScope.() -> Unit) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
         horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = if (directive.isPartitionedHorizontally()) {
-            calculatePaddingInThreePaneScaffold(directive, role, lowestActiveRole)
-        } else {
-            PaddingValues(16.dp)
-        },
+        contentPadding = PaddingValues(DefaultPaneSpacing),
         modifier = modifier,
         content = content
     )

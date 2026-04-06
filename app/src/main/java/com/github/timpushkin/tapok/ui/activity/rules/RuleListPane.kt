@@ -9,7 +9,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -30,44 +29,39 @@ fun RuleListPane(
     selectedRuleId: Long?,
     onEditRule: (Rule?) -> Unit,
     onDeleteRule: (Rule) -> Unit,
-    directive: PaneScaffoldDirective,
-    modifier: Modifier = Modifier,
     vm: RuleListViewModel = hiltViewModel()
 ) {
     Scaffold(
         // TODO: hide FAB on content scroll
         floatingActionButton = { CreateRuleFab(onClick = { onEditRule(null) }) },
-        containerColor = Color.Transparent,
-        modifier = modifier
-    ) { paddingValues ->
-        val uiState by vm.uiState.collectAsStateWithLifecycle()
-
+        containerColor = Color.Transparent
+    ) { padding ->
         val paddingModifier = Modifier
-            .padding(paddingValues)
-            .consumeWindowInsets(paddingValues)
+            .padding(padding)
+            .consumeWindowInsets(padding)
 
+        val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.rules.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.manage_rules_here),
                 modifier = paddingModifier.fillMaxSize()
             )
-            return@Scaffold
-        }
-
-        SegmentedListPane(directive, modifier = paddingModifier) {
-            val count = uiState.rules.size
-            itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
-                RuleItem(
-                    index,
-                    count,
-                    rule,
-                    selected = rule.id == selectedRuleId,
-                    onClick = { onEditRule(rule) },
-                    onDelete = {
-                        onDeleteRule(rule)
-                        vm.deleteRule(rule)
-                    }
-                )
+        } else {
+            SegmentedListPane(paddingModifier) {
+                val count = uiState.rules.size
+                itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
+                    RuleItem(
+                        index,
+                        count,
+                        rule,
+                        selected = rule.id == selectedRuleId,
+                        onClick = { onEditRule(rule) },
+                        onDelete = {
+                            onDeleteRule(rule)
+                            vm.deleteRule(rule)
+                        }
+                    )
+                }
             }
         }
     }

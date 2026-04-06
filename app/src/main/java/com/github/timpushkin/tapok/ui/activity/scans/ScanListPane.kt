@@ -4,21 +4,17 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -27,16 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
-import com.github.timpushkin.tapok.ScannerService
 import com.github.timpushkin.tapok.data.scans.Scan
-import com.github.timpushkin.tapok.ui.activity.ThreePaneScaffoldRole
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
-import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
-import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
-import com.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
-import com.github.timpushkin.tapok.ui.utils.thenIf
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import java.time.DateTimeException
 import java.time.ZoneId
@@ -48,49 +38,38 @@ fun ScanListPane(
     selectedScanId: Long?,
     onSelectScan: (Scan) -> Unit,
     onDeleteScan: (Scan) -> Unit,
-    directive: PaneScaffoldDirective,
-    modifier: Modifier = Modifier,
     vm: ScanListViewModel = hiltViewModel()
 ) {
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    Scaffold(containerColor = Color.Transparent) { padding ->
+        val paddingModifier = Modifier
+            .padding(padding)
+            .consumeWindowInsets(padding)
 
-    if (uiState.scans.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                PanePlaceholderText(stringResource(R.string.scans_will_be_here))
-                EnableScannerTextButton()
+        val uiState by vm.uiState.collectAsStateWithLifecycle()
+        if (uiState.scans.isEmpty()) {
+            PanePlaceholderText(
+                stringResource(R.string.scans_will_be_here),
+                modifier = paddingModifier.fillMaxSize()
+            )
+        } else {
+            SegmentedListPane {
+                val scans = uiState.scans.sortedByDescending { it.timestamp }
+                val count = scans.size
+                itemsIndexed(scans, key = { _, scan -> scan.id }) { index, scan ->
+                    ScanItem(
+                        index,
+                        count,
+                        scan,
+                        selected = scan.id == selectedScanId,
+                        onClick = { onSelectScan(scan) },
+                        onDelete = {
+                            onDeleteScan(scan)
+                            vm.deleteScan(scan)
+                        }
+                    )
+                }
             }
         }
-        return
-    }
-
-    SegmentedListPane(
-        directive,
-        lowestActiveRole = ThreePaneScaffoldRole.PRIMARY,
-        modifier = modifier.thenIf(!directive.isPartitionedHorizontally()) {
-            windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
-        }
-    ) {
-        val scans = uiState.scans.sortedByDescending { it.timestamp }
-        val count = scans.size
-        itemsIndexed(scans, key = { _, scan -> scan.id }) { index, scan ->
-            ScanItem(
-                index,
-                count,
-                scan,
-                selected = scan.id == selectedScanId,
-                onClick = { onSelectScan(scan) },
-                onDelete = {
-                    onDeleteScan(scan)
-                    vm.deleteScan(scan)
-                }
-            )
-        }
-
-        item { EnableScannerTextButton() }
     }
 }
 
@@ -164,17 +143,4 @@ private fun Instant.toFormattedString(): String {
     val hh = if (DateFormat.is24HourFormat(LocalContext.current)) "HH" else "hh"
     val format = DateFormat.getBestDateTimePattern(locale, "yyyyMMMdd${hh}mmss")
     return DateFormat.format(format, timestampZonedMillis).toString()
-}
-
-@Composable
-private fun EnableScannerTextButton(modifier: Modifier = Modifier) {
-    if (!rememberIsAccessibilityServiceEnabled(ScannerService::class)) {
-        val context = LocalContext.current
-        TextButton(
-            onClick = { context.openAccessibilityServiceSettings(ScannerService::class) },
-            modifier = modifier
-        ) {
-            Text(stringResource(R.string.enable_scanner))
-        }
-    }
 }

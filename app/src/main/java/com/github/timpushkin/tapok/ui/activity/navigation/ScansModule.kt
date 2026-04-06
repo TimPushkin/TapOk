@@ -28,8 +28,7 @@ data object ScanListKey : Pane.Primary(
             onSelectScan = { scan -> backStack.addScreen(ScanInspectorKey(scan.id)) },
             onDeleteScan = { scan ->
                 backStack.removeAll { it is ScanInspectorKey && it.scanId == scan.id }
-            },
-            directive
+            }
         )
     }
 }

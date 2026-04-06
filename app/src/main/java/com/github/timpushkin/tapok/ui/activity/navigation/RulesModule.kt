@@ -30,8 +30,7 @@ data object RuleListKey : Pane.Primary(
             onEditRule = { backStack.addSecondary(RuleEditorKey(it?.id)) },
             onDeleteRule = { rule ->
                 backStack.removeAll { it is RuleEditorKey && it.ruleId == rule.id }
-            },
-            directive
+            }
         )
     }
 }
@@ -42,13 +41,13 @@ data class RuleEditorKey(val ruleId: Long?) : Pane.Secondary(parent = RuleListKe
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
         RuleEditorPane(
             ruleId,
-            onClose = { backStack.remove(this) },
             onCreated = { id ->
                 backStack.replaceAll {
                     if (it is RuleEditorKey && it.ruleId == ruleId) RuleEditorKey(id) else it
                 }
             },
-            directive
+            onBack = { backStack.remove(this) },
+            showBackButton = directive.maxHorizontalPartitions == 1
         )
     }
 }

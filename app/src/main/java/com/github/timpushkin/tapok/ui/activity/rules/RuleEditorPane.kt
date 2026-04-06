@@ -3,10 +3,10 @@ package com.github.timpushkin.tapok.ui.activity.rules
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -21,10 +21,11 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,63 +46,57 @@ import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.ViewIdValidity
+import com.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
-import com.github.timpushkin.tapok.ui.activity.components.TitledPane
-import com.github.timpushkin.tapok.ui.activity.isPartitionedHorizontally
-import com.github.timpushkin.tapok.ui.utils.thenIf
+import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RuleEditorPane(
     ruleId: Long?,
-    onClose: () -> Unit,
     onCreated: (Long) -> Unit,
-    directive: PaneScaffoldDirective,
-    modifier: Modifier = Modifier,
+    onBack: () -> Unit,
+    showBackButton: Boolean,
     vm: RuleEditorViewModel = hiltViewModel(
         key = ruleId.toString()
     ) { f: RuleEditorViewModelFactory -> f.create(ruleId) }
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
-    TitledPane(
-        title = {
-            Text(stringResource(if (ruleId == null) R.string.create_rule else R.string.edit_rule))
-        },
-        onClose = onClose,
-        actions = {
-            SaveButton(
-                canSave = (state as? RuleEditorUiState.Loaded)?.allowsSaving() == true,
-                onSave = {
-                    val rule = vm.save()
-                    if (!directive.isPartitionedHorizontally()) onClose() else onCreated(rule.id)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(if (ruleId == null) R.string.create_rule else R.string.edit_rule)) },
+                navigationIcon = { if (showBackButton) NavigateBackButton(onBack) },
+                actions = {
+                    SaveButton(
+                        canSave = (state as? RuleEditorUiState.Loaded)?.allowsSaving() == true,
+                        onSave = { onCreated(vm.save().id) }
+                    )
                 },
-                animate = directive.isPartitionedHorizontally()
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        directive = directive,
-        modifier = modifier
-    ) {
+        containerColor = Color.Transparent
+    ) { padding ->
         EditableFields(
             state,
             vm.ruleNameState,
             vm.viewIdState,
             vm::selectAction,
-            contentPadding = PaddingValues(
-                vertical = if (!directive.isPartitionedHorizontally()) 24.dp else 0.dp
-            ),
+            contentPadding = PaddingValues(DefaultSpacing),
             modifier = Modifier
-                .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
-                .thenIf(!directive.isPartitionedHorizontally()) {
-                    padding(horizontal = 24.dp)
-                }
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .padding(horizontal = DefaultSpacing)
         )
     }
 }
 
 @Composable
-private fun SaveButton(canSave: Boolean, onSave: suspend () -> Unit, animate: Boolean) {
+private fun SaveButton(canSave: Boolean, onSave: suspend () -> Unit) {
     val scope = rememberCoroutineScope()
 
     var savedRecently by remember { mutableStateOf(false) }
@@ -121,7 +117,7 @@ private fun SaveButton(canSave: Boolean, onSave: suspend () -> Unit, animate: Bo
         },
         enabled = canSave
     ) {
-        AnimatedContent(animate && savedRecently) {
+        AnimatedContent(savedRecently) {
             Text(stringResource(if (!it) R.string.save else R.string.done))
         }
     }
@@ -137,7 +133,7 @@ private fun EditableFields(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(DefaultSpacing),
         contentPadding = contentPadding,
         modifier = modifier
     ) {
