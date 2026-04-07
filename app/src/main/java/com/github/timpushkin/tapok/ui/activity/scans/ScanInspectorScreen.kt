@@ -538,7 +538,7 @@ private fun NodeList(nodes: List<Node>, onNodeClick: (Node) -> Unit) {
 private fun NodeIcon(node: Node) {
     Icon(
         painterResource(
-            if (node.isClickable) R.drawable.touch_app_outlined else R.drawable.code_outlined
+            if (node.isClickable) R.drawable.touch_app_outlined else R.drawable.code
         ),
         contentDescription = stringResource(
             if (node.isClickable) R.string.clickable_element else R.string.non_clickable_element

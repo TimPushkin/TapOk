@@ -20,8 +20,8 @@ import kotlinx.serialization.Serializable
 data object RuleListKey : Pane.Primary(
     order = 2,
     label = R.string.rules,
-    icon = R.drawable.settings_outlined,
-    iconSelected = R.drawable.settings_filled
+    icon = R.drawable.page_info_outlined,
+    iconSelected = R.drawable.page_info_filled
 ) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {

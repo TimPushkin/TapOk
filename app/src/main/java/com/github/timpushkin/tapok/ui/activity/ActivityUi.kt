@@ -33,7 +33,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.github.timpushkin.tapok.ui.activity.components.PaneExpansionDragHandle
 import com.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExpansionState
-import com.github.timpushkin.tapok.ui.activity.navigation.InfoKey
+import com.github.timpushkin.tapok.ui.activity.navigation.HomeKey
 import com.github.timpushkin.tapok.ui.activity.navigation.NavDescriptor
 import com.github.timpushkin.tapok.ui.activity.navigation.Pane
 import com.github.timpushkin.tapok.ui.activity.navigation.PaneScreenKey
@@ -46,7 +46,7 @@ import com.github.timpushkin.tapok.ui.utils.thenIf
 
 @Composable
 fun ActivityUi(navDescriptors: Iterable<NavDescriptor<*>>) {
-    val backStack = rememberNavBackStack(PaneScreenKey, InfoKey)
+    val backStack = rememberNavBackStack(PaneScreenKey, HomeKey)
     val screenBackStack by remember { derivedStateOf { backStack.filterIsInstance<Screen>() } }
     NavDisplay(
         backStack = screenBackStack as List<NavKey>,

@@ -1,4 +1,4 @@
-package com.github.timpushkin.tapok.ui.activity.info
+package com.github.timpushkin.tapok.ui.activity.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +40,7 @@ import com.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnable
 import kotlin.reflect.KClass
 
 @Composable
-fun InfoPane(openTutorial: () -> Unit) {
+fun HomePane(openTutorial: () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             verticalArrangement = Arrangement.spacedBy(DefaultPaneSpacing),

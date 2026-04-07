@@ -17,8 +17,8 @@ import kotlinx.serialization.Serializable
 data object ScanListKey : Pane.Primary(
     order = 3,
     label = R.string.scans,
-    icon = R.drawable.data_table_outlined,
-    iconSelected = R.drawable.data_table_filled
+    icon = R.drawable.home_storage_outlined,
+    iconSelected = R.drawable.home_storage_filled
 ) {
     @Composable
     override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
