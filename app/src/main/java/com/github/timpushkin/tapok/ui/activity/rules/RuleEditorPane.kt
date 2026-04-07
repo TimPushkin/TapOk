@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
@@ -49,11 +47,12 @@ import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
+import com.github.timpushkin.tapok.ui.theme.requiredMinPaneWidth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun RuleEditorPane(
     ruleId: Long?,
     onCreated: (Long) -> Unit,
@@ -79,7 +78,8 @@ fun RuleEditorPane(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        modifier = Modifier.requiredMinPaneWidth()
     ) { padding ->
         EditableFields(
             state,
@@ -267,9 +267,9 @@ private fun <T> RuleDropdownMenu(
 }
 
 @Composable
-fun RuleEditorPlaceholder(modifier: Modifier = Modifier) {
+fun RuleEditorPlaceholder() {
     PanePlaceholderText(
         stringResource(R.string.select_rule_or_create_one),
-        modifier = modifier.fillMaxSize()
+        modifier = Modifier.requiredMinPaneWidth()
     )
 }

@@ -1,7 +1,6 @@
 package com.github.timpushkin.tapok.ui.activity.rules
 
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -23,6 +22,7 @@ import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
+import com.github.timpushkin.tapok.ui.theme.requiredMinPaneWidth
 
 @Composable
 fun RuleListPane(
@@ -44,10 +44,10 @@ fun RuleListPane(
         if (uiState.rules.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.manage_rules_here),
-                modifier = paddingModifier.fillMaxSize()
+                modifier = paddingModifier.requiredMinPaneWidth()
             )
         } else {
-            SegmentedListPane(paddingModifier) {
+            SegmentedListPane(paddingModifier.requiredMinPaneWidth()) {
                 val count = uiState.rules.size
                 itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
                     RuleItem(

@@ -1,17 +1,16 @@
 package com.github.timpushkin.tapok.ui.activity
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
@@ -20,7 +19,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,6 +32,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.github.timpushkin.tapok.ui.activity.components.PaneExpansionDragHandle
+import com.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExpansionState
 import com.github.timpushkin.tapok.ui.activity.navigation.InfoKey
 import com.github.timpushkin.tapok.ui.activity.navigation.NavDescriptor
 import com.github.timpushkin.tapok.ui.activity.navigation.Pane
@@ -98,8 +97,11 @@ private fun PaneScreen(
         }
     ) {
         val paneBackStack by remember { derivedStateOf { backStack.filterIsInstance<Pane>() } }
+        val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
         val strategy = rememberListDetailSceneStrategy<NavKey>(
-            paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) }
+            directive = directive,
+            paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) },
+            paneExpansionState = rememberAnchoredPaneExpansionState(directive)
         )
         val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
         NavDisplay(
@@ -107,7 +109,7 @@ private fun PaneScreen(
             onBack = { backStack.removeLastOrNull() },
             entryProvider = entryProvider {
                 for (descriptor in paneDescriptors) {
-                    addPaneEntry(descriptor, strategy.directive, backStack)
+                    addPaneEntry(descriptor, directive, backStack)
                 }
             },
             sceneStrategy = strategy,

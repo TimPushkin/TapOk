@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -49,7 +48,7 @@ fun ScanListPane(
         if (uiState.scans.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.scans_will_be_here),
-                modifier = paddingModifier.fillMaxSize()
+                modifier = paddingModifier
             )
         } else {
             SegmentedListPane {
