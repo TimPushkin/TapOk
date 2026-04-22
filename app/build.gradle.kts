@@ -25,12 +25,12 @@ kotlin {
 
 android {
     namespace = "com.github.timpushkin.tapok"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.github.timpushkin.tapok"
         minSdk = 34 // Scanning (e.g. screenshotting) is more difficult on older APIs
-        targetSdk = 36
+        targetSdk = 37
         versionCode = Version.CODE
         versionName = Version.NAME
     }

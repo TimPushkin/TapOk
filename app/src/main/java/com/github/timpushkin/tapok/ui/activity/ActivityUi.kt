@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
@@ -70,8 +70,8 @@ private fun PaneScreen(
     paneDescriptors: Iterable<NavDescriptor<Pane>>,
     backStack: MutableList<NavKey>
 ) {
-    val navSuiteType =
-        NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val navSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
     // TODO: maybe use https://developer.android.com/develop/ui/compose/animation/shared-elements
     NavigationSuiteScaffold(
         navigationItems = {
@@ -97,7 +97,7 @@ private fun PaneScreen(
         }
     ) {
         val paneBackStack by remember { derivedStateOf { backStack.filterIsInstance<Pane>() } }
-        val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
+        val directive = calculatePaneScaffoldDirective(adaptiveInfo)
         val strategy = rememberListDetailSceneStrategy<NavKey>(
             directive = directive,
             paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) },
@@ -112,7 +112,7 @@ private fun PaneScreen(
                     addPaneEntry(descriptor, directive, backStack)
                 }
             },
-            sceneStrategy = strategy,
+            sceneStrategies = listOf(strategy),
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
