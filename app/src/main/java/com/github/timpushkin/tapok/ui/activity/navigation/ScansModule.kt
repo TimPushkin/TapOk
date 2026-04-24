@@ -2,7 +2,6 @@ package com.github.timpushkin.tapok.ui.activity.navigation
 
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
-import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ui.activity.scans.ScanInspectorScreen
 import com.github.timpushkin.tapok.ui.activity.scans.ScanListPane
@@ -14,18 +13,18 @@ import dagger.multibindings.ElementsIntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object ScanListKey : Pane.Primary(
+data object ScanListKey : PaneKey.Primary(
     order = 3,
     label = R.string.scans,
     icon = R.drawable.home_storage_outlined,
     iconSelected = R.drawable.home_storage_filled
 ) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<PaneKey>) {
         ScanListPane(
             selectedScanId =
                 (backStack.findLast { it is ScanInspectorKey } as ScanInspectorKey?)?.scanId,
-            onSelectScan = { scan -> backStack.addScreen(ScanInspectorKey(scan.id)) },
+            onSelectScan = { scan -> backStack.addSecondary(ScanInspectorKey(scan.id)) },
             onDeleteScan = { scan ->
                 backStack.removeAll { it is ScanInspectorKey && it.scanId == scan.id }
             }
@@ -34,9 +33,10 @@ data object ScanListKey : Pane.Primary(
 }
 
 @Serializable
-data class ScanInspectorKey(val scanId: Long) : Screen {
+data class ScanInspectorKey(val scanId: Long) :
+    PaneKey.Secondary(ScanListKey, fullScreen = true) {
     @Composable
-    override fun Content(backStack: MutableList<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<PaneKey>) {
         ScanInspectorScreen(scanId, onClose = { backStack.remove(this) })
     }
 }
@@ -46,7 +46,7 @@ data class ScanInspectorKey(val scanId: Long) : Screen {
 object ScansModule {
     @Provides
     @ElementsIntoSet
-    fun provideNavDescriptors(): Set<NavDescriptor<*>> = setOf(
+    fun provideNavDescriptors(): Set<NavDescriptor<PaneKey>> = setOf(
         NavDescriptor.OfInstance(ScanListKey),
         NavDescriptor.OfClass(ScanInspectorKey::class)
     )

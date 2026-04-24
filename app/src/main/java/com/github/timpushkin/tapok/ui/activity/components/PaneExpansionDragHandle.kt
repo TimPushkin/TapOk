@@ -1,7 +1,9 @@
 package com.github.timpushkin.tapok.ui.activity.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
@@ -17,11 +19,13 @@ import androidx.compose.ui.Modifier
 fun PaneScaffoldScope.PaneExpansionDragHandle(state: PaneExpansionState) {
     val interactionSource = remember { MutableInteractionSource() }
     VerticalDragHandle(
-        modifier = Modifier.paneExpansionDraggable(
-            state,
-            LocalMinimumInteractiveComponentSize.current,
-            interactionSource
-        ),
+        modifier = Modifier
+            .paneExpansionDraggable(
+                state,
+                LocalMinimumInteractiveComponentSize.current,
+                interactionSource
+            )
+            .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets),
         interactionSource = interactionSource
     )
 }

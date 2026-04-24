@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -21,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -46,8 +48,8 @@ import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
+import com.github.timpushkin.tapok.ui.activity.components.requiredMinPaneWidth
 import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
-import com.github.timpushkin.tapok.ui.theme.requiredMinPaneWidth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -79,7 +81,9 @@ fun RuleEditorPane(
             )
         },
         containerColor = Color.Transparent,
-        modifier = Modifier.requiredMinPaneWidth()
+        modifier = Modifier
+            .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
+            .requiredMinPaneWidth()
     ) { padding ->
         EditableFields(
             state,

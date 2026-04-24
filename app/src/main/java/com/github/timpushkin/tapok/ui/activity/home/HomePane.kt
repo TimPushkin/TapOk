@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
@@ -17,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -41,7 +43,12 @@ import kotlin.reflect.KClass
 
 @Composable
 fun HomePane(openTutorial: () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets),
+        contentAlignment = Alignment.TopCenter
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(DefaultPaneSpacing),
             modifier = Modifier
@@ -63,7 +70,7 @@ private fun ServiceStatusCard(serviceName: String, serviceClass: KClass<*>) {
     val serviceEnabled = rememberIsAccessibilityServiceEnabled(serviceClass)
     OutlinedCard(
         onClick = { context.openAccessibilityServiceSettings(serviceClass) },
-        colors = CardDefaults.cardColors(
+        colors = CardDefaults.outlinedCardColors(
             containerColor = if (serviceEnabled) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {

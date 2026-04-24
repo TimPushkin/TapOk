@@ -1,7 +1,9 @@
 package com.github.timpushkin.tapok.ui.activity.rules
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -22,7 +24,8 @@ import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
-import com.github.timpushkin.tapok.ui.theme.requiredMinPaneWidth
+import com.github.timpushkin.tapok.ui.activity.components.requiredMinPaneWidth
+import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 
 @Composable
 fun RuleListPane(
@@ -36,18 +39,22 @@ fun RuleListPane(
         floatingActionButton = { CreateRuleFab(onClick = { onEditRule(null) }) },
         containerColor = Color.Transparent
     ) { padding ->
-        val paddingModifier = Modifier
-            .padding(padding)
-            .consumeWindowInsets(padding)
-
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.rules.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.manage_rules_here),
-                modifier = paddingModifier.requiredMinPaneWidth()
+                modifier = Modifier
+                    .padding(padding)
+                    .consumeWindowInsets(padding)
+                    .requiredMinPaneWidth()
             )
         } else {
-            SegmentedListPane(paddingModifier.requiredMinPaneWidth()) {
+            SegmentedListPane(
+                contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
+                modifier = Modifier
+                    .consumeWindowInsets(padding)
+                    .requiredMinPaneWidth()
+            ) {
                 val count = uiState.rules.size
                 itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
                     RuleItem(

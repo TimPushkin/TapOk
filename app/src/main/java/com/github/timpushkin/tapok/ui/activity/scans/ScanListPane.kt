@@ -4,8 +4,10 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
@@ -26,6 +28,7 @@ import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
+import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import java.time.DateTimeException
 import java.time.ZoneId
@@ -40,18 +43,19 @@ fun ScanListPane(
     vm: ScanListViewModel = hiltViewModel()
 ) {
     Scaffold(containerColor = Color.Transparent) { padding ->
-        val paddingModifier = Modifier
-            .padding(padding)
-            .consumeWindowInsets(padding)
-
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.scans.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.scans_will_be_here),
-                modifier = paddingModifier
+                modifier = Modifier
+                    .padding(padding)
+                    .consumeWindowInsets(padding)
             )
         } else {
-            SegmentedListPane {
+            SegmentedListPane(
+                contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
+                modifier = Modifier.consumeWindowInsets(padding)
+            ) {
                 val scans = uiState.scans.sortedByDescending { it.timestamp }
                 val count = scans.size
                 itemsIndexed(scans, key = { _, scan -> scan.id }) { index, scan ->

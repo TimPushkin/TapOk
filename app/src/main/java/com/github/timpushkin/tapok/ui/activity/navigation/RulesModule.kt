@@ -4,7 +4,6 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
-import androidx.navigation3.runtime.NavKey
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ui.activity.rules.RuleEditorPane
 import com.github.timpushkin.tapok.ui.activity.rules.RuleEditorPlaceholder
@@ -17,14 +16,14 @@ import dagger.multibindings.ElementsIntoSet
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object RuleListKey : Pane.Primary(
+data object RuleListKey : PaneKey.Primary(
     order = 2,
     label = R.string.rules,
     icon = R.drawable.page_info_outlined,
     iconSelected = R.drawable.page_info_filled
 ) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<PaneKey>) {
         RuleListPane(
             selectedRuleId = (backStack.findLast { it is RuleEditorKey } as RuleEditorKey?)?.ruleId,
             onEditRule = { backStack.addSecondary(RuleEditorKey(it?.id)) },
@@ -36,9 +35,9 @@ data object RuleListKey : Pane.Primary(
 }
 
 @Serializable
-data class RuleEditorKey(val ruleId: Long?) : Pane.Secondary(parent = RuleListKey) {
+data class RuleEditorKey(val ruleId: Long?) : PaneKey.Secondary(parent = RuleListKey) {
     @Composable
-    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<NavKey>) {
+    override fun Content(directive: PaneScaffoldDirective, backStack: MutableList<PaneKey>) {
         RuleEditorPane(
             ruleId,
             onCreated = { id ->
@@ -58,7 +57,7 @@ object RulesModule {
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     @Provides
     @ElementsIntoSet
-    fun provideNavDescriptors(): Set<NavDescriptor<*>> = setOf(
+    fun provideNavDescriptors(): Set<NavDescriptor<PaneKey>> = setOf(
         NavDescriptor.OfInstance(
             RuleListKey,
             ListDetailSceneStrategy.listPane(sceneKey = toString()) { RuleEditorPlaceholder() }

@@ -1,31 +1,28 @@
 package com.github.timpushkin.tapok.ui.activity
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -35,58 +32,41 @@ import com.github.timpushkin.tapok.ui.activity.components.PaneExpansionDragHandl
 import com.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExpansionState
 import com.github.timpushkin.tapok.ui.activity.navigation.HomeKey
 import com.github.timpushkin.tapok.ui.activity.navigation.NavDescriptor
-import com.github.timpushkin.tapok.ui.activity.navigation.Pane
-import com.github.timpushkin.tapok.ui.activity.navigation.PaneScreenKey
-import com.github.timpushkin.tapok.ui.activity.navigation.Screen
-import com.github.timpushkin.tapok.ui.activity.navigation.addPaneEntry
+import com.github.timpushkin.tapok.ui.activity.navigation.PaneKey
 import com.github.timpushkin.tapok.ui.activity.navigation.addPrimary
-import com.github.timpushkin.tapok.ui.activity.navigation.addScreenEntry
-import com.github.timpushkin.tapok.ui.activity.navigation.partitionByDescribedKeyType
-import com.github.timpushkin.tapok.ui.utils.thenIf
 
 @Composable
-fun ActivityUi(navDescriptors: Iterable<NavDescriptor<*>>) {
-    val backStack = rememberNavBackStack(PaneScreenKey, HomeKey)
-    val screenBackStack by remember { derivedStateOf { backStack.filterIsInstance<Screen>() } }
-    NavDisplay(
-        backStack = screenBackStack as List<NavKey>,
-        onBack = { backStack.removeLastOrNull() },
-        entryProvider = entryProvider {
-            val (screenDescriptors, paneDescriptors) =
-                navDescriptors.partitionByDescribedKeyType<Screen, Pane>()
-            for (descriptor in screenDescriptors) addScreenEntry(descriptor, backStack)
-            entry(PaneScreenKey) { PaneScreen(paneDescriptors, backStack) }
-        },
-        entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
-        )
-    )
-}
-
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Composable
-private fun PaneScreen(
-    paneDescriptors: Iterable<NavDescriptor<Pane>>,
-    backStack: MutableList<NavKey>
-) {
+fun ActivityUi(navDescriptors: Iterable<NavDescriptor<PaneKey>>) {
+    val backStack = rememberNavBackStack<PaneKey>(HomeKey)
+
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
-    val navSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
+    val navType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
+
+    val targetNavValue = rememberCurrentNavScaffoldValue(backStack.last())
+    val navState = rememberNavigationSuiteScaffoldState(targetNavValue)
+    LaunchedEffect(targetNavValue) { if (navState.targetValue != targetNavValue) navState.toggle() }
+
     // TODO: maybe use https://developer.android.com/develop/ui/compose/animation/shared-elements
     NavigationSuiteScaffold(
         navigationItems = {
-            val currentPrimary = backStack.filterIsInstance<Pane.Primary>().last()
-            for (primary in paneDescriptors.primaries().sortedBy { it.order }) {
+            val currentPrimary = backStack.filterIsInstance<PaneKey.Primary>().last()
+            for (primary in navDescriptors.primaries().sortedBy { it.order }) {
                 val selected = primary == currentPrimary
                 NavigationSuiteItem(
                     selected = selected,
                     onClick = { backStack.addPrimary(primary) },
-                    icon = { PrimaryIcon(primary, selected) },
-                    label = { PrimaryLabel(primary) }
+                    icon = {
+                        Icon(
+                            painterResource(if (selected) primary.iconSelected else primary.icon),
+                            contentDescription = null
+                        )
+                    },
+                    label = { Text(stringResource(primary.label)) }
                 )
             }
         },
-        navigationSuiteType = navSuiteType,
+        navigationSuiteType = navType,
         navigationSuiteColors = with(MaterialTheme.colorScheme) {
             NavigationSuiteDefaults.colors(
                 shortNavigationBarContainerColor = surfaceContainerHighest,
@@ -94,65 +74,67 @@ private fun PaneScreen(
                 navigationBarContainerColor = surfaceContainerHighest,
                 navigationBarContentColor = contentColorFor(surfaceContainerHighest),
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = contentColorFor(MaterialTheme.colorScheme.surfaceContainer),
+        state = navState
     ) {
-        val paneBackStack by remember { derivedStateOf { backStack.filterIsInstance<Pane>() } }
         val directive = calculatePaneScaffoldDirective(adaptiveInfo)
-        val strategy = rememberListDetailSceneStrategy<NavKey>(
-            directive = directive,
-            paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) },
-            paneExpansionState = rememberAnchoredPaneExpansionState(directive)
-        )
-        val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
         NavDisplay(
-            backStack = paneBackStack as List<NavKey>,
+            backStack = backStack as List<NavKey>,
             onBack = { backStack.removeLastOrNull() },
             entryProvider = entryProvider {
-                for (descriptor in paneDescriptors) {
-                    addPaneEntry(descriptor, directive, backStack)
+                for (descriptor in navDescriptors) {
+                    addDescribedEntry(descriptor, directive, backStack)
                 }
             },
-            sceneStrategies = listOf(strategy),
+            sceneStrategies = listOf(
+                rememberListDetailSceneStrategy(
+                    directive = directive,
+                    paneExpansionDragHandle = { state -> PaneExpansionDragHandle(state) },
+                    paneExpansionState = rememberAnchoredPaneExpansionState(directive)
+                )
+            ),
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
-            ),
-            modifier = Modifier
-                .fillMaxSize()
-                // Horizontal navigation => background is a rectangle
-                // Vertical navigation => background has two rounded corners
-                .thenIf(navSuiteType.isHorizontal()) { background(backgroundColor) }
-                .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
-                .thenIf(!navSuiteType.isHorizontal()) {
-                    background(
-                        color = backgroundColor,
-                        shape = MaterialTheme.shapes.extraLarge.copy(
-                            topEnd = ZeroCornerSize, bottomEnd = ZeroCornerSize
-                        )
-                    )
-                }
+            )
         )
     }
 }
 
-private fun Iterable<NavDescriptor<*>>.primaries(): List<Pane.Primary> = mapNotNull {
-    if (it is NavDescriptor.OfInstance && it.key is Pane.Primary) it.key else null
-}
-
-private fun NavigationSuiteType.isHorizontal() =
-    this == NavigationSuiteType.NavigationBar ||
-            this == NavigationSuiteType.ShortNavigationBarCompact ||
-            this == NavigationSuiteType.ShortNavigationBarMedium
+@Composable
+@Suppress("UNCHECKED_CAST")
+private fun <T : NavKey> rememberNavBackStack(vararg elements: T): NavBackStack<T> =
+    rememberNavBackStack(*elements) as NavBackStack<T>
 
 @Composable
-private fun PrimaryIcon(primary: Pane.Primary, selected: Boolean) {
-    Icon(
-        painterResource(if (selected) primary.iconSelected else primary.icon),
-        contentDescription = null
-    )
+private fun rememberCurrentNavScaffoldValue(currentKey: PaneKey) = remember(currentKey) {
+    if (currentKey is PaneKey.Secondary && currentKey.fullScreen) {
+        NavigationSuiteScaffoldValue.Hidden
+    } else {
+        NavigationSuiteScaffoldValue.Visible
+    }
 }
 
-@Composable
-private fun PrimaryLabel(primary: Pane.Primary) {
-    Text(stringResource(primary.label))
+private fun Iterable<NavDescriptor<*>>.primaries(): List<PaneKey.Primary> = mapNotNull {
+    if (it is NavDescriptor.OfInstance && it.key is PaneKey.Primary) it.key else null
+}
+
+private fun EntryProviderScope<NavKey>.addDescribedEntry(
+    descriptor: NavDescriptor<PaneKey>,
+    directive: PaneScaffoldDirective,
+    backStack: MutableList<PaneKey>
+) {
+    when (descriptor) {
+        is NavDescriptor.OfInstance ->
+            entry(descriptor.key, metadata = descriptor.metadata) {
+                it.Content(directive, backStack)
+            }
+
+        is NavDescriptor.OfClass ->
+            addEntryProvider(descriptor.cls, metadata = descriptor.metadata) {
+                it.Content(directive, backStack)
+            }
+    }
 }

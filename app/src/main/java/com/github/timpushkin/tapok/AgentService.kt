@@ -90,6 +90,7 @@ class AgentService : AccessibilityService() {
                             Log.w(TAG, "Failed to click $it")
                         }
                     }
+
                 Rule.Action.MUTE_WHEN_PRESENT -> {
                     val matches = root.findAccessibilityNodeInfosByViewId(rule.viewId)
                     if (matches.isNotEmpty()) {

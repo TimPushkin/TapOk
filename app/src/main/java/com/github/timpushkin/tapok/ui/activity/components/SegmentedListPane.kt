@@ -13,11 +13,15 @@ import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun SegmentedListPane(modifier: Modifier = Modifier, content: LazyListScope.() -> Unit) {
+fun SegmentedListPane(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(DefaultPaneSpacing),
+    content: LazyListScope.() -> Unit
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
         horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(DefaultPaneSpacing),
+        contentPadding = contentPadding,
         modifier = modifier,
         content = content
     )
