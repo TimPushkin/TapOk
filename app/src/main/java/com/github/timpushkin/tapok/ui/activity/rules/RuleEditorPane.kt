@@ -27,6 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,12 +57,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorPane(
     ruleId: Long?,
     onCreated: (Long) -> Unit,
     onBack: () -> Unit,
-    showBackButton: Boolean,
     vm: RuleEditorViewModel = hiltViewModel(
         key = ruleId.toString()
     ) { f: RuleEditorViewModelFactory -> f.create(ruleId) }
@@ -70,7 +72,13 @@ fun RuleEditorPane(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (ruleId == null) R.string.create_rule else R.string.edit_rule)) },
-                navigationIcon = { if (showBackButton) NavigateBackButton(onBack) },
+                navigationIcon = {
+                    // TODO: obtain PaneScaffoldDirective from composition-local?
+                    val singlePane = calculatePaneScaffoldDirective(
+                        currentWindowAdaptiveInfoV2()
+                    ).maxHorizontalPartitions == 1
+                    if (singlePane) NavigateBackButton(onBack)
+                },
                 actions = {
                     SaveButton(
                         canSave = (state as? RuleEditorUiState.Loaded)?.allowsSaving() == true,
