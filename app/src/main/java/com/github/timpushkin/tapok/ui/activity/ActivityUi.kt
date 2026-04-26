@@ -1,19 +1,16 @@
 package com.github.timpushkin.tapok.ui.activity
 
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -61,16 +58,6 @@ fun ActivityUi(
             }
         },
         navigationSuiteType = navType,
-        navigationSuiteColors = with(MaterialTheme.colorScheme) {
-            NavigationSuiteDefaults.colors(
-                shortNavigationBarContainerColor = surfaceContainerHighest,
-                shortNavigationBarContentColor = contentColorFor(surfaceContainerHighest),
-                navigationBarContainerColor = surfaceContainerHighest,
-                navigationBarContentColor = contentColorFor(surfaceContainerHighest),
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = contentColorFor(MaterialTheme.colorScheme.surfaceContainer),
         state = navState
     ) {
         val directive = calculatePaneScaffoldDirective(adaptiveInfo)

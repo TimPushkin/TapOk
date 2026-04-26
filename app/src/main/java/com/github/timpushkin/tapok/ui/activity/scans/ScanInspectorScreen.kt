@@ -193,9 +193,10 @@ fun ScanInspectorScreen(
                 }
             },
             sheetDragHandle = { BottomSheetHandle() },
+            sheetPeekHeight = sheetPeekHeight,
+            sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             content = {}, // Scan display not here to be rendered behind top bar
-            containerColor = Color.Transparent,
-            sheetPeekHeight = sheetPeekHeight
+            containerColor = Color.Transparent
         )
     }
 }

@@ -152,7 +152,9 @@ private inline fun TutorialCard(
 
     val size = 512.dp
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
         modifier = modifier.size(size)
     ) {
         Column {
