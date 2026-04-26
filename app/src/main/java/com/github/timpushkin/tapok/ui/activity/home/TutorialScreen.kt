@@ -6,12 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -57,10 +58,15 @@ private val TUTORIAL_PAGES: List<@Composable (Modifier) -> Unit> = listOf(
 )
 
 @Composable
-fun TutorialPane(onDone: () -> Unit) {
+fun TutorialScreen(onDone: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
+        modifier = Modifier
+            // Add insets padding even if it has already been consumed. This is needed to not have
+            // the contents jump when the outer NavigationSuiteScaffold's bottom navigation
+            // shows/hides and starts/stops consuming the insets.
+            .padding(ScaffoldDefaults.contentWindowInsets.asPaddingValues())
+            .consumeWindowInsets(ScaffoldDefaults.contentWindowInsets)
     ) {
         val state = rememberPagerState { TUTORIAL_PAGES.size }
 
@@ -77,7 +83,8 @@ fun TutorialPane(onDone: () -> Unit) {
             PageIndicator(state)
         }
 
-        DoneButton(completed = !state.canScrollForward, onClick = onDone)
+        // Not using state.canScrollForward because its value is wrong during the first frame
+        DoneButton(completed = state.currentPage == state.pageCount - 1, onClick = onDone)
     }
 }
 
@@ -115,7 +122,8 @@ private fun PageIndicator(state: PagerState) {
 @Composable
 private fun DoneButton(completed: Boolean, onClick: () -> Unit) {
     Crossfade(
-        completed, modifier = Modifier
+        completed,
+        modifier = Modifier
             .width(256.dp)
             .padding(vertical = DefaultPaneSpacing)
     ) { completed ->

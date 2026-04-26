@@ -20,7 +20,7 @@ data object HomeKey : PrimaryKey(
 )
 
 @Serializable
-data object TutorialKey : SecondaryKey()
+data object TutorialKey : SecondaryKey(fullScreen = true)
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -33,6 +33,6 @@ object HomeModule {
     @IntoSet
     fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
         entry<HomeKey> { HomePane(openTutorial = { navigator.navigateTo(TutorialKey) }) }
-        entry<TutorialKey> { TutorialPane(onDone = navigator::navigateBack) }
+        entry<TutorialKey> { TutorialScreen(onDone = navigator::navigateBack) }
     }
 }
