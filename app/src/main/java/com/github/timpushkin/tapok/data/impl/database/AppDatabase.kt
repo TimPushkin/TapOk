@@ -1,13 +1,11 @@
-package com.github.timpushkin.tapok.data
+package com.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.timpushkin.tapok.data.rules.Rule
-import com.github.timpushkin.tapok.data.rules.RuleDao
 import com.github.timpushkin.tapok.data.scans.Node
 import com.github.timpushkin.tapok.data.scans.Scan
-import com.github.timpushkin.tapok.data.scans.ScanDao
 
 @Database(
     entities = [Rule::class, Node::class, Scan::class],

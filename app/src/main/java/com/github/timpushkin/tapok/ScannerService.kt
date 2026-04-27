@@ -20,7 +20,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.github.timpushkin.tapok.data.scans.Node
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.data.scans.ScanRepo
-import com.github.timpushkin.tapok.data.screenshotFile
+import com.github.timpushkin.tapok.data.scans.screenshotFile
 import com.github.timpushkin.tapok.ui.ScannerPopup
 import com.github.timpushkin.tapok.ui.theme.TapOkTheme
 import dagger.hilt.android.AndroidEntryPoint

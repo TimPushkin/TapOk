@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.timpushkin.tapok.data.scans.Node
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.data.scans.ScanRepo
-import com.github.timpushkin.tapok.data.screenshotFile
+import com.github.timpushkin.tapok.data.scans.screenshotFile
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

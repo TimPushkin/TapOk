@@ -1,9 +1,12 @@
-package com.github.timpushkin.tapok.data.scans
+package com.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.github.timpushkin.tapok.data.scans.Node
+import com.github.timpushkin.tapok.data.scans.Scan
+import com.github.timpushkin.tapok.data.scans.ScanRepo
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -1,4 +1,4 @@
-package com.github.timpushkin.tapok.data
+package com.github.timpushkin.tapok.data.scans
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE

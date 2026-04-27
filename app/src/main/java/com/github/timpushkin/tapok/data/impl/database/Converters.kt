@@ -1,4 +1,4 @@
-package com.github.timpushkin.tapok.data
+package com.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.TypeConverter
 import kotlin.time.Instant

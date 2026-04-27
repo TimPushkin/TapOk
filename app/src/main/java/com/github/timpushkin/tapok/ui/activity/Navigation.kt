@@ -39,23 +39,44 @@ open class SecondaryKey(val fullScreen: Boolean = false) : NavKey
 typealias EntryProviderInstaller = EntryProviderScope<NavKey>.(Navigator) -> Unit
 
 @Composable
-fun rememberNavigator(initial: PrimaryKey, primaries: Iterable<PrimaryKey>): Navigator {
-    require(initial in primaries) { "Initial key must be among all registered primary keys" }
-    val primary = rememberSerializable(
-        initial, primaries, serializer = MutableStateSerializer(NavKeySerializer())
-    ) { mutableStateOf(initial) }
-    val backStacks = primaries.associateWith { key -> rememberNavBackStack(key) }
-    return remember(initial, primaries) { Navigator(initial, primary, backStacks) }
+fun rememberNavigator(
+    primaries: Iterable<PrimaryKey>,
+    initialPrimary: PrimaryKey,
+    initialSecondaries: List<SecondaryKey> = emptyList(), // Should not be a remember-key
+    onNavigateTo: (NavKey) -> Unit = {},
+    onNavigateBack: (NavKey) -> Unit = {}
+): Navigator {
+    require(initialPrimary in primaries) { "Initial primary must be among all primaries" }
+    val currentPrimary = rememberSerializable(
+        primaries, initialPrimary,
+        serializer = MutableStateSerializer(NavKeySerializer())
+    ) {
+        mutableStateOf(initialPrimary)
+    }
+    // Sort to ensure the back stacks are always remembered in the same order
+    val backStacks = primaries.sortedBy { it.index }.associateWith { primary ->
+        if (primary == initialPrimary) {
+            rememberNavBackStack(primary, *initialSecondaries.toTypedArray())
+        } else {
+            rememberNavBackStack(primary)
+        }
+    }
+    return remember(primaries, initialPrimary, onNavigateTo, onNavigateBack) {
+        Navigator(initialPrimary, currentPrimary, backStacks, onNavigateTo, onNavigateBack)
+    }
 }
 
 class Navigator(
     private val initialPrimary: PrimaryKey,
     currentPrimary: MutableState<PrimaryKey>,
-    private val backStacks: Map<PrimaryKey, NavBackStack<NavKey>>
+    private val backStacks: Map<PrimaryKey, NavBackStack<NavKey>>,
+    private val onNavigateTo: (NavKey) -> Unit = {},
+    private val onNavigateBack: (NavKey) -> Unit = {}
 ) {
+    val primaries: Set<PrimaryKey>
+        get() = backStacks.keys
     var currentPrimary: PrimaryKey by currentPrimary
         private set
-
     val currentKey: NavKey
         get() = currentBackStack.last()
 
@@ -77,17 +98,20 @@ class Navigator(
         }
     }
 
-    fun navigateTo(key: NavKey){
-        if (key is PrimaryKey){
-            require(key in backStacks.keys) { "Unregistered primary key $key" }
-            currentPrimary = key
+    fun navigateTo(to: NavKey) {
+        onNavigateTo(to)
+        if (to is PrimaryKey) {
+            require(to in backStacks.keys) { "Unregistered primary key $to" }
+            currentPrimary = to
         } else {
-            backStacks.getValue(currentPrimary).add(key)
+            backStacks.getValue(currentPrimary).add(to)
         }
     }
 
-    fun navigateBack(){
-        if (currentKey == currentPrimary){
+    fun navigateBack() {
+        val from = currentKey
+        onNavigateBack(from)
+        if (from == currentPrimary) {
             currentPrimary = initialPrimary
         } else {
             currentBackStack.removeLastOrNull()

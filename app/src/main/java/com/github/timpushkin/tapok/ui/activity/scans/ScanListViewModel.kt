@@ -6,7 +6,7 @@ import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.github.timpushkin.tapok.data.scans.Scan
 import com.github.timpushkin.tapok.data.scans.ScanRepo
-import com.github.timpushkin.tapok.data.screenshotFile
+import com.github.timpushkin.tapok.data.scans.screenshotFile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,10 +1,12 @@
-package com.github.timpushkin.tapok.data.rules
+package com.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.MapColumn
 import androidx.room.Query
 import androidx.room.Upsert
+import com.github.timpushkin.tapok.data.rules.Rule
+import com.github.timpushkin.tapok.data.rules.RuleRepo
 import kotlinx.coroutines.flow.Flow
 
 @Dao
