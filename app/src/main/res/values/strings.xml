@@ -49,11 +49,12 @@
     <string name="view_id_error_illegal_name_part">Illegal non-first character in view name</string>
 
     <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
-    <string name="select_scan_to_inspect">Select a scan to inspect</string>
-
-    <string name="enable_scanner">Enable scanner</string>
 
     <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
+
+    <string name="no_elements_in_scan">No targetable elements discovered :(</string>
+    <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
+    <string name="no_elements_match_filters">No elements match current filters</string>
 
     <string name="unlabeled_element">Unlabeled element</string>
     <string name="clickable_element">Clickable element</string>

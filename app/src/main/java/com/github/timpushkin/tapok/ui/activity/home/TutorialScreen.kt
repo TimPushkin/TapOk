@@ -37,17 +37,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
 import com.github.timpushkin.tapok.AgentService
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ScannerService
 import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import com.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
 import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
@@ -185,10 +183,6 @@ private inline fun TutorialCard(
             }
         }
     }
-}
-
-private fun AnnotatedString.Builder.appendParagraphSpacer() {
-    withStyle(ParagraphStyle(lineHeight = 0.75.em)) {}
 }
 
 @Composable

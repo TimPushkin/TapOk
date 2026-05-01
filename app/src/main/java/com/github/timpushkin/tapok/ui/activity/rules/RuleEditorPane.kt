@@ -51,7 +51,7 @@ import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
-import com.github.timpushkin.tapok.ui.activity.components.requiredMinPaneWidth
+import com.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

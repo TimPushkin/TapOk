@@ -22,8 +22,10 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
@@ -91,10 +93,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.times
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -102,6 +106,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.data.scans.Node
 import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
+import com.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -179,14 +184,16 @@ fun ScanInspectorScreen(
                 TopBar(
                     visible = showBars,
                     appPackage = loadedUiState?.run { scan.appPackage },
-                    showUnlabeledNodes = uiState.showUnlabeledNodes,
+                    showUnlabeledNodes = loadedUiState?.showUnlabeledNodes ?: false,
                     onBack = onClose,
-                    onSwitchShowUnlabeledNodes = vm::switchShowUnlabeledNodes
+                    onSwitchShowUnlabeledNodes = vm::switchShowUnlabeledNodes.takeIf {
+                        loadedUiState != null
+                    }
                 )
             },
             sheetContent = {
-                loadedUiState?.let { state ->
-                    NodeBottomSheet(state.shownNodes, state.selectedNode) { node ->
+                loadedUiState?.run {
+                    NodeBottomSheet(shownNodes, !showUnlabeledNodes, selectedNode) { node ->
                         vm.selectNode(node)
                         with(bottomSheetState) { if (node != null) expand() else shrink() }
                     }
@@ -231,6 +238,11 @@ private fun Modifier.dottedBackground(
 private fun WindowInsets.Companion.safeContentBottomDp() = with(LocalDensity.current) {
     safeContent.getBottom(density = this).toDp()
 }
+
+@Composable
+private fun Modifier.windowInsetsPadding(padding: PaddingValues) = this
+    .padding(padding)
+    .consumeWindowInsets(padding)
 
 @Stable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -399,7 +411,7 @@ private fun TopBar(
     appPackage: String?,
     showUnlabeledNodes: Boolean,
     onBack: () -> Unit,
-    onSwitchShowUnlabeledNodes: () -> Unit
+    onSwitchShowUnlabeledNodes: (() -> Unit)?
 ) {
     AnimatedVisibility(
         visible,
@@ -449,7 +461,7 @@ private fun PackageManager.getAppLabel(appPackage: String): String? {
 @Composable
 private fun ShowUnlabeledNodesSwitch(
     showUnlabeledNodes: Boolean,
-    onSwitchShowUnlabeledNodes: () -> Unit
+    onSwitchShowUnlabeledNodes: (() -> Unit)?
 ) {
     val iconRes = if (showUnlabeledNodes) {
         R.drawable.visibility_filled
@@ -464,7 +476,10 @@ private fun ShowUnlabeledNodesSwitch(
         tooltip = { Text(stringResource(descriptionRes)) },
         state = rememberTooltipState()
     ) {
-        IconButton(onClick = onSwitchShowUnlabeledNodes) {
+        IconButton(
+            onClick = onSwitchShowUnlabeledNodes ?: {},
+            enabled = onSwitchShowUnlabeledNodes != null
+        ) {
             Icon(painterResource(iconRes), stringResource(descriptionRes))
         }
     }
@@ -482,18 +497,56 @@ private fun BottomSheetHandle() {
 }
 
 @Composable
-private fun NodeBottomSheet(nodes: List<Node>, selectedNode: Node?, onClick: (Node?) -> Unit) {
+private fun NodeBottomSheet(
+    nodes: List<Node>,
+    filtered: Boolean,
+    selectedNode: Node?,
+    onClick: (Node?) -> Unit
+) {
     if (selectedNode == null) {
-        NodeList(nodes, onNodeClick = onClick)
+        if (nodes.isEmpty()) {
+            EmptyNodeListPlaceholder(filtered)
+        } else {
+            NodeList(nodes, onNodeClick = onClick)
+        }
     } else {
         NodeDescription(selectedNode, onClose = { onClick(null) })
     }
 }
 
 @Composable
+private fun EmptyNodeListPlaceholder(filtered: Boolean) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
+            .padding(horizontal = 2 * DefaultSpacing, vertical = DefaultSpacing)
+    ) {
+        Text(
+            buildAnnotatedString {
+                if (filtered) {
+                    append(stringResource(R.string.no_elements_match_filters))
+                } else {
+                    append(stringResource(R.string.no_elements_in_scan))
+                    appendParagraphSpacer()
+                    append(stringResource(R.string.no_elements_in_scan_hints))
+                }
+            },
+            textAlign = TextAlign.Center,
+            color = ListItemDefaults.colors().disabledContentColor
+        )
+    }
+}
+
+@Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeList(nodes: List<Node>, onNodeClick: (Node) -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(bottom = WindowInsets.safeContentBottomDp())) {
+    val insetsPadding = PaddingValues(bottom = WindowInsets.safeContentBottomDp())
+    LazyColumn(
+        contentPadding = insetsPadding,
+        modifier = Modifier.consumeWindowInsets(insetsPadding)
+    ) {
         items(nodes) { node ->
             val useful = node.viewId != null
             ListItem(
@@ -552,7 +605,7 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(DefaultSpacing / 2),
         modifier = Modifier
-            .padding(bottom = WindowInsets.safeContentBottomDp())
+            .windowInsetsPadding(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
             .padding(horizontal = DefaultSpacing * 2)
     ) {
         NodeDescriptionHeader(node.className.substringAfterLast('.'), onClose)

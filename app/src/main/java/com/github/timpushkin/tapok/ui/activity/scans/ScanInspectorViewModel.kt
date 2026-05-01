@@ -20,16 +20,14 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 sealed interface ScanInspectorUiState {
-    val showUnlabeledNodes: Boolean
-
-    data class Loading(override val showUnlabeledNodes: Boolean = false) : ScanInspectorUiState
+    data object Loading : ScanInspectorUiState
 
     data class Loaded(
         val scan: Scan,
         val screenshotFile: File,
         val nodes: List<Node>,
         val selectedNode: Node?,
-        override val showUnlabeledNodes: Boolean
+        val showUnlabeledNodes: Boolean
     ) : ScanInspectorUiState {
         val shownNodes by lazy {
             if (showUnlabeledNodes) nodes else nodes.filter { it.viewId != null }
@@ -43,7 +41,7 @@ class ScanInspectorViewModel @AssistedInject constructor(
     private val scanRepo: ScanRepo,
     @Assisted scanId: Long
 ) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow<ScanInspectorUiState>(ScanInspectorUiState.Loading())
+    private val _uiState = MutableStateFlow<ScanInspectorUiState>(ScanInspectorUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -59,7 +57,8 @@ class ScanInspectorViewModel @AssistedInject constructor(
                     screenshotFile,
                     nodes,
                     null,
-                    it.showUnlabeledNodes
+                    // If no labeled nodes show unlabeled by default to show at least something
+                    nodes.all { it.viewId == null }
                 )
             }
         }
@@ -67,19 +66,14 @@ class ScanInspectorViewModel @AssistedInject constructor(
 
     fun switchShowUnlabeledNodes() {
         _uiState.update { prev ->
+            check(prev is ScanInspectorUiState.Loaded) { "Nothing to show until loaded" }
             val showUnlabeledNodes = !prev.showUnlabeledNodes
-            when (prev) {
-                is ScanInspectorUiState.Loading -> prev.copy(
-                    showUnlabeledNodes = showUnlabeledNodes
-                )
-
-                is ScanInspectorUiState.Loaded -> prev.copy(
-                    showUnlabeledNodes = showUnlabeledNodes,
-                    selectedNode = prev.selectedNode?.takeIf {
-                        showUnlabeledNodes || it.viewId != null
-                    }
-                )
-            }
+            prev.copy(
+                showUnlabeledNodes = showUnlabeledNodes,
+                selectedNode = prev.selectedNode?.takeIf {
+                    showUnlabeledNodes || it.viewId != null
+                }
+            )
         }
     }
 

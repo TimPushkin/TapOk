@@ -1,4 +1,4 @@
-package com.github.timpushkin.tapok.ui.activity.components
+package com.github.timpushkin.tapok.ui.utils
 
 import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.runtime.Composable
