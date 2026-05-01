@@ -10,7 +10,9 @@ import android.util.Log
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.setViewTreeLifecycleOwner
@@ -112,10 +114,10 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
             val timestamp = Clock.System.now()
 
             val nodes: List<AccessibilityNodeInfo>
-            val screenshot: String?
+            val screenshot: Bitmap?
             coroutineScope {
                 nodes = captureAccessibilityNodes(root)
-                screenshot = captureScreenshot(root, "${appName}-${timestamp}")
+                screenshot = captureScreenshot(root)
             }
             if (screenshot == null) {
                 Log.e(TAG, "Scan failed: cannot take a screenshot")
@@ -124,7 +126,7 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
 
             withContext(Dispatchers.IO) { saveScan(appName, timestamp, nodes, screenshot) }
 
-            Log.i(TAG, "Scanned ${nodes.size} nodes, screenshot saved as $screenshot")
+            Log.i(TAG, "Scanned ${nodes.size} nodes of $appName at $timestamp")
         }
     }
 
@@ -144,8 +146,8 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
         return nodes
     }
 
-    private suspend fun captureScreenshot(root: AccessibilityNodeInfo, name: String): String? {
-        val bitmap: Bitmap? = suspendCancellableCoroutine { continuation ->
+    private suspend fun captureScreenshot(root: AccessibilityNodeInfo): Bitmap? =
+        suspendCancellableCoroutine { continuation ->
             val executor = Dispatchers.Default.asExecutor()
             val callback = object : TakeScreenshotCallback {
                 override fun onFailure(errorCode: Int) {
@@ -162,31 +164,28 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
             }
             takeScreenshotOfWindow(root.windowId, executor, callback)
         }
-        if (bitmap == null) {
-            return null
-        }
-
-        val filename = "$name.webp"
-        withContext(Dispatchers.IO) {
-            screenshotFile(filename).outputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.WEBP, 100, out)
-            }
-        }
-        return filename
-    }
 
     private suspend fun saveScan(
         appName: String,
         timestamp: Instant,
         recordedNodes: List<AccessibilityNodeInfo>,
-        screenshot: String
+        screenshot: Bitmap
     ) {
-        val scanId = scanRepo.insertScan(Scan(0, appName, timestamp, screenshot))
+        val screenshotFile = "$appName-$timestamp.webp"
+        screenshotFile(screenshotFile).outputStream().use { out ->
+            screenshot.compress(Bitmap.CompressFormat.WEBP, 100, out)
+        }
 
+        val scanId = scanRepo.insertScan(Scan(0, appName, timestamp, screenshotFile))
+
+        val offset = recordedNodes.firstOrNull()?.window?.let { window ->
+            windowOffsetInScreenshot(window, screenshot)
+        } ?: IntOffset.Zero
         val bounds = Rect()
         val nodes = List(recordedNodes.size) { i ->
             val nodeInfo = recordedNodes[i]
             nodeInfo.getBoundsInWindow(bounds)
+            bounds.offset(offset.x, offset.y)
             Node(
                 0,
                 scanId,
@@ -197,6 +196,24 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
             )
         }
         scanRepo.insertNodes(nodes)
+    }
+
+    /**
+     * For some windows, at least for dialogs, screenshots contain transparent padding. This method
+     * calculates the offset of the window within the screenshot.
+     *
+     * This padding is not officially documented so this is just a guess.
+     */
+    private fun windowOffsetInScreenshot(
+        window: AccessibilityWindowInfo,
+        screenshot: Bitmap
+    ): IntOffset {
+        val windowBounds = Rect()
+        window.getBoundsInScreen(windowBounds)
+        return IntOffset(
+            x = (screenshot.width - windowBounds.width()).coerceAtLeast(0) / 2,
+            y = (screenshot.height - windowBounds.height()).coerceAtLeast(0) / 2
+        )
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
