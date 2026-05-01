@@ -369,7 +369,7 @@ private fun ScanDisplay(
     }
 
     // Call onZoom when user zooms-in
-    val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) != 0f } }
+    val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) > 0.00001f } }
     LaunchedEffect(zoomed, isInitialZoomSet) {
         if (zoomed && isInitialZoomSet) onZoomIn()
     }
