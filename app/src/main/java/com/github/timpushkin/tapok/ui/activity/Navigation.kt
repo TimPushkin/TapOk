@@ -38,36 +38,35 @@ open class SecondaryKey(val fullScreen: Boolean = false) : NavKey
 
 typealias EntryProviderInstaller = EntryProviderScope<NavKey>.(Navigator) -> Unit
 
+data class NavRoute(val primary: PrimaryKey, val secondaries: Iterable<SecondaryKey>)
+
 @Composable
 fun rememberNavigator(
-    primaries: Iterable<PrimaryKey>,
-    initialPrimary: PrimaryKey,
-    initialSecondaries: List<SecondaryKey> = emptyList(), // Should not be a remember-key
+    primaries: Set<PrimaryKey>,
+    mainPrimary: PrimaryKey,
+    initialRoute: NavRoute = NavRoute(mainPrimary, emptyList()),
     onNavigateTo: (NavKey) -> Unit = {},
     onNavigateBack: (NavKey) -> Unit = {}
 ): Navigator {
-    require(initialPrimary in primaries) { "Initial primary must be among all primaries" }
+    require(mainPrimary in primaries) { "Main primary must be among all primaries" }
     val currentPrimary = rememberSerializable(
-        primaries, initialPrimary,
-        serializer = MutableStateSerializer(NavKeySerializer())
+        primaries, serializer = MutableStateSerializer(NavKeySerializer())
     ) {
-        mutableStateOf(initialPrimary)
+        mutableStateOf(initialRoute.primary)
     }
     // Sort to ensure the back stacks are always remembered in the same order
     val backStacks = primaries.sortedBy { it.index }.associateWith { primary ->
-        if (primary == initialPrimary) {
-            rememberNavBackStack(primary, *initialSecondaries.toTypedArray())
-        } else {
-            rememberNavBackStack(primary)
-        }
+        val secondaries =
+            if (primary == initialRoute.primary) initialRoute.secondaries else emptyList()
+        rememberNavBackStack(primary, *secondaries.toList().toTypedArray())
     }
-    return remember(primaries, initialPrimary, onNavigateTo, onNavigateBack) {
-        Navigator(initialPrimary, currentPrimary, backStacks, onNavigateTo, onNavigateBack)
+    return remember(primaries, mainPrimary, onNavigateTo, onNavigateBack) {
+        Navigator(mainPrimary, currentPrimary, backStacks, onNavigateTo, onNavigateBack)
     }
 }
 
 class Navigator(
-    private val initialPrimary: PrimaryKey,
+    private val mainPrimary: PrimaryKey,
     currentPrimary: MutableState<PrimaryKey>,
     private val backStacks: Map<PrimaryKey, NavBackStack<NavKey>>,
     private val onNavigateTo: (NavKey) -> Unit = {},
@@ -93,7 +92,7 @@ class Navigator(
             rememberDecoratedNavEntries(backStack, entryDecoratorsProvider(), entryProvider)
         }
         // Only return the entries for the stacks that are currently in use
-        return linkedSetOf(initialPrimary, currentPrimary).flatMap {
+        return linkedSetOf(mainPrimary, currentPrimary).flatMap {
             decoratedEntries.getValue(it)
         }
     }
@@ -112,7 +111,7 @@ class Navigator(
         val from = currentKey
         onNavigateBack(from)
         if (from == currentPrimary) {
-            currentPrimary = initialPrimary
+            currentPrimary = mainPrimary
         } else {
             currentBackStack.removeLastOrNull()
         }

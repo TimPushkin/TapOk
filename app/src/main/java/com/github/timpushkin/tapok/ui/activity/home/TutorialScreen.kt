@@ -46,7 +46,7 @@ import com.github.timpushkin.tapok.R
 import com.github.timpushkin.tapok.ScannerService
 import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import com.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
-import com.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
+import com.github.timpushkin.tapok.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
 import androidx.compose.ui.unit.lerp as lerpUnit

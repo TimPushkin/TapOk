@@ -8,6 +8,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.TapOk">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -30,6 +31,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/agent_service_config" />
         </service>
+
         <service
             android:name=".ScannerService"
             android:exported="false"
@@ -43,6 +45,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/scanner_service_config" />
         </service>
+
     </application>
 
     <queries>
@@ -51,4 +54,5 @@
             <action android:name="android.intent.action.MAIN" />
         </intent>
     </queries>
+
 </manifest>

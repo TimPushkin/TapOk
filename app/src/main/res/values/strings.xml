@@ -10,6 +10,11 @@
     <string name="scanner_service_description">Allows to scan the screen content for parts that can be referenced in the rules for TapOk Agent.</string>
 
     <string name="scan_screen">Scan screen</string>
+    <string name="view_scans">View scans</string>
+    <string name="turn_off">Turn off</string>
+    <string name="toggle_button">Toggle button</string>
+    <string name="expanded">Expanded</string>
+    <string name="collapsed">Collapsed</string>
 
     <string name="home">Home</string>
     <string name="rules">Rules</string>
