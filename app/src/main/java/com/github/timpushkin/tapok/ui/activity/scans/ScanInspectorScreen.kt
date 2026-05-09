@@ -406,7 +406,6 @@ private fun Iterable<Node>.findClicked(click: Offset): Node? =
 private fun Rect.area() = width * height
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun TopBar(
     visible: Boolean,
     appPackage: String?,
@@ -627,7 +626,6 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
 private fun Node.boundsAsString() = with(bounds) { "x=$left–${right}px, y=$top–${bottom}px" }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
         Box(
@@ -658,7 +656,6 @@ private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
 private const val INLINE_COPY_BUTTON_ID = "copyButton"
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescriptionElement(text: String, label: String, copyable: Boolean = false) {
     Text(
         buildAnnotatedString {

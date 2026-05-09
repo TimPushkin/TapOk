@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -51,13 +50,13 @@ import com.github.timpushkin.tapok.data.rules.RuleNameValidity
 import com.github.timpushkin.tapok.data.rules.ViewIdValidity
 import com.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
-import com.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import com.github.timpushkin.tapok.ui.theme.DefaultSpacing
+import com.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorPane(
     ruleId: Long?,
     onCreated: (Long) -> Unit,
@@ -215,7 +214,7 @@ private fun RuleTextField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> RuleDropdownMenu(
     selected: T,

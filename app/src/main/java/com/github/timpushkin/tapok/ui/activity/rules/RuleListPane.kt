@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
@@ -24,8 +23,8 @@ import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import com.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import com.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
-import com.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import com.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import com.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 
 @Composable
 fun RuleListPane(
@@ -74,7 +73,6 @@ fun RuleListPane(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CreateRuleFab(onClick: () -> Unit) {
     MediumFloatingActionButton(onClick = onClick) {
@@ -85,7 +83,6 @@ private fun CreateRuleFab(onClick: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RuleItem(
     index: Int,

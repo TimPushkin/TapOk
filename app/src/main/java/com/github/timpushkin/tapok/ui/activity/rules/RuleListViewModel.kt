@@ -7,7 +7,6 @@ import com.github.timpushkin.tapok.data.rules.Rule
 import com.github.timpushkin.tapok.data.rules.RuleRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -22,7 +21,6 @@ private const val TAG = "RuleListViewModel"
 
 data class RulesUiState(val rules: List<Rule>)
 
-@OptIn(FlowPreview::class)
 @HiltViewModel
 class RuleListViewModel @Inject constructor(private val ruleRepo: RuleRepo) : ViewModel() {
     private val _uiState = MutableStateFlow(RulesUiState(emptyList()))
