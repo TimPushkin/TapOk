@@ -30,7 +30,6 @@ import io.github.timpushkin.tapok.data.scans.ScanRepo
 import io.github.timpushkin.tapok.data.scans.screenshotFile
 import io.github.timpushkin.tapok.ui.ScannerPopup
 import io.github.timpushkin.tapok.ui.theme.TapOkTheme
-import io.github.timpushkin.tapok.utils.openAccessibilityServiceSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,7 +99,7 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
                     scanning = scanning,
                     onScan = { scope.launch { scan() } },
                     onViewScans = ::showScans,
-                    onTurnOff = { openAccessibilityServiceSettings(this::class) },
+                    onTurnOff = ::disableSelf,
                     onDrag = { delta ->
                         params.x += delta.x.toInt()
                         params.y += delta.y.toInt()

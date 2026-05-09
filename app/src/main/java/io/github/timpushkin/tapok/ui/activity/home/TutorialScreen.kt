@@ -45,7 +45,7 @@ import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ScannerService
 import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
-import io.github.timpushkin.tapok.utils.openAccessibilityServiceSettings
+import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
 import androidx.compose.ui.unit.lerp as lerpUnit
@@ -220,17 +220,6 @@ private fun Step2(modifier: Modifier = Modifier) {
 
         append(stringResource(R.string.tutorial_step2_body_2))
         appendParagraphSpacer()
-
-        append(stringResource(R.string.tutorial_step2_body_3_1))
-        val context = LocalContext.current
-        withLink(
-            LinkAnnotation.Clickable(LINK_SCANNER) {
-                context.openAccessibilityServiceSettings(ScannerService::class)
-            }
-        ) {
-            append(stringResource(R.string.tutorial_step2_body_3_2))
-        }
-        append(stringResource(R.string.tutorial_step2_body_3_3))
     }
 }
 

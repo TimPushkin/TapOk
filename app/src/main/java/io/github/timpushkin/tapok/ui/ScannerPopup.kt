@@ -186,7 +186,7 @@ private fun TurnOffItem(onClick: () -> Unit) {
         onClick = onClick,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.settings_outlined),
+                painterResource(R.drawable.mode_off_on),
                 contentDescription = null
             )
         },

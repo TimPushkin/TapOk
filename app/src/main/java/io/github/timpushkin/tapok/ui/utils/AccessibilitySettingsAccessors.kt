@@ -1,4 +1,4 @@
-package io.github.timpushkin.tapok.utils
+package io.github.timpushkin.tapok.ui.utils
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity

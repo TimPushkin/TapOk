@@ -37,8 +37,8 @@ import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ScannerService
 import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultSpacing
-import io.github.timpushkin.tapok.utils.openAccessibilityServiceSettings
-import io.github.timpushkin.tapok.utils.rememberIsAccessibilityServiceEnabled
+import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
+import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 import kotlin.reflect.KClass
 
 @Composable

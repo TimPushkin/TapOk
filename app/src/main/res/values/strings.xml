@@ -88,9 +88,6 @@
     <string name="tutorial_step2_headline">Step 2: capture the screen</string>
     <string name="tutorial_step2_body_1">When Scanner is on, you can see a floating button.</string>
     <string name="tutorial_step2_body_2">Open the app you want to automate, then tap the button to save a scan of the active screen.</string>
-    <string name="tutorial_step2_body_3_1">"You can "</string>
-    <string name="tutorial_step2_body_3_2">turn Scanner off</string>
-    <string name="tutorial_step2_body_3_3">" anytime to hide the button."</string>
 
     <string name="tutorial_step3_headline">Step 3: find a target</string>
     <string name="tutorial_step3_body_1">Go to the Scans tab and open your scan.</string>
