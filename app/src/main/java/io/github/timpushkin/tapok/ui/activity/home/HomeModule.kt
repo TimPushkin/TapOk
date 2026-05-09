@@ -1,0 +1,38 @@
+package io.github.timpushkin.tapok.ui.activity.home
+
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.multibindings.IntoSet
+import io.github.timpushkin.tapok.R
+import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
+import io.github.timpushkin.tapok.ui.activity.PrimaryKey
+import io.github.timpushkin.tapok.ui.activity.SecondaryKey
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object HomeKey : PrimaryKey(
+    index = 1,
+    label = R.string.home,
+    icon = R.drawable.home_outlined,
+    iconSelected = R.drawable.home_filled
+)
+
+@Serializable
+data object TutorialKey : SecondaryKey(fullScreen = true)
+
+@Module
+@InstallIn(ActivityRetainedComponent::class)
+object HomeModule {
+    @Provides
+    @IntoSet
+    fun providePrimaryKey(): PrimaryKey = HomeKey
+
+    @Provides
+    @IntoSet
+    fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
+        entry<HomeKey> { HomePane(openTutorial = { navigator.navigateTo(TutorialKey) }) }
+        entry<TutorialKey> { TutorialScreen(onDone = navigator::navigateBack) }
+    }
+}

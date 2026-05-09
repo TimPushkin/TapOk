@@ -4,5 +4,5 @@
     android:accessibilityFlags="flagDefault|flagReportViewIds"
     android:canRetrieveWindowContent="true"
     android:description="@string/agent_service_description"
-    android:settingsActivity="com.github.timpushkin.tapok.MainActivity"
+    android:settingsActivity="io.github.timpushkin.tapok.MainActivity"
     android:packageNames="" />

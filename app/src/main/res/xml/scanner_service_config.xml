@@ -4,4 +4,4 @@
     android:canRetrieveWindowContent="true"
     android:canTakeScreenshot="true"
     android:description="@string/scanner_service_description"
-    android:settingsActivity="com.github.timpushkin.tapok.MainActivity" />
+    android:settingsActivity="io.github.timpushkin.tapok.MainActivity" />
