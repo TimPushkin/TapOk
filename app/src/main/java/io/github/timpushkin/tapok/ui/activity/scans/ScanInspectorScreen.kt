@@ -7,10 +7,13 @@ import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -18,9 +21,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,9 +37,9 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,8 +50,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,6 +68,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -91,14 +101,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -176,7 +183,7 @@ fun ScanInspectorScreen(
             if (loadedUiState == null) {
                 0.dp
             } else {
-                maxOf(BottomSheetDefaults.SheetPeekHeight, WindowInsets.safeContentBottomDp())
+                WindowInsets.safeContentBottomDp() + LocalMinimumInteractiveComponentSize.current
             }
         )
         BottomSheetScaffold(
@@ -333,16 +340,16 @@ private fun ScanDisplay(
                 for (node in nodes) {
                     drawRect(
                         Color.White,
-                        node.boundsRect.topLeft,
-                        node.boundsRect.size,
+                        node.fractionalBounds.topLeft,
+                        node.fractionalBounds.size,
                         style = defaultNodeStroke
                     )
                 }
                 selectedNode?.run {
                     drawRect(
                         Color.White,
-                        boundsRect.topLeft,
-                        boundsRect.size,
+                        fractionalBounds.topLeft,
+                        fractionalBounds.size,
                         style = selectedNodeStroke
                     )
                 }
@@ -365,7 +372,9 @@ private fun ScanDisplay(
     var prevSelectedNode by retain { mutableStateOf<Node?>(null) }
     LaunchedEffect(selectedNode) {
         if (selectedNode != prevSelectedNode) {
-            prevSelectedNode = selectedNode?.apply { zoomState.centerOn(boundsRect, viewportSize) }
+            prevSelectedNode = selectedNode?.apply {
+                zoomState.centerOn(fractionalBounds, viewportSize)
+            }
         }
     }
 
@@ -394,11 +403,11 @@ private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
 // 3rd dimension and expects the "smaller" node or the node the center of which is closer to be
 // selected.
 private fun Iterable<Node>.findClicked(click: Offset): Node? =
-    filter { it.boundsRect.contains(click) }
+    filter { it.fractionalBounds.contains(click) }
         .mapIndexed { i, node -> i to node }
         .sortedWith(
-            compareBy<Pair<Int, Node>> { (_, node) -> node.boundsRect.area() }
-                .thenBy { (_, node) -> (node.boundsRect.center - click).getDistanceSquared() }
+            compareBy<Pair<Int, Node>> { (_, node) -> node.fractionalBounds.area() }
+                .thenBy { (_, node) -> (node.fractionalBounds.center - click).getDistanceSquared() }
                 .thenBy { (i, _) -> i }
         )
         .firstOrNull()?.second
@@ -595,35 +604,64 @@ private fun NodeIcon(node: Node) {
             if (node.isClickable) R.drawable.touch_app_outlined else R.drawable.code
         ),
         contentDescription = stringResource(
-            if (node.isClickable) R.string.clickable_element else R.string.non_clickable_element
+            if (node.isClickable) R.string.clickable_element else R.string.not_clickable_element
         )
     )
 }
+
+private fun Node.boundsAsString() = "${horizontalBoundsAsString()}, ${verticalBoundsAsString()}"
+private fun Node.horizontalBoundsAsString() = with(bounds) { "x=$left–${right}px" }
+private fun Node.verticalBoundsAsString() = with(bounds) { "y=$top–${bottom}px" }
 
 @Composable
 private fun NodeDescription(node: Node, onClose: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(DefaultSpacing / 2),
         modifier = Modifier
-            .windowInsetsPadding(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
+            .consumeWindowInsets(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
             .padding(horizontal = DefaultSpacing * 2)
+            .verticalScroll(rememberScrollState())
     ) {
         NodeDescriptionHeader(node.className.substringAfterLast('.'), onClose)
+
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            CompositionLocalProvider(
+                LocalTextStyle provides MaterialTheme.typography.labelMedium,
+                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                Text(node.horizontalBoundsAsString())
+                NodeDescriptionFlowRowDivider()
+                Text(node.verticalBoundsAsString())
+                NodeDescriptionFlowRowDivider()
+                Text(
+                    stringResource(
+                        if (node.isClickable) R.string.clickable else R.string.not_clickable
+                    )
+                )
+            }
+        }
+
+        Spacer(Modifier.height(DefaultSpacing))
+
         NodeDescriptionElement(
             node.viewId ?: "—",
             stringResource(R.string.view_id),
-            copyable = node.viewId != null
+            index = 0, count = 2,
+            enabled = node.viewId != null
         )
-        NodeDescriptionElement(node.boundsAsString(), stringResource(R.string.bounds))
-        NodeDescriptionElement(node.className, stringResource(R.string.clazz))
         NodeDescriptionElement(
-            stringResource(if (node.isClickable) R.string.yes else R.string.no).lowercase(),
-            stringResource(R.string.clickable)
+            node.className,
+            stringResource(R.string.clazz),
+            index = 1, count = 2
         )
+
+        Spacer(Modifier.height(DefaultSpacing))
+
+        NodeRawInfo(node.rawInfo)
+
+        Spacer(Modifier.height(WindowInsets.safeContentBottomDp()))
     }
 }
-
-private fun Node.boundsAsString() = with(bounds) { "x=$left–${right}px, y=$top–${bottom}px" }
 
 @Composable
 private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
@@ -653,51 +691,63 @@ private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
     }
 }
 
-private const val INLINE_COPY_BUTTON_ID = "copyButton"
+@Composable
+private fun NodeDescriptionFlowRowDivider() {
+    Text("•")
+}
 
 @Composable
-private fun NodeDescriptionElement(text: String, label: String, copyable: Boolean = false) {
-    Text(
-        buildAnnotatedString {
-            withStyle(MaterialTheme.typography.labelMedium.toSpanStyle()) {
-                append("$label: ")
-            }
-            if (copyable) {
-                withStyle(MaterialTheme.typography.bodySmallEmphasized.toSpanStyle()) {
-                    append(text)
-                    append('\u00A0') // Non-line-breaking space
-                    appendInlineContent(INLINE_COPY_BUTTON_ID)
-                }
-            } else {
-                withStyle(MaterialTheme.typography.bodySmall.toSpanStyle()) {
-                    append(text)
-                }
-            }
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun NodeDescriptionElement(
+    text: String,
+    label: String,
+    index: Int,
+    count: Int,
+    enabled: Boolean = true
+) {
+    val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboard.current
+    SegmentedListItem(
+        onClick = {
+            scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(text, text))) }
         },
-        inlineContent = if (copyable) {
-            mapOf(
-                INLINE_COPY_BUTTON_ID to InlineTextContent(
-                    Placeholder(1.em, 1.em, PlaceholderVerticalAlign.Center),
-                ) {
-                    val clipboard = LocalClipboard.current
-                    val scope = rememberCoroutineScope()
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(text, text)))
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.content_copy_outlined),
-                            contentDescription = stringResource(R.string.copy),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            )
-        } else {
-            emptyMap()
-        }
+        enabled = enabled,
+        shapes = ListItemDefaults.segmentedShapes(index, count),
+        supportingContent = { Text(label) },
+        content = { Text(text) }
     )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun NodeRawInfo(info: String) {
+    var collapsed by retain { mutableStateOf(true) }
+    SegmentedListItem(
+        onClick = { collapsed = !collapsed },
+        shapes = ListItemDefaults.segmentedShapes(0, if (collapsed) 1 else 2),
+        trailingContent = {
+            val rotation by animateFloatAsState(if (collapsed) 0f else 180f)
+            Icon(
+                painterResource(R.drawable.keyboard_arrow_down),
+                contentDescription = null,
+                modifier = Modifier.graphicsLayer { rotationZ = rotation }
+            )
+        }
+    ) {
+        Text(stringResource(R.string.raw_info))
+    }
+    AnimatedVisibility(
+        !collapsed,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        SegmentedListItem(
+            onClick = { collapsed = !collapsed },
+            shapes = ListItemDefaults.segmentedShapes(1, 2)
+        ) {
+            SelectionContainer {
+                Text(info, fontFamily = FontFamily.Monospace)
+            }
+        }
+    }
 }

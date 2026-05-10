@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ada6f9b0373d48e3dea2f9bf77a24f94",
+    "identityHash": "3dec324063d4f3fb5d181a21e6c5490a",
     "entities": [
       {
         "tableName": "Rule",
@@ -61,7 +61,7 @@
       },
       {
         "tableName": "Node",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scan_id` INTEGER NOT NULL, `view_id` TEXT, `class_name` TEXT NOT NULL, `is_clickable` INTEGER NOT NULL, `bound_left` INTEGER NOT NULL, `bound_top` INTEGER NOT NULL, `bound_right` INTEGER NOT NULL, `bound_bottom` INTEGER NOT NULL, FOREIGN KEY(`scan_id`) REFERENCES `Scan`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scan_id` INTEGER NOT NULL, `view_id` TEXT, `class_name` TEXT NOT NULL, `is_clickable` INTEGER NOT NULL, `raw_info` TEXT NOT NULL, `bound_left` INTEGER NOT NULL, `bound_top` INTEGER NOT NULL, `bound_right` INTEGER NOT NULL, `bound_bottom` INTEGER NOT NULL, FOREIGN KEY(`scan_id`) REFERENCES `Scan`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -90,6 +90,12 @@
             "fieldPath": "isClickable",
             "columnName": "is_clickable",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rawInfo",
+            "columnName": "raw_info",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -198,7 +204,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ada6f9b0373d48e3dea2f9bf77a24f94')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3dec324063d4f3fb5d181a21e6c5490a')"
     ]
   }
 }

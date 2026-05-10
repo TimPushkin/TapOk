@@ -27,8 +27,6 @@
     <string name="delete">Delete</string>
     <string name="navigate_back">Navigate back</string>
     <string name="done">Done!</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
     <string name="on">On</string>
     <string name="off">Off</string>
 
@@ -63,11 +61,12 @@
 
     <string name="unlabeled_element">Unlabeled element</string>
     <string name="clickable_element">Clickable element</string>
-    <string name="non_clickable_element">Non-clickable element</string>
+    <string name="not_clickable_element">Not clickable element</string>
 
-    <string name="clazz">Class</string>
-    <string name="bounds">Bounds</string>
     <string name="clickable">Clickable</string>
+    <string name="not_clickable">Not clickable</string>
+    <string name="clazz">Class</string>
+    <string name="raw_info">Raw info</string>
 
     <string name="tutorial_suggestion_1">"Confused about these services? "</string>
     <string name="tutorial_suggestion_2">Re-visit the tutorial</string>

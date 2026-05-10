@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityWindowInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
@@ -188,6 +189,7 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
             windowOffsetInScreenshot(window, screenshot)
         } ?: IntOffset.Zero
         val bounds = Rect()
+        val objectStringRegex = """^[\w.]+@\p{XDigit}+""".toRegex()
         val nodes = List(recordedNodes.size) { i ->
             val nodeInfo = recordedNodes[i]
             nodeInfo.getBoundsInWindow(bounds)
@@ -197,8 +199,9 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
                 scanId,
                 nodeInfo.viewIdResourceName,
                 nodeInfo.className.toString(),
-                with(bounds) { Node.Bounds(left, top, right, bottom) },
-                nodeInfo.isClickable
+                with(bounds) { IntRect(left, top, right, bottom) },
+                nodeInfo.isClickable,
+                nodeInfo.toString().replace(objectStringRegex, "").removePrefix("; ")
             )
         }
         scanRepo.insertNodes(nodes)
