@@ -44,7 +44,6 @@ import io.github.timpushkin.tapok.R
 import kotlinx.coroutines.delay
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun ScannerPopup(
     scanning: Boolean,
     onScan: () -> Unit,
@@ -132,7 +131,6 @@ private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
 private enum class State { READY, SCANNING, SCANNED_RECENTLY }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun TrailingIcon(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val description = stringResource(R.string.toggle_button)
     TooltipBox(

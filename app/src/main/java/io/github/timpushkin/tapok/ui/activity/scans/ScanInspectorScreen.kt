@@ -57,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -65,7 +66,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -270,7 +271,10 @@ private data class BottomSheetStateWrapper(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun rememberBottomSheetStateWrapper(
-    bottomSheetState: SheetState = rememberStandardBottomSheetState(),
+    bottomSheetState: SheetState = rememberBottomSheetState(
+        initialValue = SheetValue.PartiallyExpanded,
+        enabledValues = setOf(SheetValue.PartiallyExpanded, SheetValue.Expanded)
+    ),
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) = remember(bottomSheetState, coroutineScope) {
     BottomSheetStateWrapper(bottomSheetState, coroutineScope)

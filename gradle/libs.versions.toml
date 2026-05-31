@@ -15,13 +15,13 @@ room = "2.8.4"
 
 dataStore = "1.2.1"
 
-composeBom = "2026.05.00"
+composeBom = "2026.05.01"
 activityCompose = "1.13.0"
-material3 = "1.5.0-alpha19"
-material3Adaptive = "1.3.0-beta01"
-materialComponents = "1.14.0-rc01"
+material3 = "1.5.0-alpha20"
+material3Adaptive = "1.3.0-beta02"
+materialComponents = "1.14.0"
 
-nav3 = "1.1.1"
+nav3 = "1.1.2"
 
 accompanist = "0.37.3"
 
