@@ -231,14 +231,22 @@ private fun Modifier.dottedBackground(
 
     val radiusPx = dotRadius.toPx()
     val spacingPx = spacing.toPx()
-    val horizontalDots = (size.width / spacingPx).toInt() + 1
-    val verticalDots = (size.height / spacingPx).toInt() + 1
-    for (i in 0..horizontalDots) {
-        for (j in 0..verticalDots) {
+
+    val horizontalSpacings = (size.width / spacingPx).toInt()
+    val verticalSpacings = (size.height / spacingPx).toInt()
+
+    val horizontalOffset = (size.width - (horizontalSpacings * spacingPx)) / 2
+    val verticalOffset = (size.height - (verticalSpacings * spacingPx)) / 2
+
+    for (i in 0..horizontalSpacings) {
+        for (j in 0..verticalSpacings) {
             drawCircle(
                 color = dotColor,
                 radius = radiusPx,
-                center = Offset(x = i * spacingPx, y = j * spacingPx),
+                center = Offset(
+                    x = horizontalOffset + (i * spacingPx),
+                    y = verticalOffset + (j * spacingPx)
+                ),
                 alpha = dotAlpha
             )
         }
