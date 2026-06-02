@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -64,6 +65,7 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberBottomSheetState
@@ -283,7 +285,7 @@ private fun rememberBottomSheetStateWrapper(
 @Composable
 @OptIn(ExperimentalTelephotoApi::class)
 private fun ScanDisplay(
-    screenshotFile: File,
+    screenshotFile: File?,
     nodes: List<Node>,
     selectedNode: Node?,
     onNodeClick: (Node?) -> Unit,
@@ -293,8 +295,12 @@ private fun ScanDisplay(
     val updatableNodes by rememberUpdatedState(nodes)
     val updatableOnNodeClick by rememberUpdatedState(onNodeClick)
 
-    val zoomState = rememberZoomableState(ZoomSpec(minZoomFactor = 0.75f, maxZoomFactor = 10f))
-    var viewportSize by remember { mutableStateOf(Size.Zero) }
+    val zoomState = rememberZoomableState(
+        ZoomSpec(minZoomFactor = 0.75f, maxZoomFactor = 10f)
+    ).apply {
+        // Let the node canvas transform itself, otherwise it gets pixilated when zoomed-in
+        autoApplyTransformations = false
+    }
     BoxWithConstraints(
         Modifier.zoomable(
             zoomState,
@@ -308,54 +314,16 @@ private fun ScanDisplay(
             }
         )
     ) {
-        val imageState = rememberSubSamplingImageState(
-            SubSamplingImageSource.file(screenshotFile.toOkioPath()),
-            zoomState
-        )
-        SubSamplingImage(imageState, contentDescription = null, modifier = Modifier.fillMaxSize())
+        Screenshot(screenshotFile, zoomState)
+        NodeCanvas(nodes, selectedNode, zoomState)
 
-        if (!imageState.isImageDisplayed) {
-            return@BoxWithConstraints
-        }
-        viewportSize = with(LocalDensity.current) { Size(maxWidth.toPx(), maxHeight.toPx()) }
-
-        val defaultNodeStroke = Stroke(with(LocalDensity.current) { 1.dp.toPx() })
-        val selectedNodeStroke = Stroke(with(LocalDensity.current) { 4.dp.toPx() })
-        // White color + difference blending mode = inversion of underlying pixels. A graphicsLayer
-        // is needed to have the blending mode applied to all rectangles together, if the mode would
-        // be set for each rectangle separately the inversion would cancel out on intersections.
-        Canvas(
-            modifier = Modifier
-                .matchParentSize()
-                .graphicsLayer { blendMode = BlendMode.Difference }
-        ) {
-            // Transformations need to be applied manually because SubSamplingImage disables
-            // auto-application
-            withTransform({
-                with(zoomState.contentTransformation) {
-                    val pivot = with(transformOrigin) {
-                        Offset(size.width * pivotFractionX, size.height * pivotFractionY)
-                    }
-                    translate(offset.x, offset.y)
-                    rotate(rotationZ, pivot)
-                    scale(scale.scaleX, scale.scaleY, pivot)
-                }
-            }) {
-                for (node in nodes) {
-                    drawRect(
-                        Color.White,
-                        node.fractionalBounds.topLeft,
-                        node.fractionalBounds.size,
-                        style = defaultNodeStroke
-                    )
-                }
-                selectedNode?.run {
-                    drawRect(
-                        Color.White,
-                        fractionalBounds.topLeft,
-                        fractionalBounds.size,
-                        style = selectedNodeStroke
-                    )
+        // Center on selected node
+        var prevSelectedNode by retain { mutableStateOf<Node?>(null) }
+        val viewportSize = with(LocalDensity.current) { Size(maxWidth.toPx(), maxHeight.toPx()) }
+        LaunchedEffect(selectedNode) {
+            if (selectedNode != prevSelectedNode) {
+                prevSelectedNode = selectedNode?.apply {
+                    zoomState.centerOn(fractionalBounds, viewportSize)
                 }
             }
         }
@@ -372,35 +340,11 @@ private fun ScanDisplay(
         }
     }
 
-    // Center on selected node
-    var prevSelectedNode by retain { mutableStateOf<Node?>(null) }
-    LaunchedEffect(selectedNode) {
-        if (selectedNode != prevSelectedNode) {
-            prevSelectedNode = selectedNode?.apply {
-                zoomState.centerOn(fractionalBounds, viewportSize)
-            }
-        }
-    }
-
     // Call onZoom when user zooms-in
     val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) > 0.00001f } }
     LaunchedEffect(zoomed, isInitialZoomSet) {
         if (zoomed && isInitialZoomSet) onZoomIn()
     }
-}
-
-@OptIn(ExperimentalTelephotoApi::class)
-private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
-    // ContentScale.Fit is uniform so scaleX == scaleY
-    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize).scaleX * 0.9f)
-        .takeUnless { it.isNaN() }
-        // Larger values make it hard to understand the surroundings, user can zoom more if needed
-        ?.coerceAtMost(3f)
-        // zoomTo coerces internally but only for some calculations
-        ?.coerceIn(zoomSpec.minimum.factor, zoomSpec.maximum.factor)
-        ?: return
-    val center = SpatialOffset(rect.center, CoordinateSpace.ZoomableContent)
-    zoomTo(factor, ZoomFocalPoint.moveToViewportCenter(center))
 }
 
 // Originally, scanned nodes are sorted from outer to inner. But the user does not see this
@@ -417,6 +361,103 @@ private fun Iterable<Node>.findClicked(click: Offset): Node? =
         .firstOrNull()?.second
 
 private fun Rect.area() = width * height
+
+@OptIn(ExperimentalTelephotoApi::class)
+private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
+    // ContentScale.Fit is uniform so scaleX == scaleY
+    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize).scaleX * 0.9f)
+        .takeUnless { it.isNaN() }
+        // Larger values make it hard to understand the surroundings, user can zoom more if needed
+        ?.coerceAtMost(3f)
+        // zoomTo coerces internally but only for some calculations
+        ?.coerceIn(zoomSpec.minimum.factor, zoomSpec.maximum.factor)
+        ?: return
+    val center = SpatialOffset(rect.center, CoordinateSpace.ZoomableContent)
+    zoomTo(factor, ZoomFocalPoint.moveToViewportCenter(center))
+}
+
+@Composable
+private fun Screenshot(screenshotFile: File?, zoomState: ZoomableState) {
+    if (screenshotFile != null) {
+        SubSamplingImage(
+            state = rememberSubSamplingImageState(
+                SubSamplingImageSource.file(screenshotFile.toOkioPath()),
+                zoomState
+            ),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+        )
+    } else {
+        MissingScreenshotPlaceholder(zoomState)
+    }
+}
+
+@Composable
+private fun MissingScreenshotPlaceholder(zoomState: ZoomableState) {
+    check(!zoomState.autoApplyTransformations)
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    Text(
+        text = stringResource(R.string.could_not_take_screenshot),
+        color = MaterialTheme.colorScheme.contentColorFor(containerColor).copy(alpha = 0.38f),
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .graphicsLayer {
+                val transformation = zoomState.contentTransformation
+                scaleX = transformation.scale.scaleX
+                scaleY = transformation.scale.scaleY
+                rotationZ = transformation.rotationZ
+                translationX = transformation.offset.x
+                translationY = transformation.offset.y
+                transformOrigin = transformation.transformOrigin
+            }
+            .background(containerColor)
+            .fillMaxSize()
+            .wrapContentHeight(Alignment.CenterVertically)
+    )
+}
+
+@Composable
+private fun NodeCanvas(nodes: List<Node>, selectedNode: Node?, zoomState: ZoomableState) {
+    check(!zoomState.autoApplyTransformations)
+    val defaultNodeStroke = Stroke(with(LocalDensity.current) { 1.dp.toPx() })
+    val selectedNodeStroke = Stroke(with(LocalDensity.current) { 4.dp.toPx() })
+    // White color + difference blending mode = inversion of underlying pixels. A graphicsLayer
+    // is needed to have the blending mode applied to all rectangles together, if the mode would
+    // be set for each rectangle separately the inversion would cancel out on intersections.
+    Canvas(
+        modifier = Modifier
+            .graphicsLayer { blendMode = BlendMode.Difference }
+            .fillMaxSize()
+    ) {
+        withTransform({
+            with(zoomState.contentTransformation) {
+                val pivot = with(transformOrigin) {
+                    Offset(size.width * pivotFractionX, size.height * pivotFractionY)
+                }
+                translate(offset.x, offset.y)
+                rotate(rotationZ, pivot)
+                scale(scale.scaleX, scale.scaleY, pivot)
+            }
+        }) {
+            for (node in nodes) {
+                drawRect(
+                    Color.White,
+                    node.fractionalBounds.topLeft,
+                    node.fractionalBounds.size,
+                    style = defaultNodeStroke
+                )
+            }
+            selectedNode?.run {
+                drawRect(
+                    Color.White,
+                    fractionalBounds.topLeft,
+                    fractionalBounds.size,
+                    style = selectedNodeStroke
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun TopBar(

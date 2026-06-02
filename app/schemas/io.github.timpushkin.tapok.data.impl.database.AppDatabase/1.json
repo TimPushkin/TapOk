@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3dec324063d4f3fb5d181a21e6c5490a",
+    "identityHash": "c98e938886a65d68f52da0f2e421e94b",
     "entities": [
       {
         "tableName": "Rule",
@@ -156,7 +156,7 @@
       },
       {
         "tableName": "Scan",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `app_package` TEXT NOT NULL, `timestamp` TEXT NOT NULL, `screenshot_file` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `app_package` TEXT NOT NULL, `timestamp` TEXT NOT NULL, `screenshot_file` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -179,8 +179,7 @@
           {
             "fieldPath": "screenshotFile",
             "columnName": "screenshot_file",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -204,7 +203,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3dec324063d4f3fb5d181a21e6c5490a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c98e938886a65d68f52da0f2e421e94b')"
     ]
   }
 }

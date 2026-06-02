@@ -11,5 +11,5 @@ data class Scan(
     @PrimaryKey(autoGenerate = true) val id: Long,
     @ColumnInfo(name = "app_package") val appPackage: String,
     val timestamp: Instant,
-    @ColumnInfo(name = "screenshot_file") val screenshotFile: String
+    @ColumnInfo(name = "screenshot_file") val screenshotFile: String?
 )

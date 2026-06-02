@@ -24,7 +24,7 @@ sealed interface ScanInspectorUiState {
 
     data class Loaded(
         val scan: Scan,
-        val screenshotFile: File,
+        val screenshotFile: File?,
         val nodes: List<Node>,
         val selectedNode: Node?,
         val showUnlabeledNodes: Boolean
@@ -48,8 +48,8 @@ class ScanInspectorViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val (scan, nodes) = withContext(Dispatchers.IO) { scanRepo.loadScanWithNodes(scanId) }
                 ?: return@launch // If the scan has been deleted concurrently the VM won't be used
-            val screenshotFile = withContext(Dispatchers.IO) {
-                application.screenshotFile(scan.screenshotFile)
+            val screenshotFile = scan.screenshotFile?.let { filename ->
+                withContext(Dispatchers.IO) { application.screenshotFile(filename) }
             }
             _uiState.update {
                 ScanInspectorUiState.Loaded(

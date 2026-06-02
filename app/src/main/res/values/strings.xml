@@ -55,6 +55,8 @@
 
     <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
 
+    <string name="could_not_take_screenshot">Could not take a screenshot</string>
+
     <string name="no_elements_in_scan">No targetable elements discovered :(</string>
     <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
     <string name="no_elements_match_filters">No elements match current filters</string>

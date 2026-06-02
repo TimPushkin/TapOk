@@ -16,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
-import androidx.core.graphics.createBitmap
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -150,21 +149,21 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
         return nodes
     }
 
-    private suspend fun captureScreenshot(root: AccessibilityNodeInfo): Bitmap =
+    private suspend fun captureScreenshot(root: AccessibilityNodeInfo): Bitmap? =
         suspendCancellableCoroutine { continuation ->
             val executor = Dispatchers.Default.asExecutor()
             val callback = object : TakeScreenshotCallback {
                 override fun onFailure(errorCode: Int) {
-                    Log.e(TAG, "Failed to screenshot: error $errorCode")
-                    continuation.resume(createBitmap(0, 0))
+                    Log.e(TAG, "Cannot take screenshot: ${screenshotErrorReason(errorCode)}")
+                    continuation.resume(null)
                 }
 
                 override fun onSuccess(screenshot: ScreenshotResult) {
                     val bitmap = screenshot.hardwareBuffer.use { buf ->
                         Bitmap.wrapHardwareBuffer(buf, screenshot.colorSpace)
-                    } ?: run {
-                        Log.e(TAG, "Failed to screenshot: Bitmap.wrapHardwareBuffer returned null")
-                        createBitmap(0, 0)
+                    }
+                    if (bitmap == null) {
+                        Log.e(TAG, "Cannot save screenshot: null from Bitmap.wrapHardwareBuffer")
                     }
                     continuation.resume(bitmap)
                 }
@@ -172,21 +171,36 @@ class ScannerService : AccessibilityService(), LifecycleOwner, SavedStateRegistr
             takeScreenshotOfWindow(root.windowId, executor, callback)
         }
 
+    private fun screenshotErrorReason(code: Int) = when (code) {
+        ERROR_TAKE_SCREENSHOT_INTERNAL_ERROR -> "internal Android error"
+        ERROR_TAKE_SCREENSHOT_NO_ACCESSIBILITY_ACCESS -> "no accessibility access"
+        ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT -> "too little time since previous screenshot"
+        ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY -> "invalid display ID"
+        ERROR_TAKE_SCREENSHOT_INVALID_WINDOW -> "invalid window ID"
+        ERROR_TAKE_SCREENSHOT_SECURE_WINDOW -> "window has secure content"
+        else -> "unknown error (code $code)"
+    }
+
     private suspend fun saveScan(
         appPackage: String,
         timestamp: Instant,
         recordedNodes: List<AccessibilityNodeInfo>,
-        screenshot: Bitmap
+        screenshot: Bitmap?
     ) {
-        val screenshotFile = "$appPackage-$timestamp.webp"
-        screenshotFile(screenshotFile).outputStream().use { out ->
-            screenshot.compress(Bitmap.CompressFormat.WEBP, 100, out)
+        val screenshotFile = screenshot?.run {
+            "$appPackage-$timestamp.webp".also { filename ->
+                screenshotFile(filename).outputStream().use { out ->
+                    compress(Bitmap.CompressFormat.WEBP, 100, out)
+                }
+            }
         }
 
         val scanId = scanRepo.insertScan(Scan(0, appPackage, timestamp, screenshotFile))
 
-        val offset = recordedNodes.firstOrNull()?.window?.let { window ->
-            windowOffsetInScreenshot(window, screenshot)
+        val offset = screenshot?.let { screenshot ->
+            recordedNodes.firstOrNull()?.window?.let { window ->
+                windowOffsetInScreenshot(window, screenshot)
+            }
         } ?: IntOffset.Zero
         val bounds = Rect()
         val objectStringRegex = """^[\w.]+@\p{XDigit}+""".toRegex()
