@@ -40,10 +40,7 @@ fun DeletableSegmentedListItem(
     trailingContent: @Composable (() -> Unit)? = null,
     overlineContent: @Composable (() -> Unit)? = null,
     supportingContent: @Composable (() -> Unit)? = null,
-    colors: ListItemColors = ListItemDefaults.segmentedColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = contentColorFor(MaterialTheme.colorScheme.surfaceContainer)
-    ),
+    colors: ListItemColors = SegmentedListPaneDefaults.colors(),
     content: @Composable (() -> Unit)
 ) {
     val dismissState = rememberSwipeToDismissBoxState()

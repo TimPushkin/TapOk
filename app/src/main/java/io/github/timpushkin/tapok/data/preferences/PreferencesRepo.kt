@@ -6,4 +6,8 @@ interface PreferencesRepo {
     fun isTutorialFinishedFlow(): Flow<Boolean>
 
     suspend fun markTutorialFinished()
+
+    fun shouldShowScannerOverlay(): Flow<Boolean>
+
+    suspend fun setShouldShowScannerOverlay(value: Boolean)
 }

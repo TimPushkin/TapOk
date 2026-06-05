@@ -1,25 +1,7 @@
 <resources>
     <string name="app_name">TapOk</string>
 
-    <string name="agent_service">Agent service</string>
-    <string name="agent_service_name">TapOk Agent</string>
-    <string name="agent_service_description">Performs tasks according to the rules specified in the settings.</string>
-
-    <string name="scanner_service">Scanner service</string>
-    <string name="scanner_service_name">TapOk Scanner</string>
-    <string name="scanner_service_description">Allows to scan the screen content for parts that can be referenced in the rules for TapOk Agent.</string>
-
-    <string name="scan_screen">Scan screen</string>
-    <string name="view_scans">View scans</string>
-    <string name="turn_off">Turn off</string>
-    <string name="toggle_button">Toggle button</string>
-    <string name="expanded">Expanded</string>
-    <string name="collapsed">Collapsed</string>
-
-    <string name="home">Home</string>
-    <string name="rules">Rules</string>
-    <string name="scans">Scans</string>
-
+    <!-- General -->
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="copy">Copy</string>
@@ -30,78 +12,98 @@
     <string name="on">On</string>
     <string name="off">Off</string>
 
+    <!-- System accessibility settings -->
+    <string name="agent_service_description">Scans the screen to find targetable elements and perform tasks according to the specified rules.</string>
+
+    <!-- Scanner overlay -->
+    <string name="scan_screen">Scan screen</string>
+    <string name="view_scans">View scans</string>
+    <string name="hide_overlay">Hide overlay</string>
+    <string name="toggle_button">Toggle button</string>
+    <string name="expanded">Expanded</string>
+    <string name="collapsed">Collapsed</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <!-- Agent status -->
+    <string name="open_agent_settings">Open agent settings</string>
+    <string name="agent_is_enabled">Agent is enabled</string>
+    <string name="enable_agent_to_run_automations">Enable the agent to be able to scan screen contents and run automations</string>
+    <!-- Other settings -->
+    <string name="show_scanner_overlay">Show scanner overlay</string>
+    <!-- Tutorial -->
+    <string name="view_tutorial">View tutorial</string>
+    <string name="skip_tutorial">Skip tutorial</string>
+    <string name="complete_tutorial">Complete tutorial</string>
+    <!-- Tutorial: intro -->
+    <string name="tutorial_intro_headline">Welcome!</string>
+    <string name="tutorial_intro_body_1">TapOk lets you automate taps and other actions in Android apps.</string>
+    <string name="tutorial_intro_body_2">Follow this quick tutorial to learn how to set up your first automation.</string>
+    <!-- Tutorial: step 1 -->
+    <string name="tutorial_step1_headline">Step 1: enable the TapOk service</string>
+    <string name="tutorial_step1_body_1">TapOk requires a background service to scan the screen and run your automations.</string>
+    <string name="tutorial_step1_body_2_1">Open Accessibility settings</string>
+    <string name="tutorial_step1_body_2_2">, find TapOk (it may be under \"Installed apps\" or \"Downloaded services\") and switch it on.</string>
+    <string name="tutorial_step1_body_3">Once enabled, a floating button will appear on your screen. You\'ll use it in the next step.</string>
+    <!-- Tutorial: step 2 -->
+    <string name="tutorial_step2_headline">Step 2: inspect the target app</string>
+    <string name="tutorial_step2_body_1">To write an automation you need to know what screen elements TapOk can interact with. A screen scanner is provided to help with that.</string>
+    <string name="tutorial_step2_body_2_1">"Open the app you want to automate, then tap "</string>
+    <string name="tutorial_step2_body_2_2">" on TapOk's floating button to capture a scan of the active window."</string>
+    <!-- Tutorial: step 3 -->
+    <string name="tutorial_step3_headline">Step 3: find a target</string>
+    <string name="tutorial_step3_body_1_1">"Tap "</string>
+    <string name="tutorial_step3_body_1_2">, then \"View scans\" on the floating button and open your recent scan.</string>
+    <string name="tutorial_step3_body_2">Elements that TapOk can interact with will be highlighted. Tap the element you want to automate, such as a button, to view its data.</string>
+    <string name="tutorial_step3_body_3">Look for a property that uniquely identifies it. View ID is the most reliable, but if it\'s empty, you can use a combination of package name and text or any other listed property that sets the element apart. Copy or save these values for the next step.</string>
+    <!-- Tutorial: step 4 -->
+    <string name="tutorial_step4_headline">Step 4: write a rule</string>
+    <string name="tutorial_step4_body_1">Switch to the Rules tab and create a new rule.</string>
+    <string name="tutorial_step4_body_2">Fill in the values you got on the previous step, choose an action and save the rule.</string>
+    <string name="tutorial_step4_body_3">That\'s it! TapOk will now automatically trigger that action whenever it sees an element matching your description.</string>
+
+    <!-- Rules -->
+    <string name="rules">Rules</string>
+    <!-- Placeholders for rule panes -->
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
     <string name="select_rule_or_create_one">Select a rule to edit or create a new one</string>
-
+    <!-- Rule editor: header -->
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
-
+    <!-- Rule editor: fields -->
     <string name="rule_name">Rule name</string>
     <string name="view_id">View ID</string>
     <string name="action">Action</string>
-
+    <!-- Rule editor: variants and placeholders -->
     <string name="rule_name_placeholder">My rule</string>
     <string name="view_id_placeholder">com.example.app:id/some_button</string>
     <string name="click">Click</string>
     <string name="mute_when_present">Mute when present</string>
-
+    <!-- Rule editor: invalid view ID inputs -->
     <string name="view_id_error_no_divider">:id/ is missing</string>
     <string name="view_id_error_illegal_package_segment">Illegal package segment name</string>
     <string name="view_id_error_not_enough_package_segments">At least two dot-separated segments required in package name</string>
     <string name="view_id_error_illegal_name_start">Illegal or missing first character in view name</string>
     <string name="view_id_error_illegal_name_part">Illegal non-first character in view name</string>
 
+    <!-- Scans -->
+    <string name="scans">Scans</string>
+    <!-- Placeholders for scan panes -->
     <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
-
+    <!-- Scan inspector -->
     <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
-
     <string name="could_not_take_screenshot">Could not take a screenshot</string>
-
+    <!-- Scan inspector: nodes' list's placeholders -->
     <string name="no_elements_in_scan">No targetable elements discovered :(</string>
     <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
     <string name="no_elements_match_filters">No elements match current filters</string>
-
+    <!-- Scan inspector: accessibility labels -->
     <string name="unlabeled_element">Unlabeled element</string>
     <string name="clickable_element">Clickable element</string>
     <string name="not_clickable_element">Not clickable element</string>
-
+    <!-- Scan inspector: node descriptions -->
     <string name="clickable">Clickable</string>
     <string name="not_clickable">Not clickable</string>
     <string name="clazz">Class</string>
     <string name="raw_info">Raw info</string>
-
-    <string name="tutorial_suggestion_1">"Confused about these services? "</string>
-    <string name="tutorial_suggestion_2">Re-visit the tutorial</string>
-    <string name="tutorial_suggestion_3">.</string>
-
-    <string name="skip_tutorial">Skip tutorial</string>
-    <string name="complete_tutorial">Complete tutorial</string>
-
-    <string name="tutorial_intro_headline">Welcome!</string>
-    <string name="tutorial_intro_body_1">TapOk helps you automate taps and other actions in Android apps.</string>
-    <string name="tutorial_intro_body_2">Follow these 5 steps to create your first automation.</string>
-
-    <string name="tutorial_step1_headline">Step 1: turn on Scanner</string>
-    <string name="tutorial_step1_body_1">TapOk Scanner lets you capture the current window to find elements that TapOk can interact with.</string>
-    <string name="tutorial_step1_body_2_1">Open Accessibility settings</string>
-    <string name="tutorial_step1_body_2_2">" and enable it."</string>
-
-    <string name="tutorial_step2_headline">Step 2: capture the screen</string>
-    <string name="tutorial_step2_body_1">When Scanner is on, you can see a floating button.</string>
-    <string name="tutorial_step2_body_2">Open the app you want to automate, then tap the button to save a scan of the active screen.</string>
-
-    <string name="tutorial_step3_headline">Step 3: find a target</string>
-    <string name="tutorial_step3_body_1">Go to the Scans tab and open your scan.</string>
-    <string name="tutorial_step3_body_2">TapOk can target elements with a view ID. They will be highlighted on the scan.</string>
-    <string name="tutorial_step3_body_3">Tap an element you want to automate, such as a button, and copy its view ID.</string>
-
-    <string name="tutorial_step4_headline">Step 4: create a rule</string>
-    <string name="tutorial_step4_body_1">Open the Rules tab and create a new automation rule.</string>
-    <string name="tutorial_step4_body_2">Enter the view ID you found, then choose what TapOk should do when it sees it.</string>
-
-    <string name="tutorial_step5_headline">Step 5: turn on Agent</string>
-    <string name="tutorial_step5_body_1">TapOk Agent watches the active window and applies your rules automatically.</string>
-    <string name="tutorial_step5_body_2_1">Open Accessibility settings</string>
-    <string name="tutorial_step5_body_2_2">" and enable it."</string>
-    <string name="tutorial_step5_body_3">Now TapOk automates actions according to your rules!</string>
 </resources>

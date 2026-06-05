@@ -1,4 +1,4 @@
-package io.github.timpushkin.tapok.ui.activity.home
+package io.github.timpushkin.tapok.ui.activity.settings
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -18,10 +18,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ScaffoldDefaults
@@ -33,16 +36,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
 import io.github.timpushkin.tapok.AgentService
 import io.github.timpushkin.tapok.R
-import io.github.timpushkin.tapok.ScannerService
 import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
 import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
@@ -51,7 +57,7 @@ import androidx.compose.ui.graphics.lerp as lerpGraphics
 import androidx.compose.ui.unit.lerp as lerpUnit
 
 private val TUTORIAL_PAGES: List<@Composable (Modifier) -> Unit> = listOf(
-    ::Intro, ::Step1, ::Step2, ::Step3, ::Step4, ::Step5
+    ::Intro, ::Step1, ::Step2, ::Step3, ::Step4
 )
 
 @Composable
@@ -141,6 +147,7 @@ private fun DoneButton(completed: Boolean, onClick: () -> Unit) {
 private inline fun TutorialCard(
     headline: String,
     modifier: Modifier = Modifier,
+    bodyInlineContent: Map<String, InlineTextContent> = emptyMap(),
     bodyBuilder: AnnotatedString.Builder.() -> Unit
 ) {
     // Evaluate here to be able to not crossinline bodyBuilder
@@ -177,7 +184,7 @@ private inline fun TutorialCard(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
-                Text(body)
+                Text(body, inlineContent = bodyInlineContent)
             }
         }
     }
@@ -193,8 +200,7 @@ private fun Intro(modifier: Modifier = Modifier) {
     }
 }
 
-private const val LINK_SCANNER = "scanner_service_link"
-private const val LINK_AGENT = "agent_service_link"
+private val ICON_PLACEHOLDER = Placeholder(1.em, 1.em, PlaceholderVerticalAlign.Center)
 
 @Composable
 private fun Step1(modifier: Modifier = Modifier) {
@@ -204,29 +210,53 @@ private fun Step1(modifier: Modifier = Modifier) {
 
         val context = LocalContext.current
         withLink(
-            LinkAnnotation.Clickable(LINK_SCANNER) {
-                context.openAccessibilityServiceSettings(ScannerService::class)
+            LinkAnnotation.Clickable("agent_service_link") {
+                context.openAccessibilityServiceSettings(AgentService::class)
             }
         ) { append(stringResource(R.string.tutorial_step1_body_2_1)) }
         append(stringResource(R.string.tutorial_step1_body_2_2))
+        appendParagraphSpacer()
+
+        append(stringResource(R.string.tutorial_step1_body_3))
     }
 }
 
 @Composable
 private fun Step2(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_step2_headline), modifier) {
+    val scanIconId = "scan_icon"
+    TutorialCard(
+        stringResource(R.string.tutorial_step2_headline),
+        modifier,
+        mapOf(
+            scanIconId to InlineTextContent(ICON_PLACEHOLDER) {
+                Icon(painterResource(R.drawable.screenshot_frame), contentDescription = null)
+            }
+        )
+    ) {
         append(stringResource(R.string.tutorial_step2_body_1))
         appendParagraphSpacer()
 
-        append(stringResource(R.string.tutorial_step2_body_2))
-        appendParagraphSpacer()
+        append(stringResource(R.string.tutorial_step2_body_2_1))
+        appendInlineContent(scanIconId, stringResource(R.string.scan_screen))
+        append(stringResource(R.string.tutorial_step2_body_2_2))
     }
 }
 
 @Composable
 private fun Step3(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_step3_headline), modifier) {
-        append(stringResource(R.string.tutorial_step3_body_1))
+    val expandIconId = "expand_icon"
+    TutorialCard(
+        stringResource(R.string.tutorial_step3_headline),
+        modifier,
+        mapOf(
+            expandIconId to InlineTextContent(ICON_PLACEHOLDER) {
+                Icon(painterResource(R.drawable.keyboard_arrow_down), contentDescription = null)
+            }
+        )
+    ) {
+        append(stringResource(R.string.tutorial_step3_body_1_1))
+        appendInlineContent(expandIconId, stringResource(R.string.toggle_button))
+        append(stringResource(R.string.tutorial_step3_body_1_2))
         appendParagraphSpacer()
 
         append(stringResource(R.string.tutorial_step3_body_2))
@@ -243,26 +273,8 @@ private fun Step4(modifier: Modifier = Modifier) {
         appendParagraphSpacer()
 
         append(stringResource(R.string.tutorial_step4_body_2))
-    }
-}
-
-@Composable
-private fun Step5(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_step5_headline), modifier) {
-        append(stringResource(R.string.tutorial_step5_body_1))
         appendParagraphSpacer()
 
-        val context = LocalContext.current
-        withLink(
-            LinkAnnotation.Clickable(LINK_AGENT) {
-                context.openAccessibilityServiceSettings(AgentService::class)
-            }
-        ) {
-            append(stringResource(R.string.tutorial_step5_body_2_1))
-        }
-        append(stringResource(R.string.tutorial_step5_body_2_2))
-        appendParagraphSpacer()
-
-        append(stringResource(R.string.tutorial_step5_body_3))
+        append(stringResource(R.string.tutorial_step4_body_3))
     }
 }

@@ -18,8 +18,8 @@ import io.github.timpushkin.tapok.ui.activity.ActivityUi
 import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
 import io.github.timpushkin.tapok.ui.activity.NavRoute
 import io.github.timpushkin.tapok.ui.activity.PrimaryKey
-import io.github.timpushkin.tapok.ui.activity.home.HomeKey
-import io.github.timpushkin.tapok.ui.activity.home.TutorialKey
+import io.github.timpushkin.tapok.ui.activity.settings.SettingsKey
+import io.github.timpushkin.tapok.ui.activity.settings.TutorialKey
 import io.github.timpushkin.tapok.ui.activity.rememberNavigator
 import io.github.timpushkin.tapok.ui.activity.scans.ScanListKey
 import io.github.timpushkin.tapok.ui.theme.TapOkTheme
@@ -30,7 +30,7 @@ import javax.inject.Inject
 
 private const val TAG = "MainActivity"
 
-private val DefaultNavRoute = NavRoute(HomeKey, emptyList())
+private val DefaultNavRoute = NavRoute(SettingsKey, emptyList())
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
             splashScreen.setKeepOnScreenCondition { initialRoute == null }
             lifecycleScope.launch {
                 initialRoute = if (!preferencesRepo.isTutorialFinishedFlow().first()) {
-                    NavRoute(HomeKey, listOf(TutorialKey))
+                    NavRoute(SettingsKey, listOf(TutorialKey))
                 } else {
                     DefaultNavRoute
                 }

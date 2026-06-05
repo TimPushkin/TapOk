@@ -42,13 +42,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import io.github.timpushkin.tapok.R
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ScannerPopup(
     scanning: Boolean,
     onScan: () -> Unit,
     onViewScans: () -> Unit,
-    onTurnOff: () -> Unit,
+    onHide: () -> Unit,
     onDrag: (Offset) -> Unit
 ) {
     Box(Modifier.draggable2D(rememberDraggable2DState(onDrag))) {
@@ -59,7 +60,7 @@ fun ScannerPopup(
         )
         DropdownMenu(expanded = checked, onDismissRequest = { checked = false }) {
             ViewScansItem(onViewScans)
-            TurnOffItem(onTurnOff)
+            HideItem(onHide)
         }
     }
 }
@@ -92,7 +93,7 @@ private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
                     state = State.SCANNING
                 } else if (!scanning && state != State.READY) {
                     state = State.SCANNED_RECENTLY
-                    delay(1000)
+                    delay(1.seconds)
                     state = State.READY
                 }
             }
@@ -178,13 +179,13 @@ private fun ViewScansItem(onClick: () -> Unit) {
 }
 
 @Composable
-private fun TurnOffItem(onClick: () -> Unit) {
+private fun HideItem(onClick: () -> Unit) {
     DropdownMenuItem(
-        text = { Text(stringResource(R.string.turn_off)) },
+        text = { Text(stringResource(R.string.hide_overlay)) },
         onClick = onClick,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.mode_off_on),
+                painterResource(R.drawable.visibility_off_outlined),
                 contentDescription = null
             )
         },

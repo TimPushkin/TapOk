@@ -1,4 +1,4 @@
-package io.github.timpushkin.tapok.ui.activity.home
+package io.github.timpushkin.tapok.ui.activity.settings
 
 import dagger.Module
 import dagger.Provides
@@ -12,11 +12,11 @@ import io.github.timpushkin.tapok.ui.activity.SecondaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object HomeKey : PrimaryKey(
+data object SettingsKey : PrimaryKey(
     index = 1,
-    label = R.string.home,
-    icon = R.drawable.home_outlined,
-    iconSelected = R.drawable.home_filled
+    label = R.string.settings,
+    icon = R.drawable.settings_outlined,
+    iconSelected = R.drawable.settings_filled
 )
 
 @Serializable
@@ -24,15 +24,15 @@ data object TutorialKey : SecondaryKey(fullScreen = true)
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-object HomeModule {
+object SettingsModule {
     @Provides
     @IntoSet
-    fun providePrimaryKey(): PrimaryKey = HomeKey
+    fun providePrimaryKey(): PrimaryKey = SettingsKey
 
     @Provides
     @IntoSet
     fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
-        entry<HomeKey> { HomePane(openTutorial = { navigator.navigateTo(TutorialKey) }) }
+        entry<SettingsKey> { SettingsPane(openTutorial = { navigator.navigateTo(TutorialKey) }) }
         entry<TutorialKey> { TutorialScreen(onDone = navigator::navigateBack) }
     }
 }
