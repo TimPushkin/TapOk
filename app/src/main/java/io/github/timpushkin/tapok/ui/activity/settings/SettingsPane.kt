@@ -12,7 +12,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -114,7 +113,8 @@ private fun AgentStatusItem(
         } else {
             SegmentedListPaneDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = contentColorFor(MaterialTheme.colorScheme.errorContainer)
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                contentVariantColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f)
             )
         },
         modifier = Modifier.fillMaxSize()

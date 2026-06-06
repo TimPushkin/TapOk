@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +37,15 @@ object SegmentedListPaneDefaults {
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     fun colors(
         containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor: Color = contentColorFor(containerColor)
+        contentColor: Color = MaterialTheme.colorScheme.onSurface,
+        contentVariantColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
     ) = ListItemDefaults.segmentedColors(
         containerColor = containerColor,
-        contentColor = contentColor
+        contentColor = contentColor,
+        leadingContentColor = contentVariantColor,
+        trailingContentColor = contentVariantColor,
+        overlineContentColor = contentVariantColor,
+        supportingContentColor = contentVariantColor
     )
 
     @Composable
