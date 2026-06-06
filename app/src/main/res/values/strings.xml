@@ -11,6 +11,7 @@
     <string name="done">Done!</string>
     <string name="on">On</string>
     <string name="off">Off</string>
+    <string name="accept_and_proceed">Accept and proceed</string>
 
     <!-- System accessibility settings -->
     <string name="agent_service_description">Scans the screen to find targetable elements and perform tasks according to the specified rules.</string>
@@ -61,6 +62,12 @@
     <string name="tutorial_step4_body_1">Switch to the Rules tab and create a new rule.</string>
     <string name="tutorial_step4_body_2">Fill in the values you got on the previous step, choose an action and save the rule.</string>
     <string name="tutorial_step4_body_3">That\'s it! TapOk will now automatically trigger that action whenever it sees an element matching your description.</string>
+    <!-- Accessibility API usage disclosure -->
+    <string name="accessibility_api_usage">Accessibility API usage</string>
+    <string name="accessibility_api_usage_disclosure_body_1">To automate your actions, TapOk uses the Accessibility API:</string>
+    <string name="accessibility_api_usage_disclosure_body_2">analyzes the active window\'s contents and identifies targetable elements</string>
+    <string name="accessibility_api_usage_disclosure_body_3">performs clicks and gestures on your behalf according to rules you specify</string>
+    <string name="accessibility_api_usage_disclosure_body_4">The data is processed within TapOk, locally on your device. It is not transmitted to external servers or third parties.</string>
 
     <!-- Rules -->
     <string name="rules">Rules</string>

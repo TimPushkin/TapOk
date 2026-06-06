@@ -32,7 +32,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,6 +51,8 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.AgentService
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
@@ -56,12 +62,10 @@ import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
 import androidx.compose.ui.unit.lerp as lerpUnit
 
-private val TUTORIAL_PAGES: List<@Composable (Modifier) -> Unit> = listOf(
-    ::Intro, ::Step1, ::Step2, ::Step3, ::Step4
-)
+private const val TUTORIAL_PAGES_NUm = 5
 
 @Composable
-fun TutorialScreen(onDone: () -> Unit) {
+fun TutorialScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -71,7 +75,7 @@ fun TutorialScreen(onDone: () -> Unit) {
             .padding(ScaffoldDefaults.contentWindowInsets.asPaddingValues())
             .consumeWindowInsets(ScaffoldDefaults.contentWindowInsets)
     ) {
-        val state = rememberPagerState { TUTORIAL_PAGES.size }
+        val state = rememberPagerState { TUTORIAL_PAGES_NUm }
 
         Column(
             modifier = Modifier.weight(1f),
@@ -80,7 +84,19 @@ fun TutorialScreen(onDone: () -> Unit) {
         ) {
             HorizontalPager(state, modifier = Modifier.weight(1f, fill = false)) { i ->
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TUTORIAL_PAGES[i](Modifier.padding(DefaultPaneSpacing))
+                    when (i) {
+                        0 -> Intro()
+                        1 -> {
+                            val a11yUsageAccepted by viewModel.isAccessibilityUsageAccepted
+                                .collectAsStateWithLifecycle()
+                            Step1(a11yUsageAccepted, viewModel::markAccessibilityUsageAccepted)
+                        }
+
+                        2 -> Step2()
+                        3 -> Step3()
+                        4 -> Step4()
+                        else -> throw IllegalArgumentException("Excess tutorial page")
+                    }
                 }
             }
             PageIndicator(state)
@@ -146,7 +162,6 @@ private fun DoneButton(completed: Boolean, onClick: () -> Unit) {
 // inline to allow composable code in the text builder
 private inline fun TutorialCard(
     headline: String,
-    modifier: Modifier = Modifier,
     bodyInlineContent: Map<String, InlineTextContent> = emptyMap(),
     bodyBuilder: AnnotatedString.Builder.() -> Unit
 ) {
@@ -158,7 +173,9 @@ private inline fun TutorialCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        modifier = modifier.size(size)
+        modifier = Modifier
+            .padding(DefaultPaneSpacing)
+            .size(size)
     ) {
         Column {
             // TODO: place some graphics
@@ -191,8 +208,8 @@ private inline fun TutorialCard(
 }
 
 @Composable
-private fun Intro(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_intro_headline), modifier) {
+private fun Intro() {
+    TutorialCard(stringResource(R.string.tutorial_intro_headline)) {
         append(stringResource(R.string.tutorial_intro_body_1))
         appendParagraphSpacer()
 
@@ -203,15 +220,32 @@ private fun Intro(modifier: Modifier = Modifier) {
 private val ICON_PLACEHOLDER = Placeholder(1.em, 1.em, PlaceholderVerticalAlign.Center)
 
 @Composable
-private fun Step1(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_step1_headline), modifier) {
+private fun Step1(accessibilityUsageAccepted: Boolean, onAccessibilityUsageAccepted: () -> Unit) {
+    val context = LocalContext.current
+
+    var showAccessibilityDisclosureDialog by retain { mutableStateOf(false) }
+    if (showAccessibilityDisclosureDialog) {
+        AccessibilityDisclosureDialog(
+            onAccept = {
+                onAccessibilityUsageAccepted()
+                context.openAccessibilityServiceSettings(AgentService::class)
+            },
+            onHide = { showAccessibilityDisclosureDialog = false }
+        )
+    }
+
+    TutorialCard(stringResource(R.string.tutorial_step1_headline)) {
         append(stringResource(R.string.tutorial_step1_body_1))
         appendParagraphSpacer()
 
-        val context = LocalContext.current
+        val updatableAccessibilityUsageAccepted by rememberUpdatedState(accessibilityUsageAccepted)
         withLink(
             LinkAnnotation.Clickable("agent_service_link") {
-                context.openAccessibilityServiceSettings(AgentService::class)
+                if (updatableAccessibilityUsageAccepted) {
+                    context.openAccessibilityServiceSettings(AgentService::class)
+                } else {
+                    showAccessibilityDisclosureDialog = true
+                }
             }
         ) { append(stringResource(R.string.tutorial_step1_body_2_1)) }
         append(stringResource(R.string.tutorial_step1_body_2_2))
@@ -222,11 +256,10 @@ private fun Step1(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Step2(modifier: Modifier = Modifier) {
+private fun Step2() {
     val scanIconId = "scan_icon"
     TutorialCard(
         stringResource(R.string.tutorial_step2_headline),
-        modifier,
         mapOf(
             scanIconId to InlineTextContent(ICON_PLACEHOLDER) {
                 Icon(painterResource(R.drawable.screenshot_frame), contentDescription = null)
@@ -243,11 +276,10 @@ private fun Step2(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Step3(modifier: Modifier = Modifier) {
+private fun Step3() {
     val expandIconId = "expand_icon"
     TutorialCard(
         stringResource(R.string.tutorial_step3_headline),
-        modifier,
         mapOf(
             expandIconId to InlineTextContent(ICON_PLACEHOLDER) {
                 Icon(painterResource(R.drawable.keyboard_arrow_down), contentDescription = null)
@@ -267,8 +299,8 @@ private fun Step3(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Step4(modifier: Modifier = Modifier) {
-    TutorialCard(stringResource(R.string.tutorial_step4_headline), modifier) {
+private fun Step4() {
+    TutorialCard(stringResource(R.string.tutorial_step4_headline)) {
         append(stringResource(R.string.tutorial_step4_body_1))
         appendParagraphSpacer()
 

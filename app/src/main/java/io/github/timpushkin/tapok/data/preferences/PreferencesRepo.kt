@@ -7,6 +7,10 @@ interface PreferencesRepo {
 
     suspend fun markTutorialFinished()
 
+    fun isAccessibilityUsageAccepted(): Flow<Boolean>
+
+    suspend fun markAccessibilityUsageAccepted()
+
     fun shouldShowScannerOverlay(): Flow<Boolean>
 
     suspend fun setShouldShowScannerOverlay(value: Boolean)

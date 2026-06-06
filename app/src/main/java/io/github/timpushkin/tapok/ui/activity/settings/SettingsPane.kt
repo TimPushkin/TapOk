@@ -15,6 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +41,11 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
             contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
             modifier = Modifier.consumeWindowInsets(padding)
         ) {
-            item { AgentStatusItem(0, 2) }
+            item {
+                val a11yUsageAccepted by viewModel.isAccessibilityUsageAccepted
+                    .collectAsStateWithLifecycle()
+                AgentStatusItem(0, 2, a11yUsageAccepted, viewModel::markAccessibilityUsageAccepted)
+            }
             item {
                 val serviceEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
                 val shouldShowScannerOverlay by viewModel.shouldShowScannerOverlay
@@ -59,9 +67,27 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun AgentStatusItem(index: Int, count: Int) {
+private fun AgentStatusItem(
+    index: Int,
+    count: Int,
+    accessibilityUsageAccepted: Boolean,
+    onAccessibilityUsageAccepted: () -> Unit
+) {
     val context = LocalContext.current
+
+    var showAccessibilityDisclosureDialog by retain { mutableStateOf(false) }
+    if (showAccessibilityDisclosureDialog) {
+        AccessibilityDisclosureDialog(
+            onAccept = {
+                onAccessibilityUsageAccepted()
+                context.openAccessibilityServiceSettings(AgentService::class)
+            },
+            onHide = { showAccessibilityDisclosureDialog = false }
+        )
+    }
+
     val agentEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
+    val updatableAccessibilityUsageAccepted by rememberUpdatedState(accessibilityUsageAccepted)
     SegmentedListItem(
         content = { Text(stringResource(R.string.open_agent_settings)) },
         supportingContent = {
@@ -75,7 +101,13 @@ private fun AgentStatusItem(index: Int, count: Int) {
         trailingContent = {
             Icon(painterResource(R.drawable.open_in_new), contentDescription = null)
         },
-        onClick = { context.openAccessibilityServiceSettings(AgentService::class) },
+        onClick = {
+            if (updatableAccessibilityUsageAccepted) {
+                context.openAccessibilityServiceSettings(AgentService::class)
+            } else {
+                showAccessibilityDisclosureDialog = true
+            }
+        },
         shapes = ListItemDefaults.segmentedShapes(index, count),
         colors = if (agentEnabled) {
             SegmentedListPaneDefaults.colors()

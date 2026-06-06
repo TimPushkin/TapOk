@@ -13,11 +13,23 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val preferencesRepo: PreferencesRepo
 ) : ViewModel() {
+    val isAccessibilityUsageAccepted = preferencesRepo.isAccessibilityUsageAccepted().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val shouldShowScannerOverlay = preferencesRepo.shouldShowScannerOverlay().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
+
+    fun markAccessibilityUsageAccepted() {
+        viewModelScope.launch {
+            preferencesRepo.markAccessibilityUsageAccepted()
+        }
+    }
 
     fun setShouldShowScannerOverlay(visible: Boolean) {
         viewModelScope.launch {

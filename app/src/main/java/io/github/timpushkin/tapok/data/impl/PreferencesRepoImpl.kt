@@ -12,6 +12,10 @@ import javax.inject.Inject
 private val IS_TUTORIAL_FINISHED_KEY = booleanPreferencesKey("is_tutorial_finished")
 private const val IS_TUTORIAL_FINISHED_DEFAULT = false
 
+private val IS_ACCESSIBILITY_USAGE_ACCEPTED_KEY =
+    booleanPreferencesKey("is_accessibility_usage_accepted")
+private const val IS_ACCESSIBILITY_USAGE_ACCEPTED_DEFAULT = false
+
 private val SHOULD_SHOW_SCANNER_OVERLAY_KEY = booleanPreferencesKey("should_show_scanner_overlay")
 private const val SHOULD_SHOW_SCANNER_OVERLAY_DEFAULT = true
 
@@ -30,6 +34,13 @@ class PreferencesRepoImpl @Inject constructor(
 
     override suspend fun markTutorialFinished() {
         setValue(IS_TUTORIAL_FINISHED_KEY, true)
+    }
+
+    override fun isAccessibilityUsageAccepted() =
+        getValueFlow(IS_ACCESSIBILITY_USAGE_ACCEPTED_KEY, IS_ACCESSIBILITY_USAGE_ACCEPTED_DEFAULT)
+
+    override suspend fun markAccessibilityUsageAccepted() {
+        setValue(IS_ACCESSIBILITY_USAGE_ACCEPTED_KEY, true)
     }
 
     override fun shouldShowScannerOverlay() =
