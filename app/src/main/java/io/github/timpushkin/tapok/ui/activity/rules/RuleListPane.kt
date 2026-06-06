@@ -23,7 +23,7 @@ import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
-import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 
 @Composable
@@ -49,7 +49,7 @@ fun RuleListPane(
             )
         } else {
             SegmentedListPane(
-                contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
+                contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
                 modifier = Modifier
                     .consumeWindowInsets(padding)
                     .requiredMinPaneWidth()

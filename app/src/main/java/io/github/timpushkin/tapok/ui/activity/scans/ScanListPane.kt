@@ -29,7 +29,7 @@ import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
-import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import java.time.DateTimeException
 import java.time.ZoneId
 import kotlin.time.Instant
@@ -53,7 +53,7 @@ fun ScanListPane(
             )
         } else {
             SegmentedListPane(
-                contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
+                contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
                 modifier = Modifier.consumeWindowInsets(padding)
             ) {
                 val scans = uiState.scans.sortedByDescending { it.timestamp }

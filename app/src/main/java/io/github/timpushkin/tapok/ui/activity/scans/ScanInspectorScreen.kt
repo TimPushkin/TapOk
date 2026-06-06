@@ -109,14 +109,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.scans.Node
-import io.github.timpushkin.tapok.ui.theme.DefaultSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -551,7 +551,7 @@ private fun ShowUnlabeledNodesSwitch(
 private fun BottomSheetHandle() {
     Surface(
         modifier = Modifier
-            .padding(vertical = DefaultSpacing)
+            .padding(vertical = DefaultInnerSpacing)
             .size(width = 32.dp, height = 4.dp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = MaterialTheme.shapes.extraLarge
@@ -583,7 +583,7 @@ private fun EmptyNodeListPlaceholder(filtered: Boolean) {
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
-            .padding(horizontal = 2 * DefaultSpacing, vertical = DefaultSpacing)
+            .padding(DefaultOuterSpacing)
     ) {
         Text(
             buildAnnotatedString {
@@ -667,17 +667,18 @@ private fun Node.horizontalBoundsAsString() = with(bounds) { "x=$left–${right}
 private fun Node.verticalBoundsAsString() = with(bounds) { "y=$top–${bottom}px" }
 
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescription(node: Node, onClose: () -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(DefaultSpacing / 2),
+        verticalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
         modifier = Modifier
             .consumeWindowInsets(PaddingValues(bottom = WindowInsets.safeContentBottomDp()))
-            .padding(horizontal = DefaultSpacing * 2)
+            .padding(horizontal = DefaultOuterSpacing)
             .verticalScroll(rememberScrollState())
     ) {
         NodeDescriptionHeader(node.className.substringAfterLast('.'), onClose)
 
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing / 2)) {
             CompositionLocalProvider(
                 LocalTextStyle provides MaterialTheme.typography.labelMedium,
                 LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
@@ -694,21 +695,19 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
             }
         }
 
-        Spacer(Modifier.height(DefaultSpacing))
-
-        NodeDescriptionElement(
-            node.viewId ?: "—",
-            stringResource(R.string.view_id),
-            index = 0, count = 2,
-            enabled = node.viewId != null
-        )
-        NodeDescriptionElement(
-            node.className,
-            stringResource(R.string.clazz),
-            index = 1, count = 2
-        )
-
-        Spacer(Modifier.height(DefaultSpacing))
+        Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+            NodeDescriptionElement(
+                node.viewId ?: "—",
+                stringResource(R.string.view_id),
+                index = 0, count = 2,
+                enabled = node.viewId != null
+            )
+            NodeDescriptionElement(
+                node.className,
+                stringResource(R.string.clazz),
+                index = 1, count = 2
+            )
+        }
 
         NodeRawInfo(node.rawInfo)
 
@@ -775,31 +774,34 @@ private fun NodeDescriptionElement(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeRawInfo(info: String) {
     var collapsed by retain { mutableStateOf(true) }
-    SegmentedListItem(
-        onClick = { collapsed = !collapsed },
-        shapes = ListItemDefaults.segmentedShapes(0, if (collapsed) 1 else 2),
-        trailingContent = {
-            val rotation by animateFloatAsState(if (collapsed) 0f else 180f)
-            Icon(
-                painterResource(R.drawable.keyboard_arrow_down),
-                contentDescription = null,
-                modifier = Modifier.graphicsLayer { rotationZ = rotation }
-            )
-        }
-    ) {
-        Text(stringResource(R.string.raw_info))
-    }
-    AnimatedVisibility(
-        !collapsed,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically()
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
         SegmentedListItem(
             onClick = { collapsed = !collapsed },
-            shapes = ListItemDefaults.segmentedShapes(1, 2)
+            shapes = ListItemDefaults.segmentedShapes(0, if (collapsed) 1 else 2),
+            trailingContent = {
+                val rotation by animateFloatAsState(if (collapsed) 0f else 180f)
+                Icon(
+                    painterResource(R.drawable.keyboard_arrow_down),
+                    contentDescription = null,
+                    modifier = Modifier.graphicsLayer { rotationZ = rotation }
+                )
+            }
         ) {
-            SelectionContainer {
-                Text(info, fontFamily = FontFamily.Monospace)
+            Text(stringResource(R.string.raw_info))
+        }
+
+        AnimatedVisibility(
+            !collapsed,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+        ) {
+            SegmentedListItem(
+                onClick = { collapsed = !collapsed },
+                shapes = ListItemDefaults.segmentedShapes(1, 2)
+            ) {
+                SelectionContainer {
+                    Text(info, fontFamily = FontFamily.Monospace)
+                }
             }
         }
     }

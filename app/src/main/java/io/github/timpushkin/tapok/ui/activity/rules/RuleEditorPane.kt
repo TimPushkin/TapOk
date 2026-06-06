@@ -50,7 +50,8 @@ import io.github.timpushkin.tapok.data.rules.RuleNameValidity
 import io.github.timpushkin.tapok.data.rules.ViewIdValidity
 import io.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
-import io.github.timpushkin.tapok.ui.theme.DefaultSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -97,11 +98,10 @@ fun RuleEditorPane(
             vm.ruleNameState,
             vm.viewIdState,
             vm::selectAction,
-            contentPadding = PaddingValues(DefaultSpacing),
+            contentPadding = PaddingValues(DefaultOuterSpacing),
             modifier = Modifier
                 .padding(padding)
                 .consumeWindowInsets(padding)
-                .padding(horizontal = DefaultSpacing)
         )
     }
 }
@@ -144,7 +144,7 @@ private fun EditableFields(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DefaultSpacing),
+        verticalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
         contentPadding = contentPadding,
         modifier = modifier
     ) {

@@ -55,7 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.AgentService
 import io.github.timpushkin.tapok.R
-import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
 import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import kotlin.math.absoluteValue
@@ -79,7 +79,8 @@ fun TutorialScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement =
+                Arrangement.spacedBy(DefaultOuterSpacing, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalPager(state, modifier = Modifier.weight(1f, fill = false)) { i ->
@@ -111,7 +112,7 @@ fun TutorialScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 private fun PageIndicator(state: PagerState) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.padding(DefaultPaneSpacing)
+        modifier = Modifier.padding(horizontal = DefaultOuterSpacing)
     ) {
         repeat(state.pageCount) { page ->
             // How close is this page to being the current, from 0 to 1, 1 means being the current
@@ -143,8 +144,8 @@ private fun DoneButton(completed: Boolean, onClick: () -> Unit) {
     Crossfade(
         completed,
         modifier = Modifier
+            .padding(DefaultOuterSpacing)
             .width(256.dp)
-            .padding(vertical = DefaultPaneSpacing)
     ) { completed ->
         if (completed) {
             Button(onClick, modifier = Modifier.fillMaxWidth()) {
@@ -174,7 +175,7 @@ private inline fun TutorialCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
-            .padding(DefaultPaneSpacing)
+            .padding(horizontal = DefaultOuterSpacing)
             .size(size)
     ) {
         Column {

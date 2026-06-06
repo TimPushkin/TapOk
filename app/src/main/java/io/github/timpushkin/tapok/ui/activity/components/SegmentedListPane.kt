@@ -15,13 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.times
-import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun SegmentedListPane(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(DefaultPaneSpacing),
+    contentPadding: PaddingValues = PaddingValues(DefaultOuterSpacing),
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
@@ -47,6 +47,6 @@ object SegmentedListPaneDefaults {
     @Composable
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     fun GroupSpacer() {
-        Spacer(Modifier.height(DefaultPaneSpacing - 2 * ListItemDefaults.SegmentedGap))
+        Spacer(Modifier.height(DefaultOuterSpacing - 2 * ListItemDefaults.SegmentedGap))
     }
 }

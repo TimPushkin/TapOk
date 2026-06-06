@@ -30,7 +30,7 @@ import io.github.timpushkin.tapok.AgentService
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
-import io.github.timpushkin.tapok.ui.theme.DefaultPaneSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 
@@ -38,7 +38,7 @@ import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     Scaffold(containerColor = Color.Transparent) { padding ->
         SegmentedListPane(
-            contentPadding = PaddingValues(DefaultPaneSpacing) + padding,
+            contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
             modifier = Modifier.consumeWindowInsets(padding)
         ) {
             item {
