@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.times
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.timpushkin.tapok.AgentService
+import io.github.timpushkin.tapok.agent.AgentService
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer

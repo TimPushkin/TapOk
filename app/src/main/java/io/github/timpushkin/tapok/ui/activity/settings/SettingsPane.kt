@@ -25,7 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.timpushkin.tapok.AgentService
+import io.github.timpushkin.tapok.agent.AgentService
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults

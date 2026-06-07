@@ -1,4 +1,4 @@
-package io.github.timpushkin.tapok
+package io.github.timpushkin.tapok.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,13 +14,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timpushkin.tapok.data.preferences.PreferencesRepo
-import io.github.timpushkin.tapok.ui.activity.ActivityUi
-import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
-import io.github.timpushkin.tapok.ui.activity.NavRoute
-import io.github.timpushkin.tapok.ui.activity.PrimaryKey
 import io.github.timpushkin.tapok.ui.activity.settings.SettingsKey
 import io.github.timpushkin.tapok.ui.activity.settings.TutorialKey
-import io.github.timpushkin.tapok.ui.activity.rememberNavigator
 import io.github.timpushkin.tapok.ui.activity.scans.ScanListKey
 import io.github.timpushkin.tapok.ui.theme.TapOkTheme
 import kotlinx.coroutines.channels.Channel
@@ -79,7 +74,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
-                ActivityUi(navigator, entryProviderInstallers)
+                MainUi(navigator, entryProviderInstallers)
                 LaunchedEffect(Unit) {
                     for (intent in newIntentChannel) {
                         val (primary, secondaries) = parseNavRoute(intent) ?: continue

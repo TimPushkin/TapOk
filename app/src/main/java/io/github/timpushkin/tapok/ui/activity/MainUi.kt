@@ -26,7 +26,7 @@ import io.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExp
 
 @Composable
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-fun ActivityUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProviderInstaller>) {
+fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProviderInstaller>) {
     val targetNavValue = rememberCurrentNavScaffoldValue(navigator.currentKey)
     val navState = rememberNavigationSuiteScaffoldState(targetNavValue)
     LaunchedEffect(targetNavValue) { if (navState.targetValue != targetNavValue) navState.toggle() }
