@@ -2,7 +2,6 @@ package io.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.MapColumn
 import androidx.room.Query
 import androidx.room.Upsert
 import io.github.timpushkin.tapok.data.rules.Rule
@@ -16,9 +15,6 @@ interface RuleDao : RuleRepo {
 
     @Query("SELECT * FROM rule WHERE rule.id = :ruleId")
     override suspend fun loadRule(ruleId: Long): Rule
-
-    @Query("SELECT * FROM rule")
-    override fun loadAllRulesByPackage(): Flow<Map<@MapColumn("package_name") String, List<Rule>>>
 
     @Upsert
     override suspend fun insertOrUpdateRule(rule: Rule): Long

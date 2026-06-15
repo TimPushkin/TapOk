@@ -73,6 +73,10 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
         preferencesRepo.shouldShowScannerOverlay()
             .onEach { shouldShow -> if (shouldShow) showScannerOverlay() else hideScannerOverlay() }
             .launchIn(lifecycle.coroutineScope)
+
+        automator.selectedPackagesFlow
+            .onEach { serviceInfo = serviceInfo.apply { packageNames = it.toTypedArray() } }
+            .launchIn(lifecycle.coroutineScope)
     }
 
     private fun showScannerOverlay() {
@@ -133,7 +137,7 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        automator.process(event)
+        automator.scheduleProcessing(event)
     }
 
     override fun onInterrupt() {}

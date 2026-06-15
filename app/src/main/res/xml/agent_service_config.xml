@@ -1,9 +1,31 @@
+<!--
+accessibilityEventTypes:
+- typeWindowsChanged - for window removals and change of the active window when only that is scanned
+- typeWindowStateChanged - for the initial draw of a window
+- typeWindowContentChanged - for consequent changes in a window
+
+accessibilityFeedbackType: feedbackGeneric - there is feedback, but it depends on user's rules
+
+accessibilityFlags:
+- flagDefault - step back if there are more specific services
+- flagReportViewIds - required to search by view ID for view-ID-based rules
+- flagRetrieveInteractiveWindows - required for scanning, e.g. to get window bounds
+
+canRetrieveWindowContent - required to retrieve active window's root node
+
+canTakeScreenshot - required to take screenshots for scans
+
+notificationTimeout - TODO: make this configurable, 0 will be better with another implementation
+
+packageNames - empty to receive no events by default, changed dynamically based on user's rules
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowContentChanged"
+    android:accessibilityEventTypes="typeWindowsChanged|typeWindowStateChanged|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault|flagReportViewIds|flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"
     android:canTakeScreenshot="true"
     android:description="@string/agent_service_description"
+    android:notificationTimeout="100"
     android:packageNames=""
     android:settingsActivity="io.github.timpushkin.tapok.MainActivity" />

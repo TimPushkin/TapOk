@@ -7,8 +7,6 @@ interface RuleRepo {
 
     suspend fun loadRule(ruleId: Long): Rule
 
-    fun loadAllRulesByPackage(): Flow<Map<String, List<Rule>>>
-
     suspend fun insertOrUpdateRule(rule: Rule): Long
 
     suspend fun deleteRule(rule: Rule)
