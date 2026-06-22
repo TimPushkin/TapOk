@@ -1,6 +1,5 @@
 package io.github.timpushkin.tapok.ui.activity.rules
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -11,15 +10,20 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.rules.Rule
-import io.github.timpushkin.tapok.data.rules.RuleNameValidity
+import io.github.timpushkin.tapok.data.rules.RuleInputValidity
 import io.github.timpushkin.tapok.data.rules.RuleRepo
-import io.github.timpushkin.tapok.data.rules.ViewIdValidity
+import io.github.timpushkin.tapok.data.rules.validateRule
+import io.github.timpushkin.tapok.data.rules.validateRuleClassName
+import io.github.timpushkin.tapok.data.rules.validateRuleContainedText
 import io.github.timpushkin.tapok.data.rules.validateRuleName
-import io.github.timpushkin.tapok.data.rules.validateViewId
+import io.github.timpushkin.tapok.data.rules.validateRulePackageName
+import io.github.timpushkin.tapok.data.rules.validateRuleViewId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -31,6 +35,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "RuleEditorViewModel"
 
@@ -38,19 +43,15 @@ sealed interface RuleEditorUiState {
     object Loading : RuleEditorUiState
 
     data class Loaded(
-        val originalRule: Rule? = null,
+        val ruleId: Long?,
         val action: Rule.Action = Rule.Action.CLICK,
-        val ruleNameValidity: RuleNameValidity? = null,
-        val viewIdValidity: ViewIdValidity? = null
-    ) : RuleEditorUiState {
-        fun allowsSaving() = ruleNameValidity == RuleNameValidity.OK &&
-                viewIdValidity == ViewIdValidity.OK
-    }
+        val textInputValidity: RuleInputValidity = RuleInputValidity.AllOK,
+        val isSaving: Boolean = false
+    ) : RuleEditorUiState
 }
 
 @HiltViewModel(assistedFactory = RuleEditorViewModelFactory::class)
 class RuleEditorViewModel @AssistedInject constructor(
-    application: Application,
     private val ruleRepo: RuleRepo,
     @Assisted ruleId: Long?
 ) : ViewModel() {
@@ -59,84 +60,153 @@ class RuleEditorViewModel @AssistedInject constructor(
     )
     val uiState = _uiState.asStateFlow()
 
-    val ruleNameState = TextFieldState()
+    // It's not possible to use (isSaving true -> false + validity check) of uiState as a
+    // notification since StateFlow may skip values because of conflation
+    private val _savingNotificationChannel = Channel<Unit>(
+        capacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val savingNotificationChannel: ReceiveChannel<Unit> = _savingNotificationChannel
+
+    val nameState = TextFieldState()
+    val packageNameState = TextFieldState()
     val viewIdState = TextFieldState()
+    val containedTextState = TextFieldState()
+    val classNameState = TextFieldState()
 
     @OptIn(FlowPreview::class)
     private fun <T> launchTextValidationFlow(
         textState: TextFieldState,
         validate: (CharSequence) -> T,
-        onChange: RuleEditorUiState.Loaded.() -> RuleEditorUiState.Loaded,
-        onValidated: RuleEditorUiState.Loaded.(T) -> RuleEditorUiState.Loaded
+        onChange: RuleInputValidity.() -> RuleInputValidity,
+        onValidated: RuleInputValidity.(T) -> RuleInputValidity
     ) {
         snapshotFlow { textState.text }
-            .onEach { _ -> _uiState.updateWhenLoaded { it.onChange() } }
-            .flowOn(Dispatchers.Main.immediate)
-            .debounce(500)
+            .onEach { _ ->
+                _uiState.updateIfLoaded {
+                    check(!it.isSaving) { "Cannot edit while saving" }
+                    it.copy(textInputValidity = it.textInputValidity.onChange())
+                }
+            }
+            .debounce(500.milliseconds)
             .filter { it.isNotEmpty() }
             .map(validate)
+            .onEach { result ->
+                _uiState.updateIfLoaded {
+                    it.copy(textInputValidity = it.textInputValidity.onValidated(result))
+                }
+            }
             .flowOn(Dispatchers.Default)
-            .onEach { result -> _uiState.updateWhenLoaded { it.onValidated(result) } }
             .launchIn(viewModelScope)
     }
 
     init {
         viewModelScope.launch {
-            if (ruleId != null) {
-                val rule = withContext(Dispatchers.IO) { ruleRepo.loadRule(ruleId) }
-                Log.d(TAG, "Editing $rule")
-                _uiState.value = RuleEditorUiState.Loaded(rule, rule.action)
-                ruleNameState.setTextAndPlaceCursorAtEnd(rule.name)
-                viewIdState.setTextAndPlaceCursorAtEnd(rule.viewId)
-            } else {
-                Log.d(TAG, "Creating new rule")
-                _uiState.value = RuleEditorUiState.Loaded()
-                ruleNameState.setTextAndPlaceCursorAtEnd(
-                    application.resources.getString(R.string.rule_name_placeholder)
-                )
-            }
+            loadRule(ruleId)
             launchTextValidationFlow(
-                ruleNameState,
+                nameState,
                 ::validateRuleName,
-                { copy(ruleNameValidity = null) },
-                { copy(ruleNameValidity = it) }
+                { relationAwareCopy(name = RuleInputValidity.Name.OK) },
+                { relationAwareCopy(name = it) }
+            )
+            launchTextValidationFlow(
+                packageNameState,
+                ::validateRulePackageName,
+                { relationAwareCopy(packageName = RuleInputValidity.PackageName.OK) },
+                { relationAwareCopy(packageName = it) }
             )
             launchTextValidationFlow(
                 viewIdState,
-                ::validateViewId,
-                { copy(viewIdValidity = null) },
-                { copy(viewIdValidity = it) }
+                ::validateRuleViewId,
+                { relationAwareCopy(viewId = RuleInputValidity.ViewId.OK) },
+                { relationAwareCopy(viewId = it) }
             )
+            launchTextValidationFlow(
+                containedTextState,
+                ::validateRuleContainedText,
+                { relationAwareCopy(containedText = RuleInputValidity.ContainedText.OK) },
+                { relationAwareCopy(containedText = it) }
+            )
+            launchTextValidationFlow(
+                classNameState,
+                ::validateRuleClassName,
+                { relationAwareCopy(className = RuleInputValidity.ClassName.OK) },
+                { relationAwareCopy(className = it) }
+            )
+        }
+    }
+
+    private suspend fun loadRule(id: Long?) {
+        if (id != null) {
+            val rule = withContext(Dispatchers.IO) { ruleRepo.loadRule(id) }
+            Log.d(TAG, "Editing $rule")
+            _uiState.value = RuleEditorUiState.Loaded(id, rule.action)
+            nameState.setTextAndPlaceCursorAtEnd(rule.name)
+            packageNameState.setTextAndPlaceCursorAtEnd(rule.packageName)
+            rule.viewId?.let { viewIdState.setTextAndPlaceCursorAtEnd(it) }
+            rule.containedText?.let { containedTextState.setTextAndPlaceCursorAtEnd(it) }
+            rule.className?.let { classNameState.setTextAndPlaceCursorAtEnd(it) }
+        } else {
+            Log.d(TAG, "Creating new rule")
+            _uiState.value = RuleEditorUiState.Loaded(null)
         }
     }
 
     fun selectAction(action: Rule.Action) {
-        _uiState.updateWhenLoaded { it.copy(action = action) }
+        _uiState.updateIfLoaded {
+            // Should not edit while saving
+            if (!it.isSaving) {
+                it.copy(action = action)
+            } else {
+                it
+            }
+        }
     }
 
-    suspend fun save(): Rule {
-        val state = withContext(Dispatchers.Main.immediate) { _uiState.value }
-        check(state is RuleEditorUiState.Loaded && state.allowsSaving())
+    fun launchSaving() {
+        var alreadySaving = false
+        _uiState.updateIfLoaded {
+            alreadySaving = it.isSaving
+            if (alreadySaving) it else it.copy(isSaving = true)
+        }
+        if (!alreadySaving) {
+            viewModelScope.launch(Dispatchers.IO) { save() }
+        }
+    }
 
-        val (packageName, viewName) = viewIdState.text.split(":id/", limit = 2)
+    private suspend fun save() {
+        val name = nameState.text
+        val packageName = packageNameState.text
+        val viewId = viewIdState.text
+        val containedText = containedTextState.text
+        val className = classNameState.text
+
+        // Perform full validation which takes inter-field relations into account
+        val validity = validateRule(name, packageName, viewId, containedText, className)
+        if (!validity.isValid) {
+            Log.d(TAG, "Invalid rule input: $validity")
+            _uiState.updateIfLoaded { it.copy(textInputValidity = validity, isSaving = false) }
+            return
+        }
+
+        val state = checkNotNull(_uiState.value as? RuleEditorUiState.Loaded)
         val rule = Rule(
-            state.originalRule?.id ?: 0,
-            ruleNameState.text.toString(),
-            packageName,
-            viewName,
+            state.ruleId ?: 0,
+            name.toString(),
+            packageName.toString(),
+            viewId.takeIf { it.isNotEmpty() }?.toString(),
+            containedText.takeIf { it.isNotEmpty() }?.toString(),
+            className.takeIf { it.isNotEmpty() }?.toString(),
             state.action
         )
-        Log.d(TAG, "Saving $rule")
-        val savedId = withContext(Dispatchers.IO) { ruleRepo.insertOrUpdateRule(rule) }
 
-        return if (savedId != -1L) {
-            rule.copy(id = savedId).also { saved ->
-                Log.d(TAG, "Saved $saved (new)")
-                _uiState.updateWhenLoaded { it.copy(originalRule = saved) }
-            }
-        } else {
-            rule.also { saved -> Log.d(TAG, "Saved $saved (update)") }
-        }
+        val savedId = ruleRepo.insertOrUpdateRule(rule)
+        Log.d(
+            TAG,
+            if (state.ruleId == null) "Created ${rule.copy(id = savedId)}" else "Updated $rule"
+        )
+        _uiState.updateIfLoaded { it.copy(textInputValidity = validity, isSaving = false) }
+        _savingNotificationChannel.send(Unit)
     }
 }
 
@@ -145,7 +215,7 @@ fun interface RuleEditorViewModelFactory {
     fun create(ruleId: Long?): RuleEditorViewModel
 }
 
-private fun MutableStateFlow<RuleEditorUiState>.updateWhenLoaded(
+private fun MutableStateFlow<RuleEditorUiState>.updateIfLoaded(
     function: (RuleEditorUiState.Loaded) -> RuleEditorUiState.Loaded
 ) {
     update {

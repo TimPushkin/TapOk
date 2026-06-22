@@ -23,24 +23,29 @@ data class Node(
     @PrimaryKey(autoGenerate = true) val id: Long,
     @ColumnInfo(name = "scan_id", index = true) val scanId: Long,
     /**
-     * Fully-qualified view's ID's resource name, e.g. com.example.app:id/view_name.
-     *
-     * See [android.view.accessibility.AccessibilityNodeInfo.getViewIdResourceName].
+     * See [android.view.accessibility.AccessibilityNodeInfo.getPackageName].
      */
-    @ColumnInfo(name = "view_id") val viewId: String?,
+    @ColumnInfo(name = "package_name", index = true) val packageName: String,
     /**
-     * Unqualified view's class' name, e.g. ViewClass.
-     *
      * See [android.view.accessibility.AccessibilityNodeInfo.getClassName].
      */
     @ColumnInfo(name = "class_name") val className: String,
     /**
-     * Bounds of the node in scan's screenshot.
-     *
-     * See [android.view.accessibility.AccessibilityNodeInfo.getBoundsInWindow], its output may be
-     * offset here if screenshot's bounds do not match window's bounds.
+     * Bounds of the node in scan's screenshot, in pixels, starting from top-left.
      */
     @Embedded(prefix = "bound_") val bounds: IntRect,
+    /**
+     * See [android.view.accessibility.AccessibilityNodeInfo.getViewIdResourceName].
+     */
+    @ColumnInfo(name = "view_id") val viewId: String?,
+    /**
+     * See [android.view.accessibility.AccessibilityNodeInfo.getText].
+     */
+    @ColumnInfo(name = "text") val text: String?,
+    /**
+     * See [android.view.accessibility.AccessibilityNodeInfo.getContentDescription].
+     */
+    @ColumnInfo(name = "content_description") val contentDescription: String?,
     /**
      * See [android.view.accessibility.AccessibilityNodeInfo.isClickable].
      */

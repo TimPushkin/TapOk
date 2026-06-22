@@ -56,19 +56,8 @@ object RulesModule {
                 }
             )
         }
-        entry<RuleEditorKey>(
-            metadata = ListDetailSceneStrategy.detailPane()
-        ) { key ->
-            RuleEditorPane(
-                key.ruleId,
-                onCreated = { id ->
-                    // Need to update this key with the new ID
-                    check(navigator.currentKey == key)
-                    navigator.navigateBack()
-                    navigator.navigateTo(RuleEditorKey(id))
-                },
-                onBack = navigator::navigateBack
-            )
+        entry<RuleEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+            RuleEditorPane(key.ruleId, onBack = navigator::navigateBack)
         }
     }
 }

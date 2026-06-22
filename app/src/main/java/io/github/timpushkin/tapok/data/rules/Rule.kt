@@ -2,12 +2,9 @@ package io.github.timpushkin.tapok.data.rules
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(
-    indices = [Index("package_name", "view_name", "action", unique = true)]
-)
+@Entity
 data class Rule(
     @PrimaryKey(autoGenerate = true) val id: Long,
     /**
@@ -15,25 +12,36 @@ data class Rule(
      */
     val name: String,
     /**
-     * Targeted view's package name.
+     * Used for event filtering via
+     * [android.accessibilityservice.AccessibilityServiceInfo.packageNames].
      */
     @ColumnInfo(name = "package_name") val packageName: String,
     /**
-     * Targeted view's ID's resource name.
+     * Used as an argument for
+     * [android.view.accessibility.AccessibilityNodeInfo.findAccessibilityNodeInfosByViewId].
      */
-    @ColumnInfo(name = "view_name") val viewName: String,
+    @ColumnInfo(name = "view_id") val viewId: String?,
+    /**
+     * Used as an argument for
+     * [android.view.accessibility.AccessibilityNodeInfo.findAccessibilityNodeInfosByText].
+     */
+    @ColumnInfo(name = "contained_text") val containedText: String?,
+    /**
+     * Used for additional filtering by comparison with
+     * [android.view.accessibility.AccessibilityNodeInfo.getClassName].
+     */
+    @ColumnInfo(name = "class_name") val className: String?,
     /**
      * What to do when the rule matches.
      */
     val action: Action
 ) {
+    init {
+        require(viewId != null || containedText != null) { "No search criteria" }
+    }
+
     enum class Action {
         CLICK,
         MUTE_WHEN_PRESENT
     }
-
-    /**
-     * See [io.github.timpushkin.tapok.data.scans.Node.viewId].
-     */
-    val viewId by lazy { "$packageName:id/$viewName" }
 }

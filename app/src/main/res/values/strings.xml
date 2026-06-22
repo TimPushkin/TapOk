@@ -9,6 +9,7 @@
     <string name="delete">Delete</string>
     <string name="navigate_back">Navigate back</string>
     <string name="done">Done!</string>
+    <string name="saved">Saved!</string>
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="accept_and_proceed">Accept and proceed</string>
@@ -74,24 +75,48 @@
     <!-- Placeholders for rule panes -->
     <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
     <string name="select_rule_or_create_one">Select a rule to edit or create a new one</string>
+    <!-- Rule list -->
+    <string name="unnamed_rule">Unnamed rule</string>
     <!-- Rule editor: header -->
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
     <!-- Rule editor: fields -->
     <string name="rule_name">Rule name</string>
-    <string name="view_id">View ID</string>
-    <string name="action">Action</string>
-    <!-- Rule editor: variants and placeholders -->
-    <string name="rule_name_placeholder">My rule</string>
-    <string name="view_id_placeholder">com.example.app:id/some_button</string>
+    <string name="app_ref">App *</string>
+    <string name="view_id_ref">View ID *</string>
+    <string name="contained_text_ref">Contained text *</string>
+    <string name="view_class">View class</string>
+    <string name="action_ref">Action *</string>
+    <!-- Rule editor: drop-down items -->
     <string name="click">Click</string>
     <string name="mute_when_present">Mute when present</string>
-    <!-- Rule editor: invalid view ID inputs -->
-    <string name="view_id_error_no_divider">:id/ is missing</string>
-    <string name="view_id_error_illegal_package_segment">Illegal package segment name</string>
-    <string name="view_id_error_not_enough_package_segments">At least two dot-separated segments required in package name</string>
-    <string name="view_id_error_illegal_name_start">Illegal or missing first character in view name</string>
-    <string name="view_id_error_illegal_name_part">Illegal non-first character in view name</string>
+    <!-- Rule editor: placeholders -->
+    <string name="rule_name_placeholder">My rule</string>
+    <string name="app_placeholder">com.example.app</string>
+    <string name="view_id_placeholder">com.example.app:id/some_button</string>
+    <string name="contained_text_placeholder">Some text</string>
+    <string name="view_class_placeholder">android.widget.Button</string>
+    <!-- Rule editor: explanations-->
+    <string name="ref_required">* required</string>
+    <string name="ref_required_unless_contained_text_filled">* required unless contained text filled</string>
+    <string name="ref_required_unless_view_id_filled">* required unless view ID filled</string>
+    <!-- Rule editor: invalid inputs -->
+    <string name="error_no_search_criteria">At least one search criterion required</string>
+    <string name="error_this_field_is_required">This field is required</string>
+    <string name="error_empty_segments">Empty segments are not allowed</string>
+    <string name="error_segments_can_only_start_with">Segments can start only with a letter</string>
+    <string name="error_segments_can_only_contain">Segments can contain only letters, numbers and underscores</string>
+    <string name="error_at_least_two_segments_required">At least two dot-separated segments required</string>
+    <string name="error_no_view_id_divider">Missing :id/</string>
+    <string name="error_empty_package">Package cannot be empty</string>
+    <string name="error_empty_package_segment">Empty package segments are not allowed</string>
+    <string name="error_illegal_package_segment_start">Illegal first symbol in package segment</string>
+    <string name="error_illegal_package_segment_part">Illegal symbol in package segment</string>
+    <string name="error_empty_view_name">View name cannot be empty</string>
+    <string name="error_illegal_view_name_start">Illegal first symbol in view name</string>
+    <string name="error_illegal_view_name_part">Illegal symbol in view name</string>
+    <string name="error_illegal_package_segment_or_class_start">Illegal first symbol in package segment or class name</string>
+    <string name="error_illegal_package_segment_or_class_part">Illegal symbol in package segment or class name</string>
 
     <!-- Scans -->
     <string name="scans">Scans</string>
@@ -111,6 +136,10 @@
     <!-- Scan inspector: node descriptions -->
     <string name="clickable">Clickable</string>
     <string name="not_clickable">Not clickable</string>
-    <string name="clazz">Class</string>
+    <string name="package_name">Package name</string>
+    <string name="class_name">Class name</string>
+    <string name="text">Text</string>
+    <string name="view_id">View ID</string>
+    <string name="content_description">Content description</string>
     <string name="raw_info">Raw info</string>
 </resources>

@@ -27,7 +27,6 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,8 +40,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import io.github.timpushkin.tapok.R
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
+import io.github.timpushkin.tapok.ui.utils.ConcurrentWorkerState
+import io.github.timpushkin.tapok.ui.utils.rememberConcurrentWorkerState
 
 @Composable
 fun ScannerPopup(
@@ -87,20 +86,11 @@ private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
                 )
             }
         ) {
-            var state by remember { mutableStateOf(if (scanning) State.SCANNING else State.READY) }
-            LaunchedEffect(scanning) {
-                if (scanning && state != State.SCANNING) {
-                    state = State.SCANNING
-                } else if (!scanning && state != State.READY) {
-                    state = State.SCANNED_RECENTLY
-                    delay(1.seconds)
-                    state = State.READY
-                }
-            }
+            val state = rememberConcurrentWorkerState(scanning)
             AnimatedContent(
                 state,
                 transitionSpec = {
-                    if (targetState == State.READY) {
+                    if (targetState == ConcurrentWorkerState.IDLE) {
                         fadeIn() togetherWith fadeOut()
                     } else {
                         (fadeIn() + scaleIn()) togetherWith (fadeOut() + scaleOut())
@@ -109,27 +99,24 @@ private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
                 modifier = Modifier.size(SplitButtonDefaults.LeadingIconSize)
             ) { state ->
                 when (state) {
-                    State.READY -> Icon(
+                    ConcurrentWorkerState.IDLE -> Icon(
                         painterResource(R.drawable.screenshot_frame),
                         contentDescription = description
                     )
 
-                    State.SCANNING -> LoadingIndicator(
+                    ConcurrentWorkerState.BUSY -> LoadingIndicator(
                         color = LocalContentColor.current
                     )
 
-                    State.SCANNED_RECENTLY -> Icon(
+                    ConcurrentWorkerState.FINISHED_RECENTLY -> Icon(
                         painterResource(R.drawable.check),
                         contentDescription = stringResource(R.string.done)
                     )
                 }
             }
-
         }
     }
 }
-
-private enum class State { READY, SCANNING, SCANNED_RECENTLY }
 
 @Composable
 private fun TrailingIcon(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {

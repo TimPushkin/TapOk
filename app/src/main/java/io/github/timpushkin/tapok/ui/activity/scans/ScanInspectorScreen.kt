@@ -697,15 +697,32 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
             NodeDescriptionElement(
-                node.viewId ?: "—",
-                stringResource(R.string.view_id),
-                index = 0, count = 2,
-                enabled = node.viewId != null
+                node.packageName,
+                stringResource(R.string.package_name),
+                index = 0, count = 5
             )
             NodeDescriptionElement(
                 node.className,
-                stringResource(R.string.clazz),
-                index = 1, count = 2
+                stringResource(R.string.class_name),
+                index = 1, count = 5
+            )
+            NodeDescriptionElement(
+                node.viewId ?: "—",
+                stringResource(R.string.view_id),
+                index = 2, count = 5,
+                enabled = node.viewId != null
+            )
+            NodeDescriptionElement(
+                node.text ?: "—",
+                stringResource(R.string.text),
+                index = 3, count = 5,
+                enabled = node.text != null
+            )
+            NodeDescriptionElement(
+                node.contentDescription ?: "—",
+                stringResource(R.string.content_description),
+                index = 4, count = 5,
+                enabled = node.contentDescription != null
             )
         }
 

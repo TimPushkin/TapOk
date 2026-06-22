@@ -1,10 +1,11 @@
 package io.github.timpushkin.tapok.ui.activity.rules
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,10 +19,13 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -35,38 +39,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.rules.Rule
-import io.github.timpushkin.tapok.data.rules.RuleNameValidity
-import io.github.timpushkin.tapok.data.rules.ViewIdValidity
+import io.github.timpushkin.tapok.data.rules.RuleInputValidity
 import io.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorPane(
     ruleId: Long?,
-    onCreated: (Long) -> Unit,
     onBack: () -> Unit,
     vm: RuleEditorViewModel = hiltViewModel(
         key = ruleId.toString()
     ) { f: RuleEditorViewModelFactory -> f.create(ruleId) }
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val loadedState = state as? RuleEditorUiState.Loaded
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -81,13 +85,14 @@ fun RuleEditorPane(
                 },
                 actions = {
                     SaveButton(
-                        canSave = (state as? RuleEditorUiState.Loaded)?.allowsSaving() == true,
-                        onSave = { onCreated(vm.save().id) }
+                        onClick = vm::launchSaving,
+                        enabled = loadedState?.isSaving == false,
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Transparent,
         modifier = Modifier
             .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
@@ -95,52 +100,53 @@ fun RuleEditorPane(
     ) { padding ->
         EditableFields(
             state,
-            vm.ruleNameState,
+            vm.nameState,
+            vm.packageNameState,
             vm.viewIdState,
+            vm.containedTextState,
+            vm.classNameState,
             vm::selectAction,
+            enabled = loadedState?.isSaving == false,
             contentPadding = PaddingValues(DefaultOuterSpacing),
             modifier = Modifier
                 .padding(padding)
                 .consumeWindowInsets(padding)
         )
     }
+
+    // Notify when saving completes successfully
+    val savedMessage = stringResource(R.string.saved)
+    LaunchedEffect(Unit) {
+        for (_ in vm.savingNotificationChannel) {
+            if (ruleId != null) {
+                // Updated existing rule
+                snackbarHostState.showSnackbar(savedMessage)
+            } else {
+                // Created a new rule
+                onBack()
+            }
+        }
+    }
 }
 
 @Composable
-private fun SaveButton(canSave: Boolean, onSave: suspend () -> Unit) {
-    val scope = rememberCoroutineScope()
-
-    var savedRecently by remember { mutableStateOf(false) }
-    LaunchedEffect(savedRecently) {
-        if (savedRecently) {
-            delay(1000)
-            savedRecently = false
-        }
-    }
-
-    TextButton(
-        onClick = {
-            scope.launch {
-                savedRecently = false
-                onSave()
-                savedRecently = true
-            }
-        },
-        enabled = canSave
-    ) {
-        AnimatedContent(savedRecently) {
-            Text(stringResource(if (!it) R.string.save else R.string.done))
-        }
+private fun SaveButton(onClick: () -> Unit, enabled: Boolean) {
+    TextButton(onClick = onClick, enabled = enabled) {
+        Text(stringResource(R.string.save))
     }
 }
 
 @Composable
 private fun EditableFields(
     state: RuleEditorUiState,
-    ruleNameState: TextFieldState,
+    nameState: TextFieldState,
+    packageNameState: TextFieldState,
     viewIdState: TextFieldState,
+    containedTextState: TextFieldState,
+    classNameState: TextFieldState,
     onSelectAction: (Rule.Action) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues()
 ) {
     LazyColumn(
@@ -148,50 +154,147 @@ private fun EditableFields(
         contentPadding = contentPadding,
         modifier = modifier
     ) {
-        val loadedState = state as? RuleEditorUiState.Loaded
+        val textInputValidity = (state as? RuleEditorUiState.Loaded)?.textInputValidity
+        // TODO: explanations for each field
         item {
             RuleTextField(
-                ruleNameState,
+                nameState,
+                enabled,
                 stringResource(R.string.rule_name),
                 stringResource(R.string.rule_name_placeholder),
-                loadedState?.ruleNameValidity?.toErrorText()
+                error = textInputValidity?.name?.toErrorText()
+            )
+        }
+        item {
+            RuleTextField(
+                packageNameState,
+                enabled,
+                stringResource(R.string.app_ref),
+                stringResource(R.string.app_placeholder),
+                supportingText = stringResource(R.string.ref_required),
+                error = textInputValidity?.packageName?.toErrorText()
             )
         }
         item {
             RuleTextField(
                 viewIdState,
-                stringResource(R.string.view_id),
+                enabled,
+                stringResource(R.string.view_id_ref),
                 stringResource(R.string.view_id_placeholder),
-                loadedState?.viewIdValidity?.toErrorText()
+                supportingText = stringResource(R.string.ref_required_unless_contained_text_filled),
+                error = textInputValidity?.viewId?.toErrorText()
+            )
+        }
+        item {
+            RuleTextField(
+                containedTextState,
+                enabled,
+                stringResource(R.string.contained_text_ref),
+                stringResource(R.string.contained_text_placeholder),
+                supportingText = stringResource(R.string.ref_required_unless_view_id_filled),
+                error = textInputValidity?.containedText?.toErrorText()
+            )
+        }
+        item {
+            RuleTextField(
+                classNameState,
+                enabled,
+                stringResource(R.string.view_class),
+                stringResource(R.string.view_class_placeholder),
+                error = textInputValidity?.className?.toErrorText()
             )
         }
         item {
             RuleDropdownMenu(
-                selected = loadedState?.action ?: Rule.Action.CLICK,
+                selected = (state as? RuleEditorUiState.Loaded)?.action ?: Rule.Action.CLICK,
+                enabled = enabled,
                 options = Rule.Action.entries,
                 toStringRes = Rule.Action::stringRes,
                 toDrawableRes = Rule.Action::drawableRes,
                 onSelect = onSelectAction,
-                label = stringResource(R.string.action)
+                label = stringResource(R.string.action_ref),
+                supportingText = stringResource(R.string.ref_required)
             )
         }
     }
 }
 
 @Composable
-private fun RuleNameValidity.toErrorText() = when (this) {
-    RuleNameValidity.OK, RuleNameValidity.EMPTY -> null
+private fun RuleInputValidity.Name.toErrorText() = when (this) {
+    RuleInputValidity.Name.OK -> null
 }
 
 @Composable
-private fun ViewIdValidity.toErrorText(): String? {
+private fun RuleInputValidity.PackageName.toErrorText(): String? {
     val resId = when (this) {
-        ViewIdValidity.OK -> return null
-        ViewIdValidity.NO_DIVIDER -> R.string.view_id_error_no_divider
-        ViewIdValidity.PACKAGE_ILLEGAL_SEGMENT -> R.string.view_id_error_illegal_package_segment
-        ViewIdValidity.PACKAGE_NOT_ENOUGH_SEGMENTS -> R.string.view_id_error_not_enough_package_segments
-        ViewIdValidity.VIEW_ILLEGAL_START -> R.string.view_id_error_illegal_name_start
-        ViewIdValidity.VIEW_ILLEGAL_PART -> R.string.view_id_error_illegal_name_part
+        RuleInputValidity.PackageName.OK -> return null
+
+        RuleInputValidity.PackageName.EMPTY -> R.string.error_this_field_is_required
+
+        RuleInputValidity.PackageName.EMPTY_SEGMENT -> R.string.error_empty_segments
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START ->
+            R.string.error_segments_can_only_start_with
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART ->
+            R.string.error_segments_can_only_contain
+
+        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS ->
+            R.string.error_at_least_two_segments_required
+    }
+    return stringResource(resId)
+}
+
+@Composable
+private fun RuleInputValidity.ViewId.toErrorText(): String? {
+    val resId = when (this) {
+        RuleInputValidity.ViewId.OK -> return null
+
+        RuleInputValidity.ViewId.EMPTY_WITH_NO_ALTERNATIVE -> R.string.error_no_search_criteria
+
+        RuleInputValidity.ViewId.NO_DIVIDER -> R.string.error_no_view_id_divider
+
+        RuleInputValidity.ViewId.PACKAGE_EMPTY -> R.string.error_empty_package
+
+        RuleInputValidity.ViewId.PACKAGE_EMPTY_SEGMENT -> R.string.error_empty_package_segment
+
+        RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_START ->
+            R.string.error_illegal_package_segment_start
+
+        RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_PART ->
+            R.string.error_illegal_package_segment_part
+
+        RuleInputValidity.ViewId.VIEW_EMPTY -> R.string.error_empty_view_name
+
+        RuleInputValidity.ViewId.VIEW_ILLEGAL_START -> R.string.error_illegal_view_name_start
+
+        RuleInputValidity.ViewId.VIEW_ILLEGAL_PART -> R.string.error_illegal_view_name_part
+    }
+    return stringResource(resId)
+}
+
+@Composable
+private fun RuleInputValidity.ContainedText.toErrorText(): String? {
+    val resId = when (this) {
+        RuleInputValidity.ContainedText.OK -> return null
+        RuleInputValidity.ContainedText.EMPTY_WITH_NO_ALTERNATIVE ->
+            R.string.error_no_search_criteria
+    }
+    return stringResource(resId)
+}
+
+@Composable
+private fun RuleInputValidity.ClassName.toErrorText(): String? {
+    val resId = when (this) {
+        RuleInputValidity.ClassName.OK -> return null
+
+        RuleInputValidity.ClassName.EMPTY_SEGMENT -> R.string.error_empty_segments
+
+        RuleInputValidity.ClassName.ILLEGAL_SEGMENT_START ->
+            R.string.error_illegal_package_segment_or_class_start
+
+        RuleInputValidity.ClassName.ILLEGAL_SEGMENT_PART ->
+            R.string.error_illegal_package_segment_or_class_part
     }
     return stringResource(resId)
 }
@@ -199,17 +302,23 @@ private fun ViewIdValidity.toErrorText(): String? {
 @Composable
 private fun RuleTextField(
     state: TextFieldState,
+    enabled: Boolean,
     label: String,
     placeholder: String,
-    error: String?
+    supportingText: String? = null,
+    error: String? = null
 ) {
     OutlinedTextField(
         state = state,
+        enabled = enabled,
         label = { Text(label) },
         placeholder = { Text(placeholder) },
-        lineLimits = TextFieldLineLimits.SingleLine,
-        supportingText = error?.let { { Text(it) } },
+        supportingText = { TextOrSpacer(error ?: supportingText) },
         isError = error != null,
+        trailingIcon = (@Composable {
+            Icon(painterResource(R.drawable.error_filled), contentDescription = null)
+        }).takeIf { error != null },
+        lineLimits = TextFieldLineLimits.SingleLine,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -218,11 +327,13 @@ private fun RuleTextField(
 @Composable
 private fun <T> RuleDropdownMenu(
     selected: T,
+    enabled: Boolean,
     options: List<T>,
     toStringRes: (T) -> Int,
     toDrawableRes: (T) -> Int,
     onSelect: (T) -> Unit,
-    label: String
+    label: String,
+    supportingText: String? = null
 ) {
     val textState = rememberTextFieldState(stringResource(toStringRes(selected)))
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -231,8 +342,9 @@ private fun <T> RuleDropdownMenu(
         OutlinedTextField(
             value = stringResource(toStringRes(selected)),
             onValueChange = {},
+            enabled = enabled,
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled)
                 .fillMaxWidth(),
             readOnly = true,
             label = { Text(label) },
@@ -242,6 +354,7 @@ private fun <T> RuleDropdownMenu(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
+            supportingText = { TextOrSpacer(supportingText) },
             singleLine = true
         )
         ExposedDropdownMenu(
@@ -274,6 +387,18 @@ private fun <T> RuleDropdownMenu(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TextOrSpacer(
+    text: String?,
+    spacerHeight: Dp = with(LocalDensity.current) { LocalTextStyle.current.lineHeight.toDp() }
+) {
+    if (text != null) {
+        Text(text)
+    } else {
+        Spacer(Modifier.height(spacerHeight))
     }
 }
 

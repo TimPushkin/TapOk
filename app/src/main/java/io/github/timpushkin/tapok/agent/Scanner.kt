@@ -164,9 +164,12 @@ class Scanner @AssistedInject constructor(
             Node(
                 0,
                 scanId,
-                node.viewIdResourceName,
+                node.packageName.toString(),
                 node.className.toString(),
                 with(nodeBounds) { IntRect(left, top, right, bottom) },
+                node.viewIdResourceName,
+                node.text?.toString(),
+                node.contentDescription?.toString(),
                 node.isClickable,
                 node.toString().replace(OBJECT_STRING_REGEX, "").removePrefix("; ")
             )

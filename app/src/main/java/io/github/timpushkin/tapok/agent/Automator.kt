@@ -12,6 +12,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.data.rules.RuleRepo
+import io.github.timpushkin.tapok.data.rules.matches
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -180,12 +181,22 @@ class Automator @AssistedInject constructor(
                 if (source.packageName != rule.packageName) {
                     continue
                 }
-                if (source.viewIdResourceName == rule.viewId) {
+                if (source.matches(rule, checkPackageName = false)) {
                     return listOf(source)
                 }
-                val nodes = source.findAccessibilityNodeInfosByViewId(rule.viewId)
-                if (nodes.isNotEmpty()) {
-                    return nodes
+                if (rule.viewId != null) {
+                    val nodes = source.findAccessibilityNodeInfosByViewId(rule.viewId)
+                        .filter { it.matches(rule, checkPackageName = false, checkViewId = false) }
+                    if (nodes.isNotEmpty()) {
+                        return nodes
+                    }
+                }
+                if (rule.containedText != null) {
+                    val nodes = source.findAccessibilityNodeInfosByText(rule.containedText)
+                        .filter { it.matches(rule, checkPackageName = false, checkText = false) }
+                    if (nodes.isNotEmpty()) {
+                        return nodes
+                    }
                 }
             }
             return emptyList()
