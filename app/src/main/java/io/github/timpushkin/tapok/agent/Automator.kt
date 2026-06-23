@@ -59,32 +59,29 @@ class Automator @AssistedInject constructor(
 
     init {
         coroutineScope.launch {
+            run {
+                Log.d(TAG, "Processing initial state")
+                process(null)
+                Log.d(TAG, "Processing initial state - done")
+            }
+
             // TODO: dynamically adjust AccessibilityService's event timeout based on processing
             //  time
             for (event in queuedEvents) {
                 Log.d(TAG, "Processing event ${event.id()}")
-                val decision = EventProcessor(
-                    event,
-                    rulesFlow.value,
-                    accessibilityService::getRootsOfAllWindows
-                ).run()
-                execute(decision)
+                process(event)
                 Log.d(TAG, "Processing event ${event.id()} - done")
             }
         }
-
-        // Process the current state
-        scheduleProcessing(AccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED))
     }
 
-    fun scheduleProcessing(event: AccessibilityEvent) {
-        Log.v(TAG, "Received event ${event.id()}: $event")
-        queuedEvents.trySend(event).exceptionOrNull()?.let { exception ->
-            Log.e(TAG, "Failed to record event ${event.id()}: $exception") // Should not happen
-        }
-    }
+    private fun process(event: AccessibilityEvent?) {
+        val action = EventProcessor(
+            event,
+            rulesFlow.value,
+            accessibilityService::getRootsOfAllWindows
+        ).run()
 
-    private fun execute(action: Action) {
         if (
             action.audioChange != Action.AudioChange.NONE &&
             action.audioChange != lastAudioChange
@@ -94,11 +91,19 @@ class Automator @AssistedInject constructor(
             audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
             lastAudioChange = action.audioChange
         }
+
         for (node in action.nodesToClick) {
             Log.i(TAG, "Clicking $node")
             if (!node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
                 Log.w(TAG, "Failed to click $node")
             }
+        }
+    }
+
+    fun scheduleProcessing(event: AccessibilityEvent) {
+        Log.v(TAG, "Received event ${event.id()}: $event")
+        queuedEvents.trySend(event).exceptionOrNull()?.let { exception ->
+            Log.e(TAG, "Failed to record event ${event.id()}: $exception") // Should not happen
         }
     }
 
@@ -110,12 +115,18 @@ class Automator @AssistedInject constructor(
      * Processes the [event] deciding what actions should be taken according to the [rules].
      */
     private class EventProcessor(
-        private val event: AccessibilityEvent,
+        /**
+         * null means perform full search.
+         */
+        private val event: AccessibilityEvent?,
         private val rules: Iterable<Rule>,
-        getRootsOfAllWindows: () -> Map<Int, AccessibilityNodeInfo> // Window's ID to its root
+        /**
+         * Returns map of window's ID to its root.
+         */
+        getRootsOfAllWindows: () -> Map<Int, AccessibilityNodeInfo>
     ) {
         private val windowRoots by lazy(LazyThreadSafetyMode.NONE, getRootsOfAllWindows)
-        private val eventSource by lazy(LazyThreadSafetyMode.NONE) { event.source }
+        private val eventSource by lazy(LazyThreadSafetyMode.NONE) { event?.source }
 
         fun run(): Action {
             val nodesToClick = mutableSetOf<AccessibilityNodeInfo>()
@@ -159,7 +170,7 @@ class Automator @AssistedInject constructor(
                 }
             }
 
-            val root = windowRoots[event.windowId]
+            val root = event?.run { windowRoots[windowId] }
             if (root != null) {
                 val nodes = findMatchingNodes(rule, listOf(root))
                 if (nodes.isNotEmpty()) {
