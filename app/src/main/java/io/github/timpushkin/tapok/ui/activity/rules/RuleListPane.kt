@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
+import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 
@@ -93,6 +93,7 @@ private fun RuleItem(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val colors = SegmentedListPaneDefaults.colors()
     DeletableSegmentedListItem(
         index,
         count,
@@ -104,10 +105,8 @@ private fun RuleItem(
                 rule.name.ifEmpty { stringResource(R.string.unnamed_rule) },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (rule.name.isNotEmpty()) {
-                    Color.Unspecified
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                color = colors.run {
+                    if (rule.name.isNotEmpty()) contentColor else disabledContentColor
                 }
             )
         },
@@ -118,7 +117,8 @@ private fun RuleItem(
             )
         },
         supportingContent = {
-            Text(rule.packageName, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
+            Text(rule.sourcePackageName, maxLines = 1, overflow = TextOverflow.StartEllipsis)
+        },
+        colors = colors
     )
 }

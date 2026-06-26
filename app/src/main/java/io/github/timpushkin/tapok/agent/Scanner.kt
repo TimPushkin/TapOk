@@ -43,8 +43,6 @@ private const val TAG = "Scanner"
 private const val PREFETCH_FLAGS = AccessibilityNodeInfo.FLAG_PREFETCH_UNINTERRUPTIBLE or
         AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
 
-private val OBJECT_STRING_REGEX = """^[\w.]+@\p{XDigit}+""".toRegex()
-
 class Scanner @AssistedInject constructor(
     @Assisted private val accessibilityService: AccessibilityService,
     private val scanRepo: ScanRepo
@@ -143,17 +141,17 @@ class Scanner @AssistedInject constructor(
         a11yState: AccessibilityState,
         screenshot: Bitmap?
     ) {
-        val appPackage = a11yState.nodes.first().packageName.toString()
+        val rootPackage = a11yState.nodes.first().packageName?.toString()
 
         val screenshotFile = screenshot?.run {
-            "$appPackage-$timestamp.webp".also { filename ->
+            "$rootPackage-$timestamp.webp".also { filename ->
                 accessibilityService.screenshotFile(filename).outputStream().use { out ->
                     compress(Bitmap.CompressFormat.WEBP, 100, out)
                 }
             }
         }
 
-        val scanId = scanRepo.insertScan(Scan(0, appPackage, timestamp, screenshotFile))
+        val scanId = scanRepo.insertScan(Scan(0, rootPackage, timestamp, screenshotFile))
 
         val nodeOffset = screenshot?.run {
             calculateScreenToScreenshotOffset(a11yState.windowBounds, Size(width, height))
@@ -164,14 +162,14 @@ class Scanner @AssistedInject constructor(
             Node(
                 0,
                 scanId,
-                node.packageName.toString(),
-                node.className.toString(),
                 with(nodeBounds) { IntRect(left, top, right, bottom) },
+                node.packageName?.toString(),
+                node.className?.toString(),
                 node.viewIdResourceName,
-                node.text?.toString(),
                 node.contentDescription?.toString(),
+                node.text?.toString(),
                 node.isClickable,
-                node.toString().replace(OBJECT_STRING_REGEX, "").removePrefix("; ")
+                node.toString()
             )
         }
         scanRepo.insertNodes(nodes)

@@ -18,6 +18,7 @@ import io.github.timpushkin.tapok.data.rules.validateRuleClassName
 import io.github.timpushkin.tapok.data.rules.validateRuleContainedText
 import io.github.timpushkin.tapok.data.rules.validateRuleName
 import io.github.timpushkin.tapok.data.rules.validateRulePackageName
+import io.github.timpushkin.tapok.data.rules.validateRuleSourcePackageName
 import io.github.timpushkin.tapok.data.rules.validateRuleViewId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -69,9 +70,10 @@ class RuleEditorViewModel @AssistedInject constructor(
     val savingNotificationChannel: ReceiveChannel<Unit> = _savingNotificationChannel
 
     val nameState = TextFieldState()
-    val packageNameState = TextFieldState()
+    val sourcePackageNameState = TextFieldState()
     val viewIdState = TextFieldState()
     val containedTextState = TextFieldState()
+    val packageNameState = TextFieldState()
     val classNameState = TextFieldState()
 
     @OptIn(FlowPreview::class)
@@ -110,10 +112,10 @@ class RuleEditorViewModel @AssistedInject constructor(
                 { relationAwareCopy(name = it) }
             )
             launchTextValidationFlow(
-                packageNameState,
-                ::validateRulePackageName,
-                { relationAwareCopy(packageName = RuleInputValidity.PackageName.OK) },
-                { relationAwareCopy(packageName = it) }
+                sourcePackageNameState,
+                ::validateRuleSourcePackageName,
+                { relationAwareCopy(sourcePackageName = RuleInputValidity.SourcePackageName.OK) },
+                { relationAwareCopy(sourcePackageName = it) }
             )
             launchTextValidationFlow(
                 viewIdState,
@@ -126,6 +128,12 @@ class RuleEditorViewModel @AssistedInject constructor(
                 ::validateRuleContainedText,
                 { relationAwareCopy(containedText = RuleInputValidity.ContainedText.OK) },
                 { relationAwareCopy(containedText = it) }
+            )
+            launchTextValidationFlow(
+                packageNameState,
+                ::validateRulePackageName,
+                { relationAwareCopy(packageName = RuleInputValidity.PackageName.OK) },
+                { relationAwareCopy(packageName = it) }
             )
             launchTextValidationFlow(
                 classNameState,
@@ -142,7 +150,7 @@ class RuleEditorViewModel @AssistedInject constructor(
             Log.d(TAG, "Editing $rule")
             _uiState.value = RuleEditorUiState.Loaded(id, rule.action)
             nameState.setTextAndPlaceCursorAtEnd(rule.name)
-            packageNameState.setTextAndPlaceCursorAtEnd(rule.packageName)
+            sourcePackageNameState.setTextAndPlaceCursorAtEnd(rule.sourcePackageName)
             rule.viewId?.let { viewIdState.setTextAndPlaceCursorAtEnd(it) }
             rule.containedText?.let { containedTextState.setTextAndPlaceCursorAtEnd(it) }
             rule.className?.let { classNameState.setTextAndPlaceCursorAtEnd(it) }
@@ -176,13 +184,15 @@ class RuleEditorViewModel @AssistedInject constructor(
 
     private suspend fun save() {
         val name = nameState.text
-        val packageName = packageNameState.text
+        val sourcePackageName = sourcePackageNameState.text
         val viewId = viewIdState.text
         val containedText = containedTextState.text
+        val packageName = packageNameState.text
         val className = classNameState.text
 
         // Perform full validation which takes inter-field relations into account
-        val validity = validateRule(name, packageName, viewId, containedText, className)
+        val validity =
+            validateRule(name, sourcePackageName, viewId, containedText, packageName, className)
         if (!validity.isValid) {
             Log.d(TAG, "Invalid rule input: $validity")
             _uiState.updateIfLoaded { it.copy(textInputValidity = validity, isSaving = false) }
@@ -193,9 +203,10 @@ class RuleEditorViewModel @AssistedInject constructor(
         val rule = Rule(
             state.ruleId ?: 0,
             name.toString(),
-            packageName.toString(),
+            sourcePackageName.toString(),
             viewId.takeIf { it.isNotEmpty() }?.toString(),
             containedText.takeIf { it.isNotEmpty() }?.toString(),
+            packageName.takeIf { it.isNotEmpty() }?.toString(),
             className.takeIf { it.isNotEmpty() }?.toString(),
             state.action
         )

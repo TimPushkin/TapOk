@@ -1,7 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.scans
 
 import android.content.ClipData
-import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedVisibility
@@ -17,6 +16,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -98,8 +98,8 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -107,6 +107,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -193,18 +194,17 @@ fun ScanInspectorScreen(
             scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState.bottomSheetState),
             topBar = {
                 TopBar(
+                    rootPackage = loadedUiState?.run { scan.rootPackageName },
+                    loaded = loadedUiState != null,
                     visible = showBars,
-                    appPackage = loadedUiState?.run { scan.appPackage },
-                    showUnlabeledNodes = loadedUiState?.showUnlabeledNodes ?: false,
+                    showUnreferenceableNodes = loadedUiState?.showUnreferenceableNodes ?: false,
                     onBack = onClose,
-                    onSwitchShowUnlabeledNodes = vm::switchShowUnlabeledNodes.takeIf {
-                        loadedUiState != null
-                    }
+                    onSwitchShowUnreferenceableNodes = vm::switchShowUnreferenceableNodes
                 )
             },
             sheetContent = {
                 loadedUiState?.run {
-                    NodeBottomSheet(shownNodes, !showUnlabeledNodes, selectedNode) { node ->
+                    NodeBottomSheet(shownNodes, !showUnreferenceableNodes, selectedNode) { node ->
                         vm.selectNode(node)
                         with(bottomSheetState) { if (node != null) expand() else shrink() }
                     }
@@ -469,24 +469,42 @@ private fun NodeCanvas(nodes: List<Node>, selectedNode: Node?, zoomState: Zoomab
 
 @Composable
 private fun TopBar(
+    rootPackage: String?,
+    loaded: Boolean,
     visible: Boolean,
-    appPackage: String?,
-    showUnlabeledNodes: Boolean,
+    showUnreferenceableNodes: Boolean,
     onBack: () -> Unit,
-    onSwitchShowUnlabeledNodes: (() -> Unit)?
+    onSwitchShowUnreferenceableNodes: () -> Unit
 ) {
     AnimatedVisibility(
         visible,
         enter = fadeIn(spring(stiffness = Spring.StiffnessLow)),
         exit = fadeOut(spring(stiffness = Spring.StiffnessLow))
     ) {
+        val colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
         CenterAlignedTopAppBar(
             title = {
-                Text(
-                    appPackage?.let {
-                        LocalContext.current.packageManager.getAppLabel(it) ?: it
-                    } ?: ""
-                )
+                AnimatedVisibility(loaded, enter = fadeIn(), exit = fadeOut()) {
+                    if (loaded) {
+                        Text(
+                            rootPackage ?: stringResource(R.string.unidentifiable_app),
+                            maxLines = 1,
+                            color = colors.run {
+                                if (rootPackage != null) titleContentColor else subtitleContentColor
+                            },
+                            modifier = if (rootPackage != null) {
+                                val scope = rememberCoroutineScope()
+                                val clipboard = LocalClipboard.current
+                                Modifier.clickable {
+                                    scope.launch { clipboard.setTextEntry(rootPackage) }
+                                }
+                            } else {
+                                Modifier
+                            }
+                                .basicMarquee()
+                        )
+                    }
+                }
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
@@ -497,11 +515,12 @@ private fun TopBar(
                 }
             },
             actions = {
-                ShowUnlabeledNodesSwitch(showUnlabeledNodes, onSwitchShowUnlabeledNodes)
+                ShowUnreferenceableNodesSwitch(
+                    showUnreferenceableNodes,
+                    onSwitchShowUnreferenceableNodes.takeIf { loaded }
+                )
             },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent
-            ),
+            colors = colors,
             modifier = Modifier.background(
                 Brush.verticalGradient(
                     listOf(MaterialTheme.colorScheme.background, Color.Transparent)
@@ -511,25 +530,13 @@ private fun TopBar(
     }
 }
 
-private fun PackageManager.getAppLabel(appPackage: String): String? {
-    val appInfo = try {
-        getApplicationInfo(appPackage, 0)
-    } catch (_: PackageManager.NameNotFoundException) {
-        return null
-    }
-    return getApplicationLabel(appInfo).toString()
+private suspend fun Clipboard.setTextEntry(text: String) {
+    setClipEntry(ClipEntry(ClipData.newPlainText(text, text)))
 }
 
 @Composable
-private fun ShowUnlabeledNodesSwitch(
-    showUnlabeledNodes: Boolean,
-    onSwitchShowUnlabeledNodes: (() -> Unit)?
-) {
-    val iconRes = if (showUnlabeledNodes) {
-        R.drawable.visibility_filled
-    } else {
-        R.drawable.visibility_off_outlined
-    }
+private fun ShowUnreferenceableNodesSwitch(value: Boolean, onSwitch: (() -> Unit)?) {
+    val iconRes = if (value) R.drawable.visibility_filled else R.drawable.visibility_off_outlined
     val descriptionRes = R.string.show_hide_elements_that_cannot_be_referenced
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
@@ -538,10 +545,7 @@ private fun ShowUnlabeledNodesSwitch(
         tooltip = { PlainTooltip { Text(stringResource(descriptionRes)) } },
         state = rememberTooltipState()
     ) {
-        IconButton(
-            onClick = onSwitchShowUnlabeledNodes ?: {},
-            enabled = onSwitchShowUnlabeledNodes != null
-        ) {
+        IconButton(onClick = onSwitch ?: {}, enabled = onSwitch != null) {
             Icon(painterResource(iconRes), stringResource(descriptionRes))
         }
     }
@@ -610,35 +614,49 @@ private fun NodeList(nodes: List<Node>, onNodeClick: (Node) -> Unit) {
         modifier = Modifier.consumeWindowInsets(insetsPadding)
     ) {
         items(nodes) { node ->
-            val useful = node.viewId != null
+            val searchCriterion = node.run {
+                viewId ?: contentDescription?.let { "\"$it\"" } ?: text?.let { "\"$it\"" }
+            }
+            assert((searchCriterion != null) == node.isReferenceableInRules)
             ListItem(
                 onClick = { onNodeClick(node) },
                 leadingContent = { NodeIcon(node) },
                 content = {
                     Text(
-                        node.viewId ?: stringResource(R.string.unlabeled_element),
+                        node.className ?: stringResource(R.string.element_of_unspecified_class),
                         color = with(ListItemDefaults.colors()) {
-                            if (useful) contentColor else disabledContentColor
+                            if (node.isReferenceableInRules) {
+                                supportingContentColor
+                            } else {
+                                disabledSupportingContentColor
+                            }
                         },
                         maxLines = 1,
-                        modifier = Modifier.basicMarquee()
+                        overflow = if (node.className != null) {
+                            TextOverflow.StartEllipsis
+                        } else {
+                            TextOverflow.Ellipsis
+                        }
                     )
                 },
-                supportingContent = {
-                    Text(
-                        node.className,
-                        color = with(ListItemDefaults.colors()) {
-                            if (useful) supportingContentColor else disabledSupportingContentColor
-                        },
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee()
-                    )
+                supportingContent = searchCriterion?.let { viewId ->
+                    {
+                        Text(
+                            viewId,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee()
+                        )
+                    }
                 },
                 overlineContent = {
                     Text(
                         node.boundsAsString(),
                         color = with(ListItemDefaults.colors()) {
-                            if (useful) overlineContentColor else disabledOverlineContentColor
+                            if (node.isReferenceableInRules) {
+                                overlineContentColor
+                            } else {
+                                disabledOverlineContentColor
+                            }
                         },
                         maxLines = 1,
                         modifier = Modifier.basicMarquee()
@@ -657,7 +675,7 @@ private fun NodeIcon(node: Node) {
             if (node.isClickable) R.drawable.touch_app_outlined else R.drawable.code
         ),
         contentDescription = stringResource(
-            if (node.isClickable) R.string.clickable_element else R.string.not_clickable_element
+            if (node.isClickable) R.string.clickable else R.string.not_clickable
         )
     )
 }
@@ -676,7 +694,7 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
             .padding(horizontal = DefaultOuterSpacing)
             .verticalScroll(rememberScrollState())
     ) {
-        NodeDescriptionHeader(node.className.substringAfterLast('.'), onClose)
+        NodeDescriptionHeader(onClose)
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing / 2)) {
             CompositionLocalProvider(
@@ -697,32 +715,32 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
             NodeDescriptionElement(
+                node.viewId,
+                stringResource(R.string.view_id),
+                index = 0, count = 3
+            )
+            NodeDescriptionElement(
+                node.contentDescription,
+                stringResource(R.string.content_description),
+                index = 1, count = 3
+            )
+            NodeDescriptionElement(
+                node.text,
+                stringResource(R.string.text),
+                index = 2, count = 3
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+            NodeDescriptionElement(
                 node.packageName,
                 stringResource(R.string.package_name),
-                index = 0, count = 5
+                index = 0, count = 2
             )
             NodeDescriptionElement(
                 node.className,
                 stringResource(R.string.class_name),
-                index = 1, count = 5
-            )
-            NodeDescriptionElement(
-                node.viewId ?: "—",
-                stringResource(R.string.view_id),
-                index = 2, count = 5,
-                enabled = node.viewId != null
-            )
-            NodeDescriptionElement(
-                node.text ?: "—",
-                stringResource(R.string.text),
-                index = 3, count = 5,
-                enabled = node.text != null
-            )
-            NodeDescriptionElement(
-                node.contentDescription ?: "—",
-                stringResource(R.string.content_description),
-                index = 4, count = 5,
-                enabled = node.contentDescription != null
+                index = 1, count = 2
             )
         }
 
@@ -733,7 +751,7 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
 }
 
 @Composable
-private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
+private fun NodeDescriptionHeader(onClose: () -> Unit) {
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
         Box(
             contentAlignment = Alignment.CenterStart,
@@ -741,7 +759,10 @@ private fun NodeDescriptionHeader(title: String, onClose: () -> Unit) {
                 .fillMaxHeight()
                 .weight(1f)
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(R.string.selected_element),
+                style = MaterialTheme.typography.titleLarge
+            )
         }
 
         FilledTonalIconButton(
@@ -768,22 +789,19 @@ private fun NodeDescriptionFlowRowDivider() {
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescriptionElement(
-    text: String,
+    text: String?,
     label: String,
     index: Int,
-    count: Int,
-    enabled: Boolean = true
+    count: Int
 ) {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
     SegmentedListItem(
-        onClick = {
-            scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(text, text))) }
-        },
-        enabled = enabled,
+        onClick = { if (text != null) scope.launch { clipboard.setTextEntry(text) } },
+        enabled = text != null,
         shapes = ListItemDefaults.segmentedShapes(index, count),
         supportingContent = { Text(label) },
-        content = { Text(text) }
+        content = { Text(text ?: "—") }
     )
 }
 

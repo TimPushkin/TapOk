@@ -29,6 +29,7 @@ import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
+import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import java.time.DateTimeException
 import java.time.ZoneId
@@ -85,7 +86,10 @@ private fun ScanItem(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val (appIcon, appLabel) = LocalContext.current.packageManager.getAppIconAndLabel(scan.appPackage)
+    val (appIcon, appLabel) = LocalContext.current.packageManager.getAppIconAndLabel(
+        scan.rootPackageName
+    )
+    val colors = SegmentedListPaneDefaults.colors()
     DeletableSegmentedListItem(
         index,
         count,
@@ -94,12 +98,17 @@ private fun ScanItem(
         onDelete = onDelete,
         content = {
             Text(
-                text = appLabel ?: scan.appPackage,
+                text = appLabel
+                    ?: scan.rootPackageName
+                    ?: stringResource(R.string.unidentifiable_app),
                 maxLines = 1,
-                overflow = if (appLabel != null) {
-                    TextOverflow.Ellipsis
+                overflow = if (appLabel != null || scan.rootPackageName == null) {
+                    TextOverflow.Ellipsis // General text
                 } else {
-                    TextOverflow.StartEllipsis
+                    TextOverflow.StartEllipsis // Package
+                },
+                color = colors.run {
+                    if (scan.rootPackageName != null) contentColor else disabledContentColor
                 }
             )
         },
@@ -116,21 +125,21 @@ private fun ScanItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        }
+        },
+        colors = colors
     )
 }
 
-private fun PackageManager.getAppIconAndLabel(appPackage: String): Pair<Drawable, String?> {
+private fun PackageManager.getAppIconAndLabel(appPackage: String?): Pair<Drawable, String?> {
+    if (appPackage == null) {
+        return defaultActivityIcon to null
+    }
     val appInfo = try {
         getApplicationInfo(appPackage, 0)
     } catch (_: PackageManager.NameNotFoundException) {
-        null
+        return defaultActivityIcon to null
     }
-    return if (appInfo != null) {
-        getApplicationIcon(appInfo) to getApplicationLabel(appInfo).toString()
-    } else {
-        defaultActivityIcon to null
-    }
+    return getApplicationIcon(appInfo) to getApplicationLabel(appInfo).toString()
 }
 
 @Composable

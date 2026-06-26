@@ -27,10 +27,10 @@ sealed interface ScanInspectorUiState {
         val screenshotFile: File?,
         val nodes: List<Node>,
         val selectedNode: Node?,
-        val showUnlabeledNodes: Boolean
+        val showUnreferenceableNodes: Boolean
     ) : ScanInspectorUiState {
         val shownNodes by lazy {
-            if (showUnlabeledNodes) nodes else nodes.filter { it.viewId != null }
+            if (showUnreferenceableNodes) nodes else nodes.filter { it.isReferenceableInRules }
         }
     }
 }
@@ -57,21 +57,21 @@ class ScanInspectorViewModel @AssistedInject constructor(
                     screenshotFile,
                     nodes,
                     null,
-                    // If no labeled nodes show unlabeled by default to show at least something
-                    nodes.all { it.viewId == null }
+                    // If no referenceable nodes show at least something by default
+                    nodes.all { !it.isReferenceableInRules }
                 )
             }
         }
     }
 
-    fun switchShowUnlabeledNodes() {
+    fun switchShowUnreferenceableNodes() {
         _uiState.update { prev ->
             check(prev is ScanInspectorUiState.Loaded) { "Nothing to show until loaded" }
-            val showUnlabeledNodes = !prev.showUnlabeledNodes
+            val showUnreferenceableNodes = !prev.showUnreferenceableNodes
             prev.copy(
-                showUnlabeledNodes = showUnlabeledNodes,
+                showUnreferenceableNodes = showUnreferenceableNodes,
                 selectedNode = prev.selectedNode?.takeIf {
-                    showUnlabeledNodes || it.viewId != null
+                    showUnreferenceableNodes || it.viewId != null
                 }
             )
         }

@@ -101,9 +101,10 @@ fun RuleEditorPane(
         EditableFields(
             state,
             vm.nameState,
-            vm.packageNameState,
+            vm.sourcePackageNameState,
             vm.viewIdState,
             vm.containedTextState,
+            vm.packageNameState,
             vm.classNameState,
             vm::selectAction,
             enabled = loadedState?.isSaving == false,
@@ -140,9 +141,10 @@ private fun SaveButton(onClick: () -> Unit, enabled: Boolean) {
 private fun EditableFields(
     state: RuleEditorUiState,
     nameState: TextFieldState,
-    packageNameState: TextFieldState,
+    sourcePackageNameState: TextFieldState,
     viewIdState: TextFieldState,
     containedTextState: TextFieldState,
+    packageNameState: TextFieldState,
     classNameState: TextFieldState,
     onSelectAction: (Rule.Action) -> Unit,
     modifier: Modifier = Modifier,
@@ -167,12 +169,12 @@ private fun EditableFields(
         }
         item {
             RuleTextField(
-                packageNameState,
+                sourcePackageNameState,
                 enabled,
-                stringResource(R.string.app_ref),
+                stringResource(R.string.window_level_package_ref),
                 stringResource(R.string.app_placeholder),
                 supportingText = stringResource(R.string.ref_required),
-                error = textInputValidity?.packageName?.toErrorText()
+                error = textInputValidity?.sourcePackageName?.toErrorText()
             )
         }
         item {
@@ -193,6 +195,15 @@ private fun EditableFields(
                 stringResource(R.string.contained_text_placeholder),
                 supportingText = stringResource(R.string.ref_required_unless_view_id_filled),
                 error = textInputValidity?.containedText?.toErrorText()
+            )
+        }
+        item {
+            RuleTextField(
+                packageNameState,
+                enabled,
+                stringResource(R.string.element_level_package),
+                stringResource(R.string.app_placeholder),
+                error = textInputValidity?.packageName?.toErrorText()
             )
         }
         item {
@@ -225,21 +236,21 @@ private fun RuleInputValidity.Name.toErrorText() = when (this) {
 }
 
 @Composable
-private fun RuleInputValidity.PackageName.toErrorText(): String? {
+private fun RuleInputValidity.SourcePackageName.toErrorText(): String? {
     val resId = when (this) {
-        RuleInputValidity.PackageName.OK -> return null
+        RuleInputValidity.SourcePackageName.OK -> return null
 
-        RuleInputValidity.PackageName.EMPTY -> R.string.error_this_field_is_required
+        RuleInputValidity.SourcePackageName.EMPTY -> R.string.error_this_field_is_required
 
-        RuleInputValidity.PackageName.EMPTY_SEGMENT -> R.string.error_empty_segments
+        RuleInputValidity.SourcePackageName.EMPTY_SEGMENT -> R.string.error_empty_segments
 
-        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START ->
+        RuleInputValidity.SourcePackageName.ILLEGAL_SEGMENT_START ->
             R.string.error_segments_can_only_start_with
 
-        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART ->
+        RuleInputValidity.SourcePackageName.ILLEGAL_SEGMENT_PART ->
             R.string.error_segments_can_only_contain
 
-        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS ->
+        RuleInputValidity.SourcePackageName.NOT_ENOUGH_SEGMENTS ->
             R.string.error_at_least_two_segments_required
     }
     return stringResource(resId)
@@ -279,6 +290,25 @@ private fun RuleInputValidity.ContainedText.toErrorText(): String? {
         RuleInputValidity.ContainedText.OK -> return null
         RuleInputValidity.ContainedText.EMPTY_WITH_NO_ALTERNATIVE ->
             R.string.error_no_search_criteria
+    }
+    return stringResource(resId)
+}
+
+@Composable
+private fun RuleInputValidity.PackageName.toErrorText(): String? {
+    val resId = when (this) {
+        RuleInputValidity.PackageName.OK -> return null
+
+        RuleInputValidity.PackageName.EMPTY_SEGMENT -> R.string.error_empty_segments
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START ->
+            R.string.error_segments_can_only_start_with
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART ->
+            R.string.error_segments_can_only_contain
+
+        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS ->
+            R.string.error_at_least_two_segments_required
     }
     return stringResource(resId)
 }

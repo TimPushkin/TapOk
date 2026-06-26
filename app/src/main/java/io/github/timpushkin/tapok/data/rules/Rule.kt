@@ -15,7 +15,7 @@ data class Rule(
      * Used for event filtering via
      * [android.accessibilityservice.AccessibilityServiceInfo.packageNames].
      */
-    @ColumnInfo(name = "package_name") val packageName: String,
+    @ColumnInfo(name = "source_package_name") val sourcePackageName: String,
     /**
      * Used as an argument for
      * [android.view.accessibility.AccessibilityNodeInfo.findAccessibilityNodeInfosByViewId].
@@ -26,6 +26,11 @@ data class Rule(
      * [android.view.accessibility.AccessibilityNodeInfo.findAccessibilityNodeInfosByText].
      */
     @ColumnInfo(name = "contained_text") val containedText: String?,
+    /**
+     * Used for additional filtering by comparison with
+     * [android.view.accessibility.AccessibilityNodeInfo.getPackageName].
+     */
+    @ColumnInfo(name = "package_name") val packageName: String?,
     /**
      * Used for additional filtering by comparison with
      * [android.view.accessibility.AccessibilityNodeInfo.getClassName].

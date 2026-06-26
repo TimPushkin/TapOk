@@ -47,7 +47,7 @@ class Automator @AssistedInject constructor(
     )
     val selectedPackagesFlow = rulesFlow
         // Empty list would mean all packages are selected, so using an empty package instead
-        .map { rules -> rules.mapTo(mutableSetOf()) { it.packageName }.ifEmpty { setOf("") } }
+        .map { rules -> rules.mapTo(mutableSetOf()) { it.sourcePackageName }.ifEmpty { setOf("") } }
         .distinctUntilChanged()
         .flowOn(Dispatchers.Default)
 
@@ -133,8 +133,7 @@ class Automator @AssistedInject constructor(
             var muteDirection = Action.AudioChange.NONE
             for (rule in rules) {
                 when (rule.action) {
-                    Rule.Action.CLICK ->
-                        nodesToClick.addAll(findMatchingNodes(rule).filter { it.isClickable })
+                    Rule.Action.CLICK -> nodesToClick.addAll(findMatchingNodes(rule))
 
                     // No point in searching if we have already decided to mute
                     Rule.Action.MUTE_WHEN_PRESENT if muteDirection != Action.AudioChange.MUTE ->
@@ -162,26 +161,54 @@ class Automator @AssistedInject constructor(
          * window - either worsens the performance.
          */
         private fun findMatchingNodes(rule: Rule): List<AccessibilityNodeInfo> {
-            val source = eventSource
-            if (source != null) {
-                val nodes = findMatchingNodes(rule, listOf(source))
-                if (nodes.isNotEmpty()) {
-                    return nodes
+            if (event?.packageName == rule.sourcePackageName) {
+                val source = eventSource
+                if (source != null) {
+                    val nodes = findMatchingNodes(rule, source)
+                    if (nodes.isNotEmpty()) {
+                        return nodes
+                    }
                 }
             }
 
             val root = event?.run { windowRoots[windowId] }
             if (root != null) {
-                val nodes = findMatchingNodes(rule, listOf(root))
+                val nodes = findMatchingNodes(rule, root)
                 if (nodes.isNotEmpty()) {
                     return nodes
                 }
             }
 
             return findMatchingNodes(
-                rule,
-                root?.let { windowRoots.values - it } ?: windowRoots.values
+                rule, root?.let { windowRoots.values - it } ?: windowRoots.values
             )
+        }
+
+        private fun findMatchingNodes(
+            rule: Rule,
+            source: AccessibilityNodeInfo
+        ): List<AccessibilityNodeInfo> {
+            if (source.packageName != rule.sourcePackageName) {
+                return emptyList()
+            }
+            if (source.matches(rule)) {
+                return listOf(source)
+            }
+            if (rule.viewId != null) {
+                val nodes = source.findAccessibilityNodeInfosByViewId(rule.viewId)
+                    .filter { it.matches(rule, checkViewId = false) }
+                if (nodes.isNotEmpty()) {
+                    return nodes
+                }
+            }
+            if (rule.containedText != null) {
+                val nodes = source.findAccessibilityNodeInfosByText(rule.containedText)
+                    .filter { it.matches(rule, checkText = false) }
+                if (nodes.isNotEmpty()) {
+                    return nodes
+                }
+            }
+            return emptyList()
         }
 
         private fun findMatchingNodes(
@@ -189,25 +216,9 @@ class Automator @AssistedInject constructor(
             sources: Iterable<AccessibilityNodeInfo>
         ): List<AccessibilityNodeInfo> {
             for (source in sources) {
-                if (source.packageName != rule.packageName) {
-                    continue
-                }
-                if (source.matches(rule, checkPackageName = false)) {
-                    return listOf(source)
-                }
-                if (rule.viewId != null) {
-                    val nodes = source.findAccessibilityNodeInfosByViewId(rule.viewId)
-                        .filter { it.matches(rule, checkPackageName = false, checkViewId = false) }
-                    if (nodes.isNotEmpty()) {
-                        return nodes
-                    }
-                }
-                if (rule.containedText != null) {
-                    val nodes = source.findAccessibilityNodeInfosByText(rule.containedText)
-                        .filter { it.matches(rule, checkPackageName = false, checkText = false) }
-                    if (nodes.isNotEmpty()) {
-                        return nodes
-                    }
+                val nodes = findMatchingNodes(rule, source)
+                if (nodes.isNotEmpty()) {
+                    return nodes
                 }
             }
             return emptyList()

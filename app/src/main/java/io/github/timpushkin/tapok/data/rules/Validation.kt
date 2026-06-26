@@ -2,88 +2,50 @@ package io.github.timpushkin.tapok.data.rules
 
 data class RuleInputValidity(
     val name: Name,
-    val packageName: PackageName,
+    val sourcePackageName: SourcePackageName,
     val viewId: ViewId,
     val containedText: ContainedText,
+    val packageName: PackageName,
     val className: ClassName
 ) {
-    val isValid = name == Name.OK &&
-            packageName == PackageName.OK &&
+    val isValid = name == Name.OK && sourcePackageName == SourcePackageName.OK &&
             ((viewId == ViewId.OK && !isError(containedText)) ||
                     (containedText == ContainedText.OK && !isError(viewId))) &&
-            !isError(className)
+            !isError(packageName) && !isError(className)
 
     private fun isError(validity: Enum<*>?) = validity != null && validity.ordinal != 0 // OK is 0
 
     fun relationAwareCopy(
         name: Name = this.name,
-        packageName: PackageName = this.packageName,
+        sourcePackageName: SourcePackageName = this.sourcePackageName,
         viewId: ViewId = this.viewId,
         containedText: ContainedText = this.containedText,
+        packageName: PackageName = this.packageName,
         className: ClassName = this.className
     ) = copy(
-        name = name.takeIfRetainedOnChangeOf(
-            packageName = packageName != this.packageName,
-            viewId = viewId != this.viewId,
-            containedText = containedText != this.containedText,
-            className = className != this.className
-        ) ?: Name.OK,
-        packageName = packageName.takeIfRetainedOnChangeOf(
-            name = name != this.name,
-            viewId = viewId != this.viewId,
-            containedText = containedText != this.containedText,
-            className = className != this.className
-        ) ?: PackageName.OK,
-        viewId = viewId.takeIfRetainedOnChangeOf(
-            name = name != this.name,
-            packageName = packageName != this.packageName,
-            containedText = containedText != this.containedText,
-            className = className != this.className
-        ) ?: ViewId.OK,
-        containedText = containedText.takeIfRetainedOnChangeOf(
-            name = name != this.name,
-            packageName = packageName != this.packageName,
-            viewId = viewId != this.viewId,
-            className = className != this.className
-        ) ?: ContainedText.OK,
-        className = className.takeIfRetainedOnChangeOf(
-            name = name != this.name,
-            packageName = packageName != this.packageName,
-            viewId = viewId != this.viewId,
-            containedText = containedText != this.containedText
-        ) ?: ClassName.OK
+        name = name,
+        sourcePackageName = sourcePackageName,
+        viewId = viewId.takeUnless { containedText != this.containedText } ?: ViewId.OK,
+        containedText = containedText.takeUnless { viewId != this.viewId } ?: ContainedText.OK,
+        packageName = packageName,
+        className = className
     )
 
     companion object {
-        val AllOK =
-            RuleInputValidity(Name.OK, PackageName.OK, ViewId.OK, ContainedText.OK, ClassName.OK)
+        val AllOK = RuleInputValidity(
+            Name.OK, SourcePackageName.OK, ViewId.OK, ContainedText.OK, PackageName.OK, ClassName.OK
+        )
     }
 
-    enum class Name {
-        OK;
+    enum class Name { OK }
 
-        fun takeIfRetainedOnChangeOf(
-            packageName: Boolean = false,
-            viewId: Boolean = false,
-            containedText: Boolean = false,
-            className: Boolean = false
-        ): Name? = this
-    }
-
-    enum class PackageName {
+    enum class SourcePackageName {
         OK,
         EMPTY,
         EMPTY_SEGMENT,
         ILLEGAL_SEGMENT_START,
         ILLEGAL_SEGMENT_PART,
-        NOT_ENOUGH_SEGMENTS;
-
-        fun takeIfRetainedOnChangeOf(
-            name: Boolean = false,
-            viewId: Boolean = false,
-            containedText: Boolean = false,
-            className: Boolean = false
-        ): PackageName? = this
+        NOT_ENOUGH_SEGMENTS
     }
 
     enum class ViewId {
@@ -100,59 +62,48 @@ data class RuleInputValidity(
 
         VIEW_EMPTY,
         VIEW_ILLEGAL_START,
-        VIEW_ILLEGAL_PART;
-
-        fun takeIfRetainedOnChangeOf(
-            name: Boolean = false,
-            packageName: Boolean = false,
-            containedText: Boolean = false,
-            className: Boolean = false
-        ): ViewId? = takeIf { !containedText }
+        VIEW_ILLEGAL_PART
     }
 
     enum class ContainedText {
         OK,
-        EMPTY_WITH_NO_ALTERNATIVE;
+        EMPTY_WITH_NO_ALTERNATIVE
+    }
 
-        fun takeIfRetainedOnChangeOf(
-            name: Boolean = false,
-            packageName: Boolean = false,
-            viewId: Boolean = false,
-            className: Boolean = false
-        ): ContainedText? = takeIf { !viewId }
+    enum class PackageName {
+        OK,
+        EMPTY_SEGMENT,
+        ILLEGAL_SEGMENT_START,
+        ILLEGAL_SEGMENT_PART,
+        NOT_ENOUGH_SEGMENTS
     }
 
     enum class ClassName {
         OK,
         EMPTY_SEGMENT,
         ILLEGAL_SEGMENT_START,
-        ILLEGAL_SEGMENT_PART;
-
-        fun takeIfRetainedOnChangeOf(
-            name: Boolean = false,
-            packageName: Boolean = false,
-            viewId: Boolean = false,
-            containedText: Boolean = false
-        ): ClassName? = this
+        ILLEGAL_SEGMENT_PART
     }
 }
 
 fun validateRule(
     name: CharSequence,
-    packageName: CharSequence,
+    sourcePackageName: CharSequence,
     viewId: CharSequence,
     containedText: CharSequence,
+    packageName: CharSequence,
     className: CharSequence
 ): RuleInputValidity {
     val nameValidity = validateRuleName(name)
-    val packageNameValidity = validateRulePackageName(packageName)
+    val sourcePackageNameValidity = validateRuleSourcePackageName(sourcePackageName)
     val viewIdValidity = validateRuleViewId(viewId)
     val containedTextValidity = validateRuleContainedText(containedText)
+    val packageNameValidity = validateRulePackageName(packageName)
     val classNameValidity = validateRuleClassName(className)
     val hasSearchCriterion = viewId.isNotEmpty() || containedText.isNotEmpty()
     return RuleInputValidity(
         nameValidity,
-        packageNameValidity,
+        sourcePackageNameValidity,
         if (hasSearchCriterion) {
             viewIdValidity
         } else {
@@ -163,36 +114,31 @@ fun validateRule(
         } else {
             RuleInputValidity.ContainedText.EMPTY_WITH_NO_ALTERNATIVE
         },
+        packageNameValidity,
         classNameValidity
     )
 }
 
 fun validateRuleName(str: CharSequence): RuleInputValidity.Name = RuleInputValidity.Name.OK
 
-fun validateRulePackageName(str: CharSequence): RuleInputValidity.PackageName {
+fun validateRuleSourcePackageName(str: CharSequence): RuleInputValidity.SourcePackageName {
     if (str.isEmpty()) {
-        return RuleInputValidity.PackageName.EMPTY
+        return RuleInputValidity.SourcePackageName.EMPTY
     }
-    // https://developer.android.com/build/configure-app-module#set-application-id
-    var numSegments = 0
-    for (segment in str.splitToSequence('.')) {
-        numSegments++
-        if (segment.isEmpty()) {
-            return RuleInputValidity.PackageName.EMPTY_SEGMENT
-        }
-        segment.forEachIndexed { i, c ->
-            if (i == 0 && !c.isLetter()) {
-                return RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START
-            }
-            if (i > 0 && !c.isLetterOrDigit() && c != '_') {
-                return RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART
-            }
-        }
-    }
-    return if (numSegments < 2) {
-        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS
-    } else {
-        RuleInputValidity.PackageName.OK
+    return when (validateRulePackageName(str)) {
+        RuleInputValidity.PackageName.OK -> RuleInputValidity.SourcePackageName.OK
+
+        RuleInputValidity.PackageName.EMPTY_SEGMENT ->
+            RuleInputValidity.SourcePackageName.EMPTY_SEGMENT
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START ->
+            RuleInputValidity.SourcePackageName.ILLEGAL_SEGMENT_START
+
+        RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART ->
+            RuleInputValidity.SourcePackageName.ILLEGAL_SEGMENT_PART
+
+        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS ->
+            RuleInputValidity.SourcePackageName.NOT_ENOUGH_SEGMENTS
     }
 }
 
@@ -234,6 +180,33 @@ fun validateRuleViewId(str: CharSequence): RuleInputValidity.ViewId {
 
 fun validateRuleContainedText(str: CharSequence): RuleInputValidity.ContainedText =
     RuleInputValidity.ContainedText.OK // Depends on other fields
+
+fun validateRulePackageName(str: CharSequence): RuleInputValidity.PackageName {
+    if (str.isEmpty()) {
+        return RuleInputValidity.PackageName.OK
+    }
+    // https://developer.android.com/build/configure-app-module#set-application-id
+    var numSegments = 0
+    for (segment in str.splitToSequence('.')) {
+        numSegments++
+        if (segment.isEmpty()) {
+            return RuleInputValidity.PackageName.EMPTY_SEGMENT
+        }
+        segment.forEachIndexed { i, c ->
+            if (i == 0 && !c.isLetter()) {
+                return RuleInputValidity.PackageName.ILLEGAL_SEGMENT_START
+            }
+            if (i > 0 && !c.isLetterOrDigit() && c != '_') {
+                return RuleInputValidity.PackageName.ILLEGAL_SEGMENT_PART
+            }
+        }
+    }
+    return if (numSegments < 2) {
+        RuleInputValidity.PackageName.NOT_ENOUGH_SEGMENTS
+    } else {
+        RuleInputValidity.PackageName.OK
+    }
+}
 
 fun validateRuleClassName(str: CharSequence): RuleInputValidity.ClassName {
     if (!str.isEmpty()) {

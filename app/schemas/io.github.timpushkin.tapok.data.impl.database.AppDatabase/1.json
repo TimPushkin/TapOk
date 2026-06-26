@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "940a3cb964a4286b4feef9b4d096433f",
+    "identityHash": "30f4449aca5bb554ee5aaebbe19d4587",
     "entities": [
       {
         "tableName": "Rule",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `class_name` TEXT, `action` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `source_package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `package_name` TEXT, `class_name` TEXT, `action` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -21,8 +21,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "packageName",
-            "columnName": "package_name",
+            "fieldPath": "sourcePackageName",
+            "columnName": "source_package_name",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -34,6 +34,11 @@
           {
             "fieldPath": "containedText",
             "columnName": "contained_text",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "package_name",
             "affinity": "TEXT"
           },
           {
@@ -57,7 +62,7 @@
       },
       {
         "tableName": "Node",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scan_id` INTEGER NOT NULL, `package_name` TEXT NOT NULL, `class_name` TEXT NOT NULL, `view_id` TEXT, `text` TEXT, `content_description` TEXT, `is_clickable` INTEGER NOT NULL, `raw_info` TEXT NOT NULL, `bound_left` INTEGER NOT NULL, `bound_top` INTEGER NOT NULL, `bound_right` INTEGER NOT NULL, `bound_bottom` INTEGER NOT NULL, FOREIGN KEY(`scan_id`) REFERENCES `Scan`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scan_id` INTEGER NOT NULL, `package_name` TEXT, `class_name` TEXT, `view_id` TEXT, `content_description` TEXT, `text` TEXT, `is_clickable` INTEGER NOT NULL, `raw_info` TEXT NOT NULL, `bound_left` INTEGER NOT NULL, `bound_top` INTEGER NOT NULL, `bound_right` INTEGER NOT NULL, `bound_bottom` INTEGER NOT NULL, FOREIGN KEY(`scan_id`) REFERENCES `Scan`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -74,14 +79,12 @@
           {
             "fieldPath": "packageName",
             "columnName": "package_name",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "className",
             "columnName": "class_name",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "viewId",
@@ -89,13 +92,13 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "text",
-            "columnName": "text",
+            "fieldPath": "contentDescription",
+            "columnName": "content_description",
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "contentDescription",
-            "columnName": "content_description",
+            "fieldPath": "text",
+            "columnName": "text",
             "affinity": "TEXT"
           },
           {
@@ -177,7 +180,7 @@
       },
       {
         "tableName": "Scan",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `app_package` TEXT NOT NULL, `timestamp` TEXT NOT NULL, `screenshot_file` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_package_name` TEXT, `timestamp` TEXT NOT NULL, `screenshot_file` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -186,10 +189,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "appPackage",
-            "columnName": "app_package",
-            "affinity": "TEXT",
-            "notNull": true
+            "fieldPath": "rootPackageName",
+            "columnName": "root_package_name",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "timestamp",
@@ -224,7 +226,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '940a3cb964a4286b4feef9b4d096433f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '30f4449aca5bb554ee5aaebbe19d4587')"
     ]
   }
 }

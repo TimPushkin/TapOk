@@ -82,9 +82,10 @@
     <string name="edit_rule">Edit rule</string>
     <!-- Rule editor: fields -->
     <string name="rule_name">Rule name</string>
-    <string name="app_ref">App *</string>
+    <string name="window_level_package_ref">Window-level package *</string>
     <string name="view_id_ref">View ID *</string>
     <string name="contained_text_ref">Contained text *</string>
+    <string name="element_level_package">Element-level package</string>
     <string name="view_class">View class</string>
     <string name="action_ref">Action *</string>
     <!-- Rule editor: drop-down items -->
@@ -122,18 +123,19 @@
     <string name="scans">Scans</string>
     <!-- Placeholders for scan panes -->
     <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
+    <!-- Scan list -->
+    <string name="unidentifiable_app">Unidentifiable app</string>
     <!-- Scan inspector -->
     <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
     <string name="could_not_take_screenshot">Could not take a screenshot</string>
-    <!-- Scan inspector: nodes' list's placeholders -->
+    <!-- Scan inspector: labels in node list's labels -->
+    <string name="element_of_unspecified_class">Element of unspecified class</string>
+    <!-- Scan inspector: node list's placeholders -->
     <string name="no_elements_in_scan">No targetable elements discovered :(</string>
     <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
     <string name="no_elements_match_filters">No elements match current filters</string>
-    <!-- Scan inspector: accessibility labels -->
-    <string name="unlabeled_element">Unlabeled element</string>
-    <string name="clickable_element">Clickable element</string>
-    <string name="not_clickable_element">Not clickable element</string>
-    <!-- Scan inspector: node descriptions -->
+    <!-- Scan inspector: node description -->
+    <string name="selected_element">Selected element</string>
     <string name="clickable">Clickable</string>
     <string name="not_clickable">Not clickable</string>
     <string name="package_name">Package name</string>

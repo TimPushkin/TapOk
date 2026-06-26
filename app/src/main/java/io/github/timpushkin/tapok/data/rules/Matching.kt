@@ -4,14 +4,14 @@ import android.view.accessibility.AccessibilityNodeInfo
 
 fun AccessibilityNodeInfo.matches(
     rule: Rule,
-    checkPackageName: Boolean = true,
-    checkClassName: Boolean = true,
     checkViewId: Boolean = true,
-    checkText: Boolean = true
-) = !((checkPackageName && packageName != rule.packageName) ||
-        (checkClassName && className != rule.className) ||
-        (checkViewId && viewIdResourceName != rule.viewId) ||
-        (checkText && !matchesByText(rule)))
+    checkText: Boolean = true,
+    checkPackageName: Boolean = true,
+    checkClassName: Boolean = true
+) = !((checkViewId && viewIdResourceName != rule.viewId) ||
+        (checkText && !matchesByText(rule)) ||
+        (checkPackageName && packageName != rule.packageName) ||
+        (checkClassName && className != rule.className))
 
 /**
  * Whether this node would be returned by

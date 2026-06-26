@@ -23,35 +23,35 @@ data class Node(
     @PrimaryKey(autoGenerate = true) val id: Long,
     @ColumnInfo(name = "scan_id", index = true) val scanId: Long,
     /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.getPackageName].
-     */
-    @ColumnInfo(name = "package_name", index = true) val packageName: String,
-    /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.getClassName].
-     */
-    @ColumnInfo(name = "class_name") val className: String,
-    /**
      * Bounds of the node in scan's screenshot, in pixels, starting from top-left.
      */
     @Embedded(prefix = "bound_") val bounds: IntRect,
     /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.getViewIdResourceName].
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.getPackageName].
+     */
+    @ColumnInfo(name = "package_name", index = true) val packageName: String?,
+    /**
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.getClassName].
+     */
+    @ColumnInfo(name = "class_name") val className: String?,
+    /**
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.getViewIdResourceName].
      */
     @ColumnInfo(name = "view_id") val viewId: String?,
     /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.getText].
-     */
-    @ColumnInfo(name = "text") val text: String?,
-    /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.getContentDescription].
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.getContentDescription].
      */
     @ColumnInfo(name = "content_description") val contentDescription: String?,
     /**
-     * See [android.view.accessibility.AccessibilityNodeInfo.isClickable].
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.getText].
+     */
+    @ColumnInfo(name = "text") val text: String?,
+    /**
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.isClickable].
      */
     @ColumnInfo(name = "is_clickable") val isClickable: Boolean,
     /**
-     * Barely processed output of [android.view.accessibility.AccessibilityNodeInfo.toString].
+     * Result of [android.view.accessibility.AccessibilityNodeInfo.toString].
      */
     @ColumnInfo(name = "raw_info") val rawInfo: String
 ) {
@@ -59,5 +59,9 @@ data class Node(
         with(bounds) {
             Rect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
         }
+    }
+
+    val isReferenceableInRules by lazy {
+        viewId != null || contentDescription != null || text != null
     }
 }
