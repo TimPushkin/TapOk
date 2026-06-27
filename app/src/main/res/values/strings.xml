@@ -73,35 +73,52 @@
     <!-- Rules -->
     <string name="rules">Rules</string>
     <!-- Placeholders for rule panes -->
-    <string name="manage_rules_here">Here you can manage rules for the agent to follow</string>
-    <string name="select_rule_or_create_one">Select a rule to edit or create a new one</string>
+    <string name="manage_rules_here">Manage the agent\'s rules here</string>
+    <string name="select_rule_or_create_one">Select a rule to edit, or create a new one</string>
     <!-- Rule list -->
     <string name="unnamed_rule">Unnamed rule</string>
-    <!-- Rule editor: header -->
+    <!-- Rule editor: headers and introduction paragraphs -->
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
-    <!-- Rule editor: fields -->
+    <string name="triggering_ui_element">Triggering UI element</string>
+    <string name="triggering_ui_element_intro">The rule\'s action runs on any UI element that matches all the following criteria.</string>
+    <string name="search_criteria">Search criteria</string>
+    <string name="search_criteria_intro">One of these is used to find a matching element. If multiple are filled in, the topmost one is used for the search and the rest act as post-search filters.</string>
+    <string name="post_search_filters">Post-search filters</string>
+    <string name="post_search_filters_intro">After the search, these filters are applied. Only fill in when needed to distinguish between similar elements — additional filters slow down matching.</string>
+    <string name="action">Action</string>
+    <string name="action_intro">The action performed on the matched element. If multiple elements match simultaneously, the action may run only on some of them.</string>
+    <!-- Rule editor: field names, placeholders and explanations -->
     <string name="rule_name">Rule name</string>
-    <string name="window_level_package_ref">Window-level package *</string>
-    <string name="view_id_ref">View ID *</string>
-    <string name="contained_text_ref">Contained text *</string>
-    <string name="element_level_package">Element-level package</string>
-    <string name="view_class">View class</string>
-    <string name="action_ref">Action *</string>
-    <!-- Rule editor: drop-down items -->
-    <string name="click">Click</string>
-    <string name="mute_when_present">Mute when present</string>
-    <!-- Rule editor: placeholders -->
     <string name="rule_name_placeholder">My rule</string>
-    <string name="app_placeholder">com.example.app</string>
+    <string name="rule_name_explanation">Name of the rule for your own reference.</string>
+    <string name="window_level_package_ref">Window-level package *</string>
+    <string name="package_placeholder">com.example.app</string>
+    <string name="window_level_package_explanation">\"Package name\" of the window\'s top-level element — normally the owning app\'s package. Visible in the top bar when viewing a scan.</string>
+    <string name="view_id_ref">View ID *</string>
     <string name="view_id_placeholder">com.example.app:id/some_button</string>
+    <string name="view_id_explanation">An element matches if its \"View ID\" is exactly this value.</string>
+    <string name="contained_text_ref">Contained text *</string>
     <string name="contained_text_placeholder">Some text</string>
+    <string name="contained_text_explanation">An element matches if this text appears as a substring of its \"Content description\" or \"Text\", case-insensitive. \"Text\" is usually only searched when the element\'s \"Class name\" is \"android.widget.TextView\".</string>
+    <string name="element_level_package">Element-level package</string>
+    <string name="element_level_package_explanation">An element matches if its \"Package name\" is exactly this value. Usually the same as the window-level package, so should typically be left empty.</string>
+    <string name="view_class">View class</string>
     <string name="view_class_placeholder">android.widget.Button</string>
-    <!-- Rule editor: explanations-->
+    <string name="view_class_explanation">An element matches if its \"Class name\" is exactly this value.</string>
+    <string name="action_ref">Action *</string>
+    <string name="show_field_explanation">Show field explanation</string>
+    <string name="hide_field_explanation">Hide field explanation</string>
+    <!-- Rule editor: drop-down menu items and explanations -->
+    <string name="click">Click</string>
+    <string name="click_explanation">Click the matched element</string>
+    <string name="mute_when_present">Mute when present</string>
+    <string name="mute_when_present_explanation">Mute music when a matching element is present, unmute when it is not</string>
+    <!-- Rule editor: supporting texts -->
     <string name="ref_required">* required</string>
-    <string name="ref_required_unless_contained_text_filled">* required unless contained text filled</string>
-    <string name="ref_required_unless_view_id_filled">* required unless view ID filled</string>
-    <!-- Rule editor: invalid inputs -->
+    <string name="ref_required_unless_filled_in_another_criterion">* required unless filled in another criterion</string>
+    <!-- Rule editor: messages for invalid inputs -->
+    <string name="invalid_input">Invalid input</string>
     <string name="error_no_search_criteria">At least one search criterion required</string>
     <string name="error_this_field_is_required">This field is required</string>
     <string name="error_empty_segments">Empty segments are not allowed</string>
@@ -122,7 +139,7 @@
     <!-- Scans -->
     <string name="scans">Scans</string>
     <!-- Placeholders for scan panes -->
-    <string name="scans_will_be_here">Scans obtained with the scanner will be listed here</string>
+    <string name="scans_will_be_here">Scans you make will be listed here</string>
     <!-- Scan list -->
     <string name="unidentifiable_app">Unidentifiable app</string>
     <!-- Scan inspector -->

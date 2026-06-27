@@ -111,10 +111,7 @@ private fun RuleItem(
             )
         },
         leadingContent = {
-            Icon(
-                painterResource(rule.action.drawableRes()),
-                contentDescription = stringResource(rule.action.stringRes())
-            )
+            Icon(rule.action.icon(), contentDescription = rule.action.explanation())
         },
         supportingContent = {
             Text(rule.sourcePackageName, maxLines = 1, overflow = TextOverflow.StartEllipsis)
