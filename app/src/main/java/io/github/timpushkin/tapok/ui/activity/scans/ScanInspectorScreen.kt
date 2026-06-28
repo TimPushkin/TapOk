@@ -104,7 +104,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,7 +119,9 @@ import io.github.timpushkin.tapok.ui.activity.rules.IncompleteRule
 import io.github.timpushkin.tapok.ui.activity.rules.prefilledRuleFrom
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
-import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
+import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
+import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
+import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -606,13 +607,13 @@ private fun EmptyNodeListPlaceholder(filtered: Boolean) {
             .padding(DefaultOuterSpacing)
     ) {
         Text(
-            buildAnnotatedString {
-                if (filtered) {
-                    append(stringResource(R.string.no_elements_match_filters))
-                } else {
-                    append(stringResource(R.string.no_elements_in_scan))
-                    appendParagraphSpacer()
-                    append(stringResource(R.string.no_elements_in_scan_hints))
+            if (filtered) {
+                stringResource(R.string.no_elements_match_filters).let {
+                    rememberAnnotatedString(it) { append(it) }
+                }
+            } else {
+                annotatedStringArrayResource(R.array.no_elements_in_scan).let {
+                    rememberAnnotatedString(it) { appendAnnotatedParagraphs(it) }
                 }
             },
             textAlign = TextAlign.Center,

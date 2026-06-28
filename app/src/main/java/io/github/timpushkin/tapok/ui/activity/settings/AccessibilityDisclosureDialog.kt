@@ -8,9 +8,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import io.github.timpushkin.tapok.R
-import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
+import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
+import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
+import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,18 +24,11 @@ fun AccessibilityDisclosureDialog(onAccept: () -> Unit, onHide: () -> Unit) {
             Text(stringResource(R.string.accessibility_api_usage))
         },
         text = {
+            val paragraphs =
+                annotatedStringArrayResource(R.array.accessibility_api_usage_disclosure)
             Text(
-                buildAnnotatedString {
-                    appendLine(stringResource(R.string.accessibility_api_usage_disclosure_body_1))
-                    appendLine(
-                        "• ${stringResource(R.string.accessibility_api_usage_disclosure_body_2)}"
-                    )
-                    append(
-                        "• ${stringResource(R.string.accessibility_api_usage_disclosure_body_3)}"
-                    )
-                    appendParagraphSpacer()
-
-                    append(stringResource(R.string.accessibility_api_usage_disclosure_body_4))
+                rememberAnnotatedString(paragraphs) {
+                    appendAnnotatedParagraphs(paragraphs)
                 }
             )
         },

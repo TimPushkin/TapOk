@@ -33,42 +33,50 @@
     <string name="enable_agent_to_run_automations">Enable the agent to be able to scan screen contents and run automations</string>
     <!-- Other settings -->
     <string name="show_scanner_overlay">Show scanner overlay</string>
-    <!-- Tutorial -->
+    <!-- Tutorial: buttons -->
     <string name="view_tutorial">View tutorial</string>
     <string name="skip_tutorial">Skip tutorial</string>
     <string name="complete_tutorial">Complete tutorial</string>
-    <!-- Tutorial: intro -->
+    <!-- Tutorial: texts -->
     <string name="tutorial_intro_headline">Welcome!</string>
-    <string name="tutorial_intro_body_1">TapOk lets you automate taps and other actions in Android apps.</string>
-    <string name="tutorial_intro_body_2">Follow this quick tutorial to learn how to set up your first automation.</string>
-    <!-- Tutorial: step 1 -->
+    <string-array name="tutorial_intro_body">
+        <item>TapOk lets you automate taps and other actions in Android apps.</item>
+        <item>Follow this quick tutorial to learn how to set up your first automation.</item>
+    </string-array>
     <string name="tutorial_step1_headline">Step 1: enable the TapOk service</string>
-    <string name="tutorial_step1_body_1">TapOk requires a background service to scan the screen and run your automations.</string>
-    <string name="tutorial_step1_body_2_1">Open Accessibility settings</string>
-    <string name="tutorial_step1_body_2_2">, find TapOk (it may be under \"Installed apps\" or \"Downloaded services\") and switch it on.</string>
-    <string name="tutorial_step1_body_3">Once enabled, a floating button will appear on your screen. You\'ll use it in the next step.</string>
-    <!-- Tutorial: step 2 -->
+    <string-array name="tutorial_step1_body">
+        <item>TapOk requires a background service to scan the screen and run your automations.</item>
+        <item><b><annotation link="agent_settings">Open Accessibility settings</annotation></b>, <b>find TapOk</b> (it may be under \"Installed apps\" or \"Downloaded services\") and <b>switch it on</b>.</item>
+        <item>Once enabled, a floating button will appear on your screen. You\'ll use it in the next step.</item>
+    </string-array>
     <string name="tutorial_step2_headline">Step 2: inspect the target app</string>
-    <string name="tutorial_step2_body_1">To write an automation you need to know what screen elements TapOk can interact with. A screen scanner is provided to help with that.</string>
-    <string name="tutorial_step2_body_2_1">"Open the app you want to automate, then tap "</string>
-    <string name="tutorial_step2_body_2_2">" on TapOk's floating button to capture a scan of the active window."</string>
-    <!-- Tutorial: step 3 -->
+    <string-array name="tutorial_step2_body">
+        <item>To write an automation you need to know what screen elements TapOk can interact with. A screen scanner is provided to help with that.</item>
+        <item><b>Open the app you want to automate</b>, then <b>tap <annotation inline="scan_icon">\"Scan screen\"</annotation></b> on TapOk\'s floating button to capture a scan of the active window.</item>
+    </string-array>
     <string name="tutorial_step3_headline">Step 3: find a target</string>
-    <string name="tutorial_step3_body_1_1">"Tap "</string>
-    <string name="tutorial_step3_body_1_2">, then \"View scans\" on the floating button and open your recent scan.</string>
-    <string name="tutorial_step3_body_2">Elements that TapOk can interact with will be highlighted. Tap the element you want to automate, such as a button, to view its data.</string>
-    <string name="tutorial_step3_body_3">Look for a property that uniquely identifies it. View ID is the most reliable, but if it\'s empty, you can use a combination of package name and text or any other listed property that sets the element apart. Copy or save these values for the next step.</string>
-    <!-- Tutorial: step 4 -->
-    <string name="tutorial_step4_headline">Step 4: write a rule</string>
-    <string name="tutorial_step4_body_1">Switch to the Rules tab and create a new rule.</string>
-    <string name="tutorial_step4_body_2">Fill in the values you got on the previous step, choose an action and save the rule.</string>
-    <string name="tutorial_step4_body_3">That\'s it! TapOk will now automatically trigger that action whenever it sees an element matching your description.</string>
+    <string-array name="tutorial_step3_body">
+        <item>Open your recent scan from the floating button menu (<b><annotation inline="expand_icon">\"Toggle button\"</annotation> \> \"View scans\"</b>).</item>
+        <item>Elements that TapOk can interact with will be highlighted.</item>
+        <item><li><b>Tap an element</b> (e.g. a button) to select it.</li></item>
+        <item><li><b>Tap <annotation inline="create_rule_icon">\"Create rule from this element\"</annotation></b> to start creating a rule for this element.</li></item>
+    </string-array>
+    <string name="tutorial_step4_headline">Step 4: create a rule</string>
+    <string-array name="tutorial_step4_body">
+        <item>A rule creation form will open, pre-filled with data from your selected element.</item>
+        <item><li><b>Review the data</b>: keep only the details needed to uniquely identify your target, removing unnecessary filters speeds up matching.</li></item>
+        <item><li><b>Choose an action</b>: select what TapOk should do, e.g. click the element.</li></item>
+        <item><li><b>Save the rule</b>.</li></item>
+        <item>That\'s it! TapOk will now perform this action automatically whenever it sees an element matching your description.</item>
+    </string-array>
     <!-- Accessibility API usage disclosure -->
     <string name="accessibility_api_usage">Accessibility API usage</string>
-    <string name="accessibility_api_usage_disclosure_body_1">To automate your actions, TapOk uses the Accessibility API:</string>
-    <string name="accessibility_api_usage_disclosure_body_2">analyzes the active window\'s contents and identifies targetable elements</string>
-    <string name="accessibility_api_usage_disclosure_body_3">performs clicks and gestures on your behalf according to rules you specify</string>
-    <string name="accessibility_api_usage_disclosure_body_4">The data is processed within TapOk, locally on your device. It is not transmitted to external servers or third parties.</string>
+    <string-array name="accessibility_api_usage_disclosure">
+        <item>To automate your actions, TapOk uses the Accessibility API:</item>
+        <item><li>analyzes the active window\'s contents and identifies targetable elements,</li></item>
+        <item><li>performs clicks and gestures on your behalf according to rules you specify.</li></item>
+        <item>The data is processed within TapOk, locally on your device. It is not transmitted to external servers or third parties.</item>
+    </string-array>
 
     <!-- Rules -->
     <string name="rules">Rules</string>
@@ -148,8 +156,10 @@
     <!-- Scan inspector: labels in node list's labels -->
     <string name="element_of_unspecified_class">Element of unspecified class</string>
     <!-- Scan inspector: node list's placeholders -->
-    <string name="no_elements_in_scan">No targetable elements discovered :(</string>
-    <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
+    <string-array name="no_elements_in_scan">
+        <item>No elements discovered :(</item>
+        <item>You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</item>
+    </string-array>
     <string name="no_elements_match_filters">No elements match current filters</string>
     <!-- Scan inspector: node description -->
     <string name="create_rule_from_this_element">Create rule from this element</string>
