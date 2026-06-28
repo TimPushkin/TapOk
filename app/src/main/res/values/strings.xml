@@ -152,6 +152,7 @@
     <string name="no_elements_in_scan_hints">You can try again and scan something else. Note that when multiple windows are visible only the one you are interacting with is scanned.</string>
     <string name="no_elements_match_filters">No elements match current filters</string>
     <!-- Scan inspector: node description -->
+    <string name="create_rule_from_this_element">Create rule from this element</string>
     <string name="selected_element">Selected element</string>
     <string name="clickable">Clickable</string>
     <string name="not_clickable">Not clickable</string>

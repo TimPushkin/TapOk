@@ -116,6 +116,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.scans.Node
+import io.github.timpushkin.tapok.ui.activity.rules.IncompleteRule
+import io.github.timpushkin.tapok.ui.activity.rules.prefilledRuleFrom
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.appendParagraphSpacer
@@ -141,6 +143,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScanInspectorScreen(
     scanId: Long,
+    onCreateRule: (IncompleteRule) -> Unit,
     onClose: () -> Unit,
     vm: ScanInspectorViewModel = hiltViewModel(
         key = scanId.toString()
@@ -204,10 +207,18 @@ fun ScanInspectorScreen(
             },
             sheetContent = {
                 loadedUiState?.run {
-                    NodeBottomSheet(shownNodes, !showUnreferenceableNodes, selectedNode) { node ->
-                        vm.selectNode(node)
-                        with(bottomSheetState) { if (node != null) expand() else shrink() }
-                    }
+                    NodeBottomSheet(
+                        shownNodes,
+                        !showUnreferenceableNodes,
+                        selectedNode,
+                        onSelectNode = { node ->
+                            vm.selectNode(node)
+                            with(bottomSheetState) { if (node != null) expand() else shrink() }
+                        },
+                        onCreateRuleFromNode = { node ->
+                            onCreateRule(prefilledRuleFrom(scan, node))
+                        }
+                    )
                 }
             },
             sheetDragHandle = { BottomSheetHandle() },
@@ -567,16 +578,21 @@ private fun NodeBottomSheet(
     nodes: List<Node>,
     filtered: Boolean,
     selectedNode: Node?,
-    onClick: (Node?) -> Unit
+    onSelectNode: (Node?) -> Unit,
+    onCreateRuleFromNode: (Node) -> Unit
 ) {
     if (selectedNode == null) {
         if (nodes.isEmpty()) {
             EmptyNodeListPlaceholder(filtered)
         } else {
-            NodeList(nodes, onNodeClick = onClick)
+            NodeList(nodes, onNodeClick = onSelectNode)
         }
     } else {
-        NodeDescription(selectedNode, onClose = { onClick(null) })
+        NodeDescription(
+            selectedNode,
+            onCreateRuleFromNode = { onCreateRuleFromNode(selectedNode) },
+            onClose = { onSelectNode(null) }
+        )
     }
 }
 
@@ -686,7 +702,7 @@ private fun Node.verticalBoundsAsString() = with(bounds) { "y=$top–${bottom}px
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun NodeDescription(node: Node, onClose: () -> Unit) {
+private fun NodeDescription(node: Node, onCreateRuleFromNode: () -> Unit, onClose: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
         modifier = Modifier
@@ -694,7 +710,7 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
             .padding(horizontal = DefaultOuterSpacing)
             .verticalScroll(rememberScrollState())
     ) {
-        NodeDescriptionHeader(onClose)
+        NodeDescriptionHeader(onCreateRuleFromNode, onClose)
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing / 2)) {
             CompositionLocalProvider(
@@ -751,7 +767,7 @@ private fun NodeDescription(node: Node, onClose: () -> Unit) {
 }
 
 @Composable
-private fun NodeDescriptionHeader(onClose: () -> Unit) {
+private fun NodeDescriptionHeader(onCreateRuleFromNode: () -> Unit, onClose: () -> Unit) {
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
         Box(
             contentAlignment = Alignment.CenterStart,
@@ -763,6 +779,30 @@ private fun NodeDescriptionHeader(onClose: () -> Unit) {
                 stringResource(R.string.selected_element),
                 style = MaterialTheme.typography.titleLarge
             )
+        }
+
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                TooltipAnchorPosition.Below
+            ),
+            tooltip = {
+                PlainTooltip { Text(stringResource(R.string.create_rule_from_this_element)) }
+            },
+            state = rememberTooltipState()
+        ) {
+            FilledTonalIconButton(
+                onCreateRuleFromNode,
+                shape = IconButtonDefaults.extraSmallRoundShape,
+                modifier = Modifier
+                    .minimumInteractiveComponentSize()
+                    .size(IconButtonDefaults.extraSmallContainerSize())
+            ) {
+                Icon(
+                    painterResource(R.drawable.create_rule_outlined),
+                    contentDescription = stringResource(R.string.create_rule_from_this_element),
+                    modifier = Modifier.size(IconButtonDefaults.extraSmallIconSize)
+                )
+            }
         }
 
         FilledTonalIconButton(

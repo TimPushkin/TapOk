@@ -9,6 +9,8 @@ import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
 import io.github.timpushkin.tapok.ui.activity.PrimaryKey
 import io.github.timpushkin.tapok.ui.activity.SecondaryKey
+import io.github.timpushkin.tapok.ui.activity.rules.RuleEditorKey
+import io.github.timpushkin.tapok.ui.activity.rules.RuleListKey
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -48,7 +50,14 @@ object ScansModule {
             )
         }
         entry<ScanInspectorKey> { key ->
-            ScanInspectorScreen(key.scanId, onClose = navigator::navigateBack)
+            ScanInspectorScreen(
+                key.scanId,
+                onCreateRule = { prefilling ->
+                    navigator.navigateTo(RuleListKey)
+                    navigator.navigateTo(RuleEditorKey(ruleId = null, prefilling = prefilling))
+                },
+                onClose = navigator::navigateBack
+            )
         }
     }
 }

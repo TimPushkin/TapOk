@@ -72,10 +72,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorPane(
     ruleId: Long?,
+    prefilling: IncompleteRule?,
     onBack: () -> Unit,
     vm: RuleEditorViewModel = hiltViewModel(
-        key = ruleId.toString()
-    ) { f: RuleEditorViewModelFactory -> f.create(ruleId) }
+        key = "$ruleId-$prefilling"
+    ) { f: RuleEditorViewModelFactory -> f.create(ruleId, prefilling) }
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val loadedState = state as? RuleEditorUiState.Loaded

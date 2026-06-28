@@ -22,7 +22,7 @@ data object RuleListKey : PrimaryKey(
 )
 
 @Serializable
-data class RuleEditorKey(val ruleId: Long?) : SecondaryKey()
+data class RuleEditorKey(val ruleId: Long?, val prefilling: IncompleteRule?) : SecondaryKey()
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -44,7 +44,7 @@ object RulesModule {
                     if (navigator.currentKey is RuleEditorKey) {
                         navigator.navigateBack()
                     }
-                    navigator.navigateTo(RuleEditorKey(it?.id))
+                    navigator.navigateTo(RuleEditorKey(it?.id, prefilling = null))
                 },
                 onDeleteRule = { rule ->
                     val deletingCurrent = navigator.currentKey.let {
@@ -57,7 +57,7 @@ object RulesModule {
             )
         }
         entry<RuleEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-            RuleEditorPane(key.ruleId, onBack = navigator::navigateBack)
+            RuleEditorPane(key.ruleId, key.prefilling, onBack = navigator::navigateBack)
         }
     }
 }

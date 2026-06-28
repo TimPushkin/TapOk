@@ -45,7 +45,7 @@ sealed interface RuleEditorUiState {
 
     data class Loaded(
         val ruleId: Long?,
-        val action: Rule.Action = Rule.Action.CLICK,
+        val action: Rule.Action,
         val textInputValidity: RuleInputValidity = RuleInputValidity.AllOK,
         val isSaving: Boolean = false
     ) : RuleEditorUiState
@@ -54,7 +54,8 @@ sealed interface RuleEditorUiState {
 @HiltViewModel(assistedFactory = RuleEditorViewModelFactory::class)
 class RuleEditorViewModel @AssistedInject constructor(
     private val ruleRepo: RuleRepo,
-    @Assisted ruleId: Long?
+    @Assisted ruleId: Long?,
+    @Assisted prefilling: IncompleteRule?
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<RuleEditorUiState>(
         RuleEditorUiState.Loading
@@ -76,35 +77,37 @@ class RuleEditorViewModel @AssistedInject constructor(
     val packageNameState = TextFieldState()
     val classNameState = TextFieldState()
 
-    @OptIn(FlowPreview::class)
-    private fun <T> launchTextValidationFlow(
-        textState: TextFieldState,
-        validate: (CharSequence) -> T,
-        onChange: RuleInputValidity.() -> RuleInputValidity,
-        onValidated: RuleInputValidity.(T) -> RuleInputValidity
-    ) {
-        snapshotFlow { textState.text }
-            .onEach { _ ->
-                _uiState.updateIfLoaded {
-                    check(!it.isSaving) { "Cannot edit while saving" }
-                    it.copy(textInputValidity = it.textInputValidity.onChange())
-                }
-            }
-            .debounce(500.milliseconds)
-            .filter { it.isNotEmpty() }
-            .map(validate)
-            .onEach { result ->
-                _uiState.updateIfLoaded {
-                    it.copy(textInputValidity = it.textInputValidity.onValidated(result))
-                }
-            }
-            .flowOn(Dispatchers.Default)
-            .launchIn(viewModelScope)
-    }
-
     init {
         viewModelScope.launch {
-            loadRule(ruleId)
+            val editedRule = ruleId?.let { id ->
+                withContext(Dispatchers.IO) { ruleRepo.loadRule(id) }
+            }
+            if (editedRule != null) {
+                Log.d(TAG, "Editing $editedRule, prefilled with $prefilling")
+            } else {
+                Log.d(TAG, "Creating new rule, prefilled with $prefilling")
+            }
+
+            editedRule?.name?.let {
+                nameState.setTextAndPlaceCursorAtEnd(it)
+            }
+            (prefilling?.sourcePackageName ?: editedRule?.sourcePackageName)?.let {
+                sourcePackageNameState.setTextAndPlaceCursorAtEnd(it)
+            }
+            (prefilling?.viewId ?: editedRule?.viewId)?.let {
+                viewIdState.setTextAndPlaceCursorAtEnd(it)
+            }
+            (prefilling?.containedText ?: editedRule?.containedText)?.let {
+                containedTextState.setTextAndPlaceCursorAtEnd(it)
+            }
+            (prefilling?.packageName ?: editedRule?.packageName)?.let {
+                packageNameState.setTextAndPlaceCursorAtEnd(it)
+            }
+            (prefilling?.className ?: editedRule?.className)?.let {
+                classNameState.setTextAndPlaceCursorAtEnd(it)
+            }
+            val action = (prefilling?.action ?: editedRule?.action) ?: Rule.Action.CLICK
+
             launchTextValidationFlow(
                 nameState,
                 ::validateRuleName,
@@ -141,23 +144,35 @@ class RuleEditorViewModel @AssistedInject constructor(
                 { relationAwareCopy(className = RuleInputValidity.ClassName.OK) },
                 { relationAwareCopy(className = it) }
             )
+
+            _uiState.value = RuleEditorUiState.Loaded(ruleId = ruleId, action = action)
         }
     }
 
-    private suspend fun loadRule(id: Long?) {
-        if (id != null) {
-            val rule = withContext(Dispatchers.IO) { ruleRepo.loadRule(id) }
-            Log.d(TAG, "Editing $rule")
-            _uiState.value = RuleEditorUiState.Loaded(id, rule.action)
-            nameState.setTextAndPlaceCursorAtEnd(rule.name)
-            sourcePackageNameState.setTextAndPlaceCursorAtEnd(rule.sourcePackageName)
-            rule.viewId?.let { viewIdState.setTextAndPlaceCursorAtEnd(it) }
-            rule.containedText?.let { containedTextState.setTextAndPlaceCursorAtEnd(it) }
-            rule.className?.let { classNameState.setTextAndPlaceCursorAtEnd(it) }
-        } else {
-            Log.d(TAG, "Creating new rule")
-            _uiState.value = RuleEditorUiState.Loaded(null)
-        }
+    @OptIn(FlowPreview::class)
+    private fun <T> launchTextValidationFlow(
+        textState: TextFieldState,
+        validate: (CharSequence) -> T,
+        onChange: RuleInputValidity.() -> RuleInputValidity,
+        onValidated: RuleInputValidity.(T) -> RuleInputValidity
+    ) {
+        snapshotFlow { textState.text }
+            .onEach { _ ->
+                _uiState.updateIfLoaded {
+                    check(!it.isSaving) { "Cannot edit while saving" }
+                    it.copy(textInputValidity = it.textInputValidity.onChange())
+                }
+            }
+            .debounce(500.milliseconds)
+            .filter { it.isNotEmpty() }
+            .map(validate)
+            .onEach { result ->
+                _uiState.updateIfLoaded {
+                    it.copy(textInputValidity = it.textInputValidity.onValidated(result))
+                }
+            }
+            .flowOn(Dispatchers.Default)
+            .launchIn(viewModelScope)
     }
 
     fun selectAction(action: Rule.Action) {
@@ -223,7 +238,7 @@ class RuleEditorViewModel @AssistedInject constructor(
 
 @AssistedFactory
 fun interface RuleEditorViewModelFactory {
-    fun create(ruleId: Long?): RuleEditorViewModel
+    fun create(ruleId: Long?, prefilling: IncompleteRule?): RuleEditorViewModel
 }
 
 private fun MutableStateFlow<RuleEditorUiState>.updateIfLoaded(
