@@ -173,6 +173,7 @@ fun ScanInspectorScreen(
         loadedUiState?.run {
             ScanDisplay(
                 screenshot,
+                nodes.firstOrNull(),
                 shownNodes,
                 selectedNode,
                 onNodeClick = { node ->
@@ -310,6 +311,7 @@ private fun rememberBottomSheetStateWrapper(
 @OptIn(ExperimentalTelephotoApi::class)
 private fun ScanDisplay(
     screenshot: ImageBitmap?,
+    rootNode: Node?,
     nodes: List<Node>,
     selectedNode: Node?,
     onNodeClick: (Node?) -> Unit,
@@ -324,7 +326,7 @@ private fun ScanDisplay(
         val viewportSize = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
         val scanSize = remember(screenshot, nodes) {
             screenshot?.run { Size(width.toFloat(), height.toFloat()) }
-                ?: nodes.firstOrNull()?.run { fractionalBounds.size }
+                ?: rootNode?.run { fractionalBounds.size }
                 ?: Size(1080f, 1080f)
         }
 
