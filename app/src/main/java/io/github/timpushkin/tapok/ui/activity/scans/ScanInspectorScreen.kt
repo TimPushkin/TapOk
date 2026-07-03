@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -35,7 +34,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -93,9 +91,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
@@ -104,9 +107,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -125,20 +133,16 @@ import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.subsamplingimage.SubSamplingImage
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomFocalPoint
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableContent
+import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.zoomable
-import okio.Path.Companion.toOkioPath
-import java.io.File
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -168,7 +172,7 @@ fun ScanInspectorScreen(
 
         loadedUiState?.run {
             ScanDisplay(
-                screenshotFile,
+                screenshot,
                 shownNodes,
                 selectedNode,
                 onNodeClick = { node ->
@@ -305,7 +309,7 @@ private fun rememberBottomSheetStateWrapper(
 @Composable
 @OptIn(ExperimentalTelephotoApi::class)
 private fun ScanDisplay(
-    screenshotFile: File?,
+    screenshot: ImageBitmap?,
     nodes: List<Node>,
     selectedNode: Node?,
     onNodeClick: (Node?) -> Unit,
@@ -315,31 +319,117 @@ private fun ScanDisplay(
     val updatableNodes by rememberUpdatedState(nodes)
     val updatableOnNodeClick by rememberUpdatedState(onNodeClick)
 
-    val zoomState = rememberZoomableState(
-        ZoomSpec(minZoomFactor = 0.75f, maxZoomFactor = 10f)
-    ).apply {
-        // Let the node canvas transform itself, otherwise it gets pixilated when zoomed-in
-        autoApplyTransformations = false
-    }
-    BoxWithConstraints(
-        Modifier.zoomable(
-            zoomState,
-            onClick = { offset ->
-                val offsetInContent = with(zoomState.coordinateSystem) {
-                    SpatialOffset(offset, CoordinateSpace.Viewport).offsetIn(
-                        CoordinateSpace.ZoomableContent
+    BoxWithConstraints {
+        val density = LocalDensity.current
+        val viewportSize = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
+        val scanSize = remember(screenshot, nodes) {
+            screenshot?.run { Size(width.toFloat(), height.toFloat()) }
+                ?: nodes.firstOrNull()?.run { fractionalBounds.size }
+                ?: Size(1080f, 1080f)
+        }
+
+        val zoomState = rememberZoomableState(
+            // minZoomFactor = 2f would be better, but the initial zoom factor is always 1, and it
+            // only jumps into the specified range on first zoom attempt. Moreover, because the
+            // viewport's size is animated, that leads to off-center zoom. Thus, we have to use the
+            // default minZoomFactor of 1.
+            ZoomSpec(maxZoomFactor = 10f),
+            // Let the node canvas transform itself, otherwise nodes get pixilated when zoomed-in
+            autoApplyTransformations = false
+        ).apply {
+            setContentLocation(ZoomableContentLocation.unscaledAndTopLeftAligned(scanSize))
+            // To be able to center on any pixel of the scan we need to be able to over-scroll by
+            // half of the corresponding dimension on each size which the padding allows. Sadly,
+            // https://github.com/saket/telephoto/issues/173 does not allow making it large enough.
+            contentPadding = with(density) { scanSize.toDpSize() }.run {
+                PaddingValues(horizontal = width / 3, vertical = height / 3)
+            }
+        }
+
+        val textMeasurer = rememberTextMeasurer()
+        val placeholderBackgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
+        val placeholderText = stringResource(R.string.could_not_take_screenshot)
+        val placeholderTextStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.contentColorFor(placeholderBackgroundColor)
+        )
+
+        val defaultNodeStroke = Stroke(with(density) { 1.dp.toPx() })
+        val selectedNodeStroke = Stroke(with(density) { 4.dp.toPx() })
+
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .zoomable(
+                    zoomState,
+                    onClick = { offset ->
+                        val offsetInContent = with(zoomState.coordinateSystem) {
+                            SpatialOffset(offset, CoordinateSpace.Viewport).offsetIn(
+                                CoordinateSpace.ZoomableContent
+                            )
+                        }
+                        updatableOnNodeClick(updatableNodes.findClicked(offsetInContent))
+                    }
+                )
+        ) {
+            withTransform({
+                with(zoomState.contentTransformation) {
+                    val pivot = with(transformOrigin) {
+                        Offset(size.width * pivotFractionX, size.height * pivotFractionY)
+                    }
+                    translate(offset.x, offset.y)
+                    rotate(rotationZ, pivot)
+                    scale(scale.scaleX, scale.scaleY, pivot)
+                }
+            }) {
+                if (screenshot != null) {
+                    // TODO: use srcOffset, srcSize to only draw the visible part
+                    drawImage(screenshot)
+                } else {
+                    drawScreenshotPlaceholder(
+                        textMeasurer,
+                        placeholderText,
+                        placeholderTextStyle,
+                        placeholderBackgroundColor
                     )
                 }
-                updatableOnNodeClick(updatableNodes.findClicked(offsetInContent))
+
+                // White + difference = inversion of underlying pixels. A layer is needed to have
+                // the blending applied to all rectangles together. Would it be set for each
+                // rectangle separately, the inversion would cancel out on intersections.
+                drawIntoCanvas { canvas ->
+                    canvas.withSaveLayer(
+                        bounds = Rect(Offset.Zero, size),
+                        paint = Paint().apply { blendMode = BlendMode.Difference }
+                    ) {
+                        for (node in nodes) {
+                            drawRect(
+                                Color.White,
+                                node.fractionalBounds.topLeft,
+                                node.fractionalBounds.size,
+                                style = defaultNodeStroke
+                            )
+                        }
+                        selectedNode?.run {
+                            drawRect(
+                                Color.White,
+                                fractionalBounds.topLeft,
+                                fractionalBounds.size,
+                                style = selectedNodeStroke
+                            )
+                        }
+                    }
+                }
             }
-        )
-    ) {
-        Screenshot(screenshotFile, zoomState)
-        NodeCanvas(nodes, selectedNode, zoomState)
+        }
+
+        // Call onZoom when user zooms-in
+        val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) > 0.00001f } }
+        LaunchedEffect(zoomed) {
+            if (zoomed) onZoomIn()
+        }
 
         // Center on selected node
         var prevSelectedNode by retain { mutableStateOf<Node?>(null) }
-        val viewportSize = with(LocalDensity.current) { Size(maxWidth.toPx(), maxHeight.toPx()) }
         LaunchedEffect(selectedNode) {
             if (selectedNode != prevSelectedNode) {
                 prevSelectedNode = selectedNode?.apply {
@@ -347,23 +437,6 @@ private fun ScanDisplay(
                 }
             }
         }
-    }
-
-    // Workaround for not being able to set the initial zoom factor
-    var isInitialZoomSet by retain { mutableStateOf(false) }
-    LaunchedEffect(null) {
-        if (!isInitialZoomSet) {
-            // Using zoomFactor = zoomState.zoomSpec.minimum.factor does not work as expected:
-            // https://github.com/saket/telephoto/issues/170
-            zoomState.zoomTo(zoomFactor = Float.MIN_VALUE, animationSpec = snap())
-            isInitialZoomSet = true
-        }
-    }
-
-    // Call onZoom when user zooms-in
-    val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) > 0.00001f } }
-    LaunchedEffect(zoomed, isInitialZoomSet) {
-        if (zoomed && isInitialZoomSet) onZoomIn()
     }
 }
 
@@ -385,98 +458,35 @@ private fun Rect.area() = width * height
 @OptIn(ExperimentalTelephotoApi::class)
 private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
     // ContentScale.Fit is uniform so scaleX == scaleY
-    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize).scaleX * 0.9f)
+    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize * 0.9f).scaleX)
         .takeUnless { it.isNaN() }
         // Larger values make it hard to understand the surroundings, user can zoom more if needed
         ?.coerceAtMost(3f)
-        // zoomTo coerces internally but only for some calculations
-        ?.coerceIn(zoomSpec.minimum.factor, zoomSpec.maximum.factor)
         ?: return
     val center = SpatialOffset(rect.center, CoordinateSpace.ZoomableContent)
     zoomTo(factor, ZoomFocalPoint.moveToViewportCenter(center))
 }
 
-@Composable
-private fun Screenshot(screenshotFile: File?, zoomState: ZoomableState) {
-    if (screenshotFile != null) {
-        SubSamplingImage(
-            state = rememberSubSamplingImageState(
-                SubSamplingImageSource.file(screenshotFile.toOkioPath()),
-                zoomState
-            ),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize()
-        )
-    } else {
-        MissingScreenshotPlaceholder(zoomState)
-    }
-}
+private fun DrawScope.drawScreenshotPlaceholder(
+    textMeasurer: TextMeasurer,
+    text: String,
+    textStyle: TextStyle,
+    backgroundColor: Color
+) {
+    drawRect(backgroundColor)
 
-@Composable
-private fun MissingScreenshotPlaceholder(zoomState: ZoomableState) {
-    check(!zoomState.autoApplyTransformations)
-    val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-    Text(
-        text = stringResource(R.string.could_not_take_screenshot),
-        color = MaterialTheme.colorScheme.contentColorFor(containerColor).copy(alpha = 0.38f),
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .graphicsLayer {
-                val transformation = zoomState.contentTransformation
-                scaleX = transformation.scale.scaleX
-                scaleY = transformation.scale.scaleY
-                rotationZ = transformation.rotationZ
-                translationX = transformation.offset.x
-                translationY = transformation.offset.y
-                transformOrigin = transformation.transformOrigin
-            }
-            .background(containerColor)
-            .fillMaxSize()
-            .wrapContentHeight(Alignment.CenterVertically)
+    val textLayoutResult = textMeasurer.measure(
+        text = text,
+        style = textStyle,
+        constraints = Constraints(maxWidth = size.width.toInt())
     )
-}
-
-@Composable
-private fun NodeCanvas(nodes: List<Node>, selectedNode: Node?, zoomState: ZoomableState) {
-    check(!zoomState.autoApplyTransformations)
-    val defaultNodeStroke = Stroke(with(LocalDensity.current) { 1.dp.toPx() })
-    val selectedNodeStroke = Stroke(with(LocalDensity.current) { 4.dp.toPx() })
-    // White color + difference blending mode = inversion of underlying pixels. A graphicsLayer
-    // is needed to have the blending mode applied to all rectangles together, if the mode would
-    // be set for each rectangle separately the inversion would cancel out on intersections.
-    Canvas(
-        modifier = Modifier
-            .graphicsLayer { blendMode = BlendMode.Difference }
-            .fillMaxSize()
-    ) {
-        withTransform({
-            with(zoomState.contentTransformation) {
-                val pivot = with(transformOrigin) {
-                    Offset(size.width * pivotFractionX, size.height * pivotFractionY)
-                }
-                translate(offset.x, offset.y)
-                rotate(rotationZ, pivot)
-                scale(scale.scaleX, scale.scaleY, pivot)
-            }
-        }) {
-            for (node in nodes) {
-                drawRect(
-                    Color.White,
-                    node.fractionalBounds.topLeft,
-                    node.fractionalBounds.size,
-                    style = defaultNodeStroke
-                )
-            }
-            selectedNode?.run {
-                drawRect(
-                    Color.White,
-                    fractionalBounds.topLeft,
-                    fractionalBounds.size,
-                    style = selectedNodeStroke
-                )
-            }
-        }
-    }
+    drawText(
+        textLayoutResult = textLayoutResult,
+        topLeft = Offset(
+            (size.width - textLayoutResult.size.width) / 2,
+            (size.height - textLayoutResult.size.height) / 2
+        )
+    )
 }
 
 @Composable

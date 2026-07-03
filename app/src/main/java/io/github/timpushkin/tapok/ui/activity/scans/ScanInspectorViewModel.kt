@@ -1,6 +1,10 @@
 package io.github.timpushkin.tapok.ui.activity.scans
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -16,7 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 sealed interface ScanInspectorUiState {
@@ -24,7 +27,7 @@ sealed interface ScanInspectorUiState {
 
     data class Loaded(
         val scan: Scan,
-        val screenshotFile: File?,
+        val screenshot: ImageBitmap?,
         val nodes: List<Node>,
         val selectedNode: Node?,
         val showUnreferenceableNodes: Boolean
@@ -45,23 +48,27 @@ class ScanInspectorViewModel @AssistedInject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            val (scan, nodes) = withContext(Dispatchers.IO) { scanRepo.loadScanWithNodes(scanId) }
-                ?: return@launch // If the scan has been deleted concurrently the VM won't be used
-            val screenshotFile = scan.screenshotFile?.let { filename ->
-                withContext(Dispatchers.IO) { application.screenshotFile(filename) }
+        viewModelScope.launch(Dispatchers.IO) {
+            // If the scan has been deleted concurrently the VM won't be used
+            val (scan, nodes) = scanRepo.loadScanWithNodes(scanId) ?: return@launch
+            val screenshot = scan.screenshotFile?.let { filename ->
+                loadScreenshot(application.screenshotFile(filename))
             }
-            _uiState.update {
-                ScanInspectorUiState.Loaded(
-                    scan,
-                    screenshotFile,
-                    nodes,
-                    null,
-                    // If no referenceable nodes show at least something by default
-                    nodes.all { !it.isReferenceableInRules }
-                )
-            }
+            _uiState.value = ScanInspectorUiState.Loaded(
+                scan,
+                screenshot,
+                nodes,
+                null,
+                // If no referenceable nodes show at least something by default
+                nodes.all { !it.isReferenceableInRules }
+            )
         }
+    }
+
+    private fun loadScreenshot(file: File): ImageBitmap {
+        val path = file.toString()
+        val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.HARDWARE }
+        return BitmapFactory.decodeFile(path, options).asImageBitmap()
     }
 
     fun switchShowUnreferenceableNodes() {
