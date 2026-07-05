@@ -161,49 +161,76 @@ class Automator @AssistedInject constructor(
          * window - either worsens the performance.
          */
         private fun findMatchingNodes(rule: Rule): List<AccessibilityNodeInfo> {
-            if (event?.packageName == rule.sourcePackageName) {
-                val source = eventSource
-                if (source != null) {
-                    val nodes = findMatchingNodes(rule, source)
-                    if (nodes.isNotEmpty()) {
-                        return nodes
+            Log.d(TAG, "Looking for nodes matching $rule")
+
+            if (event != null) {
+                if (event.packageName == rule.sourcePackageName) {
+                    val source = eventSource
+                    if (source != null) {
+                        Log.d(TAG, "Inspecting event's source")
+                        val nodes = findMatchingNodes(rule, source)
+                        Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
+                        if (nodes.isNotEmpty()) {
+                            return nodes
+                        }
                     }
+                } else {
+                    Log.d(TAG, "Not inspecting event's source: its package name does not match")
                 }
             }
 
             val root = event?.run { windowRoots[windowId] }
-            if (root != null) {
-                val nodes = findMatchingNodes(rule, root)
-                if (nodes.isNotEmpty()) {
-                    return nodes
+            if (event != null) {
+                if (root != null) {
+                    Log.d(TAG, "Inspecting event's window")
+                    val nodes = findMatchingNodes(rule, root)
+                    Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
+                    if (nodes.isNotEmpty()) {
+                        return nodes
+                    }
+                } else {
+                    Log.d(
+                        TAG, "Not inspecting event's window: " +
+                                "ID not in interactable windows' IDs ${windowRoots.keys}"
+                    )
                 }
             }
 
-            return findMatchingNodes(
+            Log.d(TAG, "Inspecting the rest of the windows")
+            val nodes = findMatchingNodes(
                 rule, root?.let { windowRoots.values - it } ?: windowRoots.values
             )
+            Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
+            return nodes
         }
 
         private fun findMatchingNodes(
             rule: Rule,
             source: AccessibilityNodeInfo
         ): List<AccessibilityNodeInfo> {
+            Log.d(TAG, "Inspecting subtree of $source")
             if (source.packageName != rule.sourcePackageName) {
+                Log.d(TAG, "Skipped: source's package name does not match")
                 return emptyList()
             }
             if (source.matches(rule)) {
+                Log.d(TAG, "Source matches, taking just it")
                 return listOf(source)
             }
             if (rule.viewId != null) {
                 val nodes = source.findAccessibilityNodeInfosByViewId(rule.viewId)
+                    .also { Log.d(TAG, "Found by view ID (to be filtered): $it") }
                     .filter { it.matches(rule, checkViewId = false) }
+                    .also { Log.d(TAG, "After filtering: ${it.toShortString()}") }
                 if (nodes.isNotEmpty()) {
                     return nodes
                 }
             }
             if (rule.containedText != null) {
                 val nodes = source.findAccessibilityNodeInfosByText(rule.containedText)
+                    .also { Log.d(TAG, "Found by contained text (to be filtered): $it") }
                     .filter { it.matches(rule, checkText = false) }
+                    .also { Log.d(TAG, "After filtering: ${it.toShortString()}") }
                 if (nodes.isNotEmpty()) {
                     return nodes
                 }
@@ -244,6 +271,12 @@ private fun AccessibilityService.getRootsOfAllWindows(): Map<Int, AccessibilityN
         .flatten()
         .mapNotNull { window -> window.root?.let { root -> window.id to root } }
         .toMap()
+
+private fun Iterable<AccessibilityNodeInfo>.toShortString() =
+    joinToString(prefix = "[", postfix = "]") { it.toShortString() }
+
+private fun AccessibilityNodeInfo.toShortString() =
+    this::class.simpleName + "@" + Integer.toHexString(hashCode())
 
 @AssistedFactory
 interface AutomatorFactory {

@@ -8,10 +8,10 @@ fun AccessibilityNodeInfo.matches(
     checkText: Boolean = true,
     checkPackageName: Boolean = true,
     checkClassName: Boolean = true
-) = !((checkViewId && viewIdResourceName != rule.viewId) ||
-        (checkText && !matchesByText(rule)) ||
-        (checkPackageName && packageName != rule.packageName) ||
-        (checkClassName && className != rule.className))
+) = (!checkViewId || rule.viewId == null || viewIdResourceName == rule.viewId) &&
+        (!checkText || matchesByText(rule)) &&
+        (!checkPackageName || rule.packageName == null || packageName == rule.packageName) &&
+        (!checkClassName || rule.className == null || className == rule.className)
 
 /**
  * Whether this node would be returned by
