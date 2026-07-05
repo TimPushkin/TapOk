@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "30f4449aca5bb554ee5aaebbe19d4587",
+    "identityHash": "0a6abda7bf572eea88033642bfda2566",
     "entities": [
       {
         "tableName": "Rule",
@@ -180,7 +180,7 @@
       },
       {
         "tableName": "Scan",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_package_name` TEXT, `timestamp` TEXT NOT NULL, `screenshot_file` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_package_name` TEXT, `timestamp` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -198,11 +198,6 @@
             "columnName": "timestamp",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "screenshotFile",
-            "columnName": "screenshot_file",
-            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -210,23 +205,12 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_Scan_screenshot_file",
-            "unique": true,
-            "columnNames": [
-              "screenshot_file"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_Scan_screenshot_file` ON `${TABLE_NAME}` (`screenshot_file`)"
-          }
-        ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '30f4449aca5bb554ee5aaebbe19d4587')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0a6abda7bf572eea88033642bfda2566')"
     ]
   }
 }

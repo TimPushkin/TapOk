@@ -19,6 +19,9 @@ private const val IS_ACCESSIBILITY_USAGE_ACCEPTED_DEFAULT = false
 private val SHOULD_SHOW_SCANNER_OVERLAY_KEY = booleanPreferencesKey("should_show_scanner_overlay")
 private const val SHOULD_SHOW_SCANNER_OVERLAY_DEFAULT = true
 
+private val SHOULD_SCAN_ALL_WINDOWS_KEY = booleanPreferencesKey("should_scan_all_windows")
+private const val SHOULD_SCAN_ALL_WINDOWS_DEFAULT = false
+
 class PreferencesRepoImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : PreferencesRepo {
@@ -48,5 +51,12 @@ class PreferencesRepoImpl @Inject constructor(
 
     override suspend fun setShouldShowScannerOverlay(value: Boolean) {
         setValue(SHOULD_SHOW_SCANNER_OVERLAY_KEY, value)
+    }
+
+    override fun shouldScanAllWindows() =
+        getValueFlow(SHOULD_SCAN_ALL_WINDOWS_KEY, SHOULD_SCAN_ALL_WINDOWS_DEFAULT)
+
+    override suspend fun setShouldScanAllWindows(value: Boolean) {
+        setValue(SHOULD_SCAN_ALL_WINDOWS_KEY, value)
     }
 }

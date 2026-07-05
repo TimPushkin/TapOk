@@ -51,9 +51,7 @@ class ScanInspectorViewModel @AssistedInject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             // If the scan has been deleted concurrently the VM won't be used
             val (scan, nodes) = scanRepo.loadScanWithNodes(scanId) ?: return@launch
-            val screenshot = scan.screenshotFile?.let { filename ->
-                loadScreenshot(application.screenshotFile(filename))
-            }
+            val screenshot = loadScreenshotIfExists(application.screenshotFile(scan))
             _uiState.value = ScanInspectorUiState.Loaded(
                 scan,
                 screenshot,
@@ -65,7 +63,10 @@ class ScanInspectorViewModel @AssistedInject constructor(
         }
     }
 
-    private fun loadScreenshot(file: File): ImageBitmap {
+    private fun loadScreenshotIfExists(file: File): ImageBitmap? {
+        if (!file.exists()) {
+            return null
+        }
         val path = file.toString()
         val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.HARDWARE }
         return BitmapFactory.decodeFile(path, options).asImageBitmap()

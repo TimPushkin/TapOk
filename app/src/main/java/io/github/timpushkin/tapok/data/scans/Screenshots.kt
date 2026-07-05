@@ -6,5 +6,8 @@ import java.io.File
 
 const val SCREENSHOTS_DIR = "screenshots"
 
-fun Context.screenshotFile(name: String) =
-    File(getDir(SCREENSHOTS_DIR, MODE_PRIVATE), name)
+fun Context.screenshotFile(scan: Scan) =
+    File(
+        getDir(SCREENSHOTS_DIR, MODE_PRIVATE),
+        with(scan) { "$rootPackageName-$timestamp-$id.webp" }
+    )

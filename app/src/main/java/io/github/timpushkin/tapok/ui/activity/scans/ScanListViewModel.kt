@@ -38,7 +38,7 @@ class ScanListViewModel @Inject constructor(
     fun deleteScan(scan: Scan) {
         viewModelScope.launch(Dispatchers.IO) {
             scanRepo.deleteScan(scan)
-            scan.screenshotFile?.let { application.screenshotFile(it).delete() }
+            application.screenshotFile(scan).delete() // no-op if no screenshot exists
         }
     }
 }

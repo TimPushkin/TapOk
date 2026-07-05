@@ -266,12 +266,6 @@ class Automator @AssistedInject constructor(
 
 private fun AccessibilityEvent.id() = hashCode().toHexString()
 
-private fun AccessibilityService.getRootsOfAllWindows(): Map<Int, AccessibilityNodeInfo> =
-    windowsOnAllDisplays.valueIterator().asSequence()
-        .flatten()
-        .mapNotNull { window -> window.root?.let { root -> window.id to root } }
-        .toMap()
-
 private fun Iterable<AccessibilityNodeInfo>.toShortString() =
     joinToString(prefix = "[", postfix = "]") { it.toShortString() }
 

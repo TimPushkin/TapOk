@@ -25,8 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.timpushkin.tapok.agent.AgentService
 import io.github.timpushkin.tapok.R
+import io.github.timpushkin.tapok.agent.AgentService
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
@@ -36,6 +36,7 @@ import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 @Composable
 fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     Scaffold(containerColor = Color.Transparent) { padding ->
+        val agentEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
         SegmentedListPane(
             contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
             modifier = Modifier.consumeWindowInsets(padding)
@@ -43,17 +44,43 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
             item {
                 val a11yUsageAccepted by viewModel.isAccessibilityUsageAccepted
                     .collectAsStateWithLifecycle()
-                AgentStatusItem(0, 2, a11yUsageAccepted, viewModel::markAccessibilityUsageAccepted)
+                AgentStatusItem(
+                    0, 1,
+                    agentEnabled,
+                    a11yUsageAccepted,
+                    viewModel::markAccessibilityUsageAccepted
+                )
             }
+
+            item { SegmentedListPaneDefaults.GroupSpacer() }
+
             item {
-                val serviceEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
                 val shouldShowScannerOverlay by viewModel.shouldShowScannerOverlay
                     .collectAsStateWithLifecycle()
                 SwitchItem(
-                    1, 2, stringResource(R.string.show_scanner_overlay),
+                    0, 2,
+                    stringResource(R.string.show_scanner_overlay),
                     checked = shouldShowScannerOverlay,
                     onCheckedChange = viewModel::setShouldShowScannerOverlay,
-                    enabled = serviceEnabled
+                    enabled = agentEnabled
+                )
+            }
+            item {
+                val shouldScanAllWindows by viewModel.shouldScanAllWindows
+                    .collectAsStateWithLifecycle()
+                SwitchItem(
+                    1, 2,
+                    stringResource(R.string.scan_all_windows),
+                    supportingText = stringResource(
+                        if (shouldScanAllWindows) {
+                            R.string.all_interactable_windows_will_be_scanned
+                        } else {
+                            R.string.only_active_window_will_be_scanned
+                        }
+                    ),
+                    checked = shouldScanAllWindows,
+                    onCheckedChange = viewModel::setShouldScanAllWindows,
+                    enabled = agentEnabled
                 )
             }
 
@@ -69,6 +96,7 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
 private fun AgentStatusItem(
     index: Int,
     count: Int,
+    agentEnabled: Boolean,
     accessibilityUsageAccepted: Boolean,
     onAccessibilityUsageAccepted: () -> Unit
 ) {
@@ -85,7 +113,6 @@ private fun AgentStatusItem(
         )
     }
 
-    val agentEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
     val updatableAccessibilityUsageAccepted by rememberUpdatedState(accessibilityUsageAccepted)
     SegmentedListItem(
         content = { Text(stringResource(R.string.open_agent_settings)) },
@@ -129,10 +156,12 @@ private fun SwitchItem(
     text: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    supportingText: String? = null,
     enabled: Boolean = true
 ) {
     SegmentedListItem(
         content = { Text(text) },
+        supportingContent = supportingText?.let { { Text(it) } },
         trailingContent = { Switch(checked, onCheckedChange = null, enabled = enabled) },
         onClick = { onCheckedChange(!checked) },
         enabled = enabled,

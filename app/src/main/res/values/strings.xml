@@ -33,6 +33,9 @@
     <string name="enable_agent_to_run_automations">Enable the agent to be able to scan screen contents and run automations</string>
     <!-- Other settings -->
     <string name="show_scanner_overlay">Show scanner overlay</string>
+    <string name="scan_all_windows">Scan all windows</string>
+    <string name="all_interactable_windows_will_be_scanned">All interactable windows will be scanned</string>
+    <string name="only_active_window_will_be_scanned">Only the active window will be scanned</string>
     <!-- Tutorial: buttons -->
     <string name="view_tutorial">View tutorial</string>
     <string name="skip_tutorial">Skip tutorial</string>

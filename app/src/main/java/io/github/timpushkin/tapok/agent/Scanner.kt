@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.IntRect
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import io.github.timpushkin.tapok.data.preferences.PreferencesRepo
 import io.github.timpushkin.tapok.data.scans.Node
 import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.data.scans.ScanRepo
@@ -28,8 +29,9 @@ import io.github.timpushkin.tapok.data.scans.screenshotFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -45,7 +47,8 @@ private const val PREFETCH_FLAGS = AccessibilityNodeInfo.FLAG_PREFETCH_UNINTERRU
 
 class Scanner @AssistedInject constructor(
     @Assisted private val accessibilityService: AccessibilityService,
-    private val scanRepo: ScanRepo
+    private val scanRepo: ScanRepo,
+    private val preferencesRepo: PreferencesRepo
 ) {
     val isScanningFlow = MutableStateFlow(false)
 
@@ -54,20 +57,35 @@ class Scanner @AssistedInject constructor(
             return
         }
 
-        coroutineScope { // Need a coroutine scope for async/await
-            Log.i(TAG, "Scanning...")
+        withContext(Dispatchers.Default) {
+            val shouldScanAllWindows = shouldScanAllWindows()
             val time = Clock.System.now()
-            val root = checkNotNull(accessibilityService.getRootInActiveWindow(PREFETCH_FLAGS))
-            val tree = async(Dispatchers.Default) { captureAccessibilityState(root) }
-            val screenshot = async(Dispatchers.Default) { captureScreenshot(root) }
-            withContext(Dispatchers.IO) {
-                saveScan(time, tree.await(), screenshot.await())
+            val roots = with(accessibilityService) {
+                if (shouldScanAllWindows) {
+                    Log.i(TAG, "Scanning all windows...")
+                    getRootsOfAllWindows(PREFETCH_FLAGS).values
+                } else {
+                    Log.i(TAG, "Scanning active window...")
+                    getRootInActiveWindow(PREFETCH_FLAGS)?.let { listOf(it) } ?: emptyList()
+                }
             }
-            Log.i(TAG, "Scanned ${tree.await().nodes.size} nodes of ${root.packageName} at $time")
+            for (root in roots) {
+                launch {
+                    val tree = async { captureAccessibilityState(root) }
+                    val screenshot = async { captureScreenshot(root) }
+                    withContext(Dispatchers.IO) {
+                        saveScan(time, tree.await(), screenshot.await())
+                    }
+                    Log.i(TAG, "Scanned ${tree.await().nodes.size} nodes of ${root.packageName}")
+                }
+            }
         }
 
         isScanningFlow.value = false
     }
+
+    suspend fun shouldScanAllWindows() =
+        withContext(Dispatchers.IO) { preferencesRepo.shouldScanAllWindows().first() }
 
     private fun captureAccessibilityState(root: AccessibilityNodeInfo): AccessibilityState {
         val windowBounds = Rect()
@@ -141,17 +159,9 @@ class Scanner @AssistedInject constructor(
         a11yState: AccessibilityState,
         screenshot: Bitmap?
     ) {
-        val rootPackage = a11yState.nodes.first().packageName?.toString()
-
-        val screenshotFile = screenshot?.run {
-            "$rootPackage-$timestamp.webp".also { filename ->
-                accessibilityService.screenshotFile(filename).outputStream().use { out ->
-                    compress(Bitmap.CompressFormat.WEBP, 100, out)
-                }
-            }
+        val scan = Scan(0, a11yState.nodes.first().packageName?.toString(), timestamp).let {
+            it.copy(id = scanRepo.insertScan(it))
         }
-
-        val scanId = scanRepo.insertScan(Scan(0, rootPackage, timestamp, screenshotFile))
 
         val nodeOffset = screenshot?.run {
             calculateScreenToScreenshotOffset(a11yState.windowBounds, Size(width, height))
@@ -161,7 +171,7 @@ class Scanner @AssistedInject constructor(
             node.calculateBoundsInScreenshot(nodeOffset, a11yState.magnification, nodeBounds)
             Node(
                 0,
-                scanId,
+                scan.id,
                 with(nodeBounds) { IntRect(left, top, right, bottom) },
                 node.packageName?.toString(),
                 node.className?.toString(),
@@ -173,6 +183,12 @@ class Scanner @AssistedInject constructor(
             )
         }
         scanRepo.insertNodes(nodes)
+
+        screenshot?.run {
+            accessibilityService.screenshotFile(scan).outputStream().use { out ->
+                compress(Bitmap.CompressFormat.WEBP, 100, out)
+            }
+        }
     }
 
     private fun calculateScreenToScreenshotOffset(
