@@ -559,6 +559,7 @@ private suspend fun Clipboard.setTextEntry(text: String) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun ShowUnreferenceableNodesSwitch(value: Boolean, onSwitch: (() -> Unit)?) {
     val iconRes = if (value) R.drawable.visibility_filled else R.drawable.visibility_off_outlined
     val descriptionRes = R.string.show_hide_elements_that_cannot_be_referenced
@@ -780,6 +781,7 @@ private fun NodeDescription(node: Node, onCreateRuleFromNode: () -> Unit, onClos
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun NodeDescriptionHeader(onCreateRuleFromNode: () -> Unit, onClose: () -> Unit) {
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
         Box(

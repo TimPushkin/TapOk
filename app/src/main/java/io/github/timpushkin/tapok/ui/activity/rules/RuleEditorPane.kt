@@ -306,6 +306,7 @@ private fun SubsectionHeader(header: String, subheader: String) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun RuleTextField(
     state: TextFieldState,
     enabled: Boolean,
