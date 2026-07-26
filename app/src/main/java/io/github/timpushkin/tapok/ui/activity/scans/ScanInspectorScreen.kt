@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -93,7 +94,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -136,11 +139,7 @@ fun ScanInspectorScreen(
 
         val sheetState = rememberBottomSheetStateWrapper()
         val sheetPeekHeightDp by animateDpAsState(
-            if (loadedUiState == null) {
-                0.dp
-            } else {
-                WindowInsets.safeContentBottomDp() + LocalMinimumInteractiveComponentSize.current
-            }
+            if (loadedUiState == null) 0.dp else bottomSheetPeekHeight()
         )
 
         loadedUiState?.run {
@@ -239,6 +238,11 @@ private fun Modifier.dottedBackground(
 @Composable
 private fun WindowInsets.Companion.safeContentBottomDp() = with(LocalDensity.current) {
     safeContent.getBottom(density = this).toDp()
+}
+
+@Composable
+private fun WindowInsets.Companion.safeDrawingBottomDp() = with(LocalDensity.current) {
+    safeDrawing.getBottom(density = this).toDp()
 }
 
 @Composable
@@ -354,12 +358,38 @@ private fun ShowUnreferenceableNodesSwitch(value: Boolean, onSwitch: (() -> Unit
     }
 }
 
+private val BOTTOM_SHEET_HANDLE_HEIGHT = 4.dp
+
+@Composable
+private fun bottomSheetPeekHeight(): Dp = with(LocalDensity.current) {
+    // Height needed for the node description to look good when peeked
+    val contentPeekHeight =
+        /* BottomSheetHandle */
+        BOTTOM_SHEET_HANDLE_HEIGHT + 2 * DefaultInnerSpacing +
+                /* NodeDescription: NodeDescriptionHeader */
+                maxOf(
+                    MaterialTheme.typography.titleLarge.lineHeight.toDp(),
+                    LocalMinimumInteractiveComponentSize.current,
+                    IconButtonDefaults.extraSmallContainerSize().height
+                ) +
+                DefaultInnerSpacing +
+                /* NodeDescription: first line of FlowRow */
+                MaterialTheme.typography.labelMedium.lineHeight.toDp() +
+                DefaultInnerSpacing +
+                /* Possibly obscured space */
+                WindowInsets.safeDrawingBottomDp()
+    // Height needed for the sheet to be interactable when peeking
+    val minInteractablePeekHeight = LocalMinimumInteractiveComponentSize.current +
+            WindowInsets.safeContentBottomDp()
+    return contentPeekHeight.coerceAtLeast(minInteractablePeekHeight)
+}
+
 @Composable
 private fun BottomSheetHandle() {
     Surface(
         modifier = Modifier
             .padding(vertical = DefaultInnerSpacing)
-            .size(width = 32.dp, height = 4.dp),
+            .size(width = 32.dp, height = BOTTOM_SHEET_HANDLE_HEIGHT),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = MaterialTheme.shapes.extraLarge
     ) {}
@@ -561,6 +591,7 @@ private fun NodeDescription(node: Node, onCreateRuleFromNode: () -> Unit, onClos
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun NodeDescriptionHeader(onCreateRuleFromNode: () -> Unit, onClose: () -> Unit) {
+    // When the height of the peeking content gets changed, bottomSheetPeekHeight must be updated
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
         Box(
             contentAlignment = Alignment.CenterStart,
@@ -570,7 +601,10 @@ private fun NodeDescriptionHeader(onCreateRuleFromNode: () -> Unit, onClose: () 
         ) {
             Text(
                 stringResource(R.string.selected_element),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                // Limit the number of lines to be able to calculate bottomSheetPeekHeight
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
