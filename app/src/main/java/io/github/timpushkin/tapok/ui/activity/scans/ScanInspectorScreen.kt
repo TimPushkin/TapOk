@@ -12,13 +12,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -28,7 +26,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -63,7 +60,6 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberBottomSheetState
@@ -71,14 +67,11 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -86,20 +79,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.withSaveLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -107,14 +89,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -132,17 +109,6 @@ import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
 import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.Viewport
-import me.saket.telephoto.zoomable.ZoomFocalPoint
-import me.saket.telephoto.zoomable.ZoomSpec
-import me.saket.telephoto.zoomable.ZoomableContent
-import me.saket.telephoto.zoomable.ZoomableContentLocation
-import me.saket.telephoto.zoomable.ZoomableState
-import me.saket.telephoto.zoomable.rememberZoomableState
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
-import me.saket.telephoto.zoomable.spatial.SpatialOffset
-import me.saket.telephoto.zoomable.zoomable
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,6 +121,9 @@ fun ScanInspectorScreen(
     ) { f: ScanInspectorViewModelFactory -> f.create(scanId) }
 ) {
     Box(modifier = Modifier.dottedBackground()) {
+        val uiState by vm.uiState.collectAsStateWithLifecycle()
+        val loadedUiState = uiState as? ScanInspectorUiState.Loaded
+
         var showBars by rememberSaveable { mutableStateOf(true) }
         val insetsController = LocalActivity.current?.window?.let { window ->
             WindowCompat.getInsetsController(window, LocalView.current)
@@ -165,42 +134,39 @@ fun ScanInspectorScreen(
             onDispose { if (!showBars) insetsController?.show(systemBars) }
         }
 
-        val bottomSheetState = rememberBottomSheetStateWrapper()
-
-        val uiState by vm.uiState.collectAsStateWithLifecycle()
-        val loadedUiState = uiState as? ScanInspectorUiState.Loaded
-
-        loadedUiState?.run {
-            ScanDisplay(
-                screenshot,
-                nodes.firstOrNull(),
-                shownNodes,
-                selectedNode,
-                onNodeClick = { node ->
-                    if (node != selectedNode) { // Clicked on deselected node
-                        vm.selectNode(node)
-                        with(bottomSheetState) { if (node != null) expand() else shrink() }
-                    } else if (selectedNode != null) { // Clicked on selected node
-                        vm.selectNode(null)
-                        bottomSheetState.shrink()
-                    } else { // Clicked on empty area when no node is selected
-                        showBars = !showBars
-                        bottomSheetState.shrink()
-                    }
-                },
-                onZoomIn = { showBars = false }
-            )
-        }
-
-        val sheetPeekHeight by animateDpAsState(
+        val sheetState = rememberBottomSheetStateWrapper()
+        val sheetPeekHeightDp by animateDpAsState(
             if (loadedUiState == null) {
                 0.dp
             } else {
                 WindowInsets.safeContentBottomDp() + LocalMinimumInteractiveComponentSize.current
             }
         )
+
+        loadedUiState?.run {
+            ZoomableScanView(
+                screenshot,
+                shownNodes,
+                nodes.firstOrNull(),
+                selectedNode,
+                onNodeSelected = { node ->
+                    if (node != selectedNode) { // Clicked on deselected node
+                        vm.selectNode(node)
+                        sheetState.shrink()
+                    } else if (selectedNode != null) { // Clicked on selected node
+                        vm.selectNode(null)
+                        sheetState.shrink()
+                    } else { // Clicked on empty area when no node is selected
+                        showBars = !showBars
+                    }
+                },
+                onZoomIn = { showBars = false },
+                obscuredPadding = PaddingValues(bottom = sheetPeekHeightDp)
+            )
+        }
+
         BottomSheetScaffold(
-            scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState.bottomSheetState),
+            scaffoldState = rememberBottomSheetScaffoldState(sheetState.bottomSheetState),
             topBar = {
                 TopBar(
                     rootPackage = loadedUiState?.run { scan.rootPackageName },
@@ -219,7 +185,7 @@ fun ScanInspectorScreen(
                         selectedNode,
                         onSelectNode = { node ->
                             vm.selectNode(node)
-                            with(bottomSheetState) { if (node != null) expand() else shrink() }
+                            sheetState.shrink()
                         },
                         onCreateRuleFromNode = { node ->
                             onCreateRule(prefilledRuleFrom(scan, node))
@@ -228,9 +194,9 @@ fun ScanInspectorScreen(
                 }
             },
             sheetDragHandle = { BottomSheetHandle() },
-            sheetPeekHeight = sheetPeekHeight,
+            sheetPeekHeight = sheetPeekHeightDp,
             sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            content = {}, // Scan display not here to be rendered behind top bar
+            content = {}, // Scan view not here to be rendered behind top bar
             containerColor = Color.Transparent
         )
     }
@@ -286,10 +252,6 @@ private data class BottomSheetStateWrapper(
     val bottomSheetState: SheetState,
     val coroutineScope: CoroutineScope
 ) {
-    fun expand() {
-        coroutineScope.launch { bottomSheetState.expand() }
-    }
-
     fun shrink() {
         coroutineScope.launch { bottomSheetState.partialExpand() }
     }
@@ -305,190 +267,6 @@ private fun rememberBottomSheetStateWrapper(
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) = remember(bottomSheetState, coroutineScope) {
     BottomSheetStateWrapper(bottomSheetState, coroutineScope)
-}
-
-@Composable
-@OptIn(ExperimentalTelephotoApi::class)
-private fun ScanDisplay(
-    screenshot: ImageBitmap?,
-    rootNode: Node?,
-    nodes: List<Node>,
-    selectedNode: Node?,
-    onNodeClick: (Node?) -> Unit,
-    onZoomIn: () -> Unit
-) {
-    // Args referenced in the onClick lambda should be wrapped to make updates visible there
-    val updatableNodes by rememberUpdatedState(nodes)
-    val updatableOnNodeClick by rememberUpdatedState(onNodeClick)
-
-    BoxWithConstraints {
-        val density = LocalDensity.current
-        val viewportSize = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
-        val scanSize = remember(screenshot, nodes) {
-            screenshot?.run { Size(width.toFloat(), height.toFloat()) }
-                ?: rootNode?.run { fractionalBounds.size }
-                ?: Size(1080f, 1080f)
-        }
-
-        val zoomState = rememberZoomableState(
-            // minZoomFactor = 2f would be better, but the initial zoom factor is always 1, and it
-            // only jumps into the specified range on first zoom attempt. Moreover, because the
-            // viewport's size is animated, that leads to off-center zoom. Thus, we have to use the
-            // default minZoomFactor of 1.
-            ZoomSpec(maxZoomFactor = 10f),
-            // Let the node canvas transform itself, otherwise nodes get pixilated when zoomed-in
-            autoApplyTransformations = false
-        ).apply {
-            setContentLocation(ZoomableContentLocation.unscaledAndTopLeftAligned(scanSize))
-            // To be able to center on any pixel of the scan we need to be able to over-scroll by
-            // half of the corresponding dimension on each size which the padding allows. Sadly,
-            // https://github.com/saket/telephoto/issues/173 does not allow making it large enough.
-            contentPadding = with(density) { scanSize.toDpSize() }.run {
-                PaddingValues(horizontal = width / 3, vertical = height / 3)
-            }
-        }
-
-        val textMeasurer = rememberTextMeasurer()
-        val placeholderBackgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
-        val placeholderText = stringResource(R.string.could_not_take_screenshot)
-        val placeholderTextStyle = MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.contentColorFor(placeholderBackgroundColor)
-        )
-
-        val defaultNodeStroke = Stroke(with(density) { 1.dp.toPx() })
-        val selectedNodeStroke = Stroke(with(density) { 4.dp.toPx() })
-
-        Canvas(
-            Modifier
-                .fillMaxSize()
-                .zoomable(
-                    zoomState,
-                    onClick = { offset ->
-                        val offsetInContent = with(zoomState.coordinateSystem) {
-                            SpatialOffset(offset, CoordinateSpace.Viewport).offsetIn(
-                                CoordinateSpace.ZoomableContent
-                            )
-                        }
-                        updatableOnNodeClick(updatableNodes.findClicked(offsetInContent))
-                    }
-                )
-        ) {
-            withTransform({
-                with(zoomState.contentTransformation) {
-                    val pivot = with(transformOrigin) {
-                        Offset(size.width * pivotFractionX, size.height * pivotFractionY)
-                    }
-                    translate(offset.x, offset.y)
-                    rotate(rotationZ, pivot)
-                    scale(scale.scaleX, scale.scaleY, pivot)
-                }
-            }) {
-                if (screenshot != null) {
-                    // TODO: use srcOffset, srcSize to only draw the visible part
-                    drawImage(screenshot)
-                } else {
-                    drawScreenshotPlaceholder(
-                        textMeasurer,
-                        placeholderText,
-                        placeholderTextStyle,
-                        placeholderBackgroundColor
-                    )
-                }
-
-                // White + difference = inversion of underlying pixels. A layer is needed to have
-                // the blending applied to all rectangles together. Would it be set for each
-                // rectangle separately, the inversion would cancel out on intersections.
-                drawIntoCanvas { canvas ->
-                    canvas.withSaveLayer(
-                        bounds = Rect(Offset.Zero, size),
-                        paint = Paint().apply { blendMode = BlendMode.Difference }
-                    ) {
-                        for (node in nodes) {
-                            drawRect(
-                                Color.White,
-                                node.fractionalBounds.topLeft,
-                                node.fractionalBounds.size,
-                                style = defaultNodeStroke
-                            )
-                        }
-                        selectedNode?.run {
-                            drawRect(
-                                Color.White,
-                                fractionalBounds.topLeft,
-                                fractionalBounds.size,
-                                style = selectedNodeStroke
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Call onZoom when user zooms-in
-        val zoomed by retain { derivedStateOf { (zoomState.zoomFraction ?: 0f) > 0.00001f } }
-        LaunchedEffect(zoomed) {
-            if (zoomed) onZoomIn()
-        }
-
-        // Center on selected node
-        var prevSelectedNode by retain { mutableStateOf<Node?>(null) }
-        LaunchedEffect(selectedNode) {
-            if (selectedNode != prevSelectedNode) {
-                prevSelectedNode = selectedNode?.apply {
-                    zoomState.centerOn(fractionalBounds, viewportSize)
-                }
-            }
-        }
-    }
-}
-
-// Originally, scanned nodes are sorted from outer to inner. But the user does not see this
-// 3rd dimension and expects the "smaller" node or the node the center of which is closer to be
-// selected.
-private fun Iterable<Node>.findClicked(click: Offset): Node? =
-    filter { it.fractionalBounds.contains(click) }
-        .mapIndexed { i, node -> i to node }
-        .sortedWith(
-            compareBy<Pair<Int, Node>> { (_, node) -> node.fractionalBounds.area() }
-                .thenBy { (_, node) -> (node.fractionalBounds.center - click).getDistanceSquared() }
-                .thenBy { (i, _) -> i }
-        )
-        .firstOrNull()?.second
-
-private fun Rect.area() = width * height
-
-@OptIn(ExperimentalTelephotoApi::class)
-private suspend fun ZoomableState.centerOn(rect: Rect, viewportSize: Size) {
-    // ContentScale.Fit is uniform so scaleX == scaleY
-    val factor = (ContentScale.Fit.computeScaleFactor(rect.size, viewportSize * 0.9f).scaleX)
-        .takeUnless { it.isNaN() }
-        // Larger values make it hard to understand the surroundings, user can zoom more if needed
-        ?.coerceAtMost(3f)
-        ?: return
-    val center = SpatialOffset(rect.center, CoordinateSpace.ZoomableContent)
-    zoomTo(factor, ZoomFocalPoint.moveToViewportCenter(center))
-}
-
-private fun DrawScope.drawScreenshotPlaceholder(
-    textMeasurer: TextMeasurer,
-    text: String,
-    textStyle: TextStyle,
-    backgroundColor: Color
-) {
-    drawRect(backgroundColor)
-
-    val textLayoutResult = textMeasurer.measure(
-        text = text,
-        style = textStyle,
-        constraints = Constraints(maxWidth = size.width.toInt())
-    )
-    drawText(
-        textLayoutResult = textLayoutResult,
-        topLeft = Offset(
-            (size.width - textLayoutResult.size.width) / 2,
-            (size.height - textLayoutResult.size.height) / 2
-        )
-    )
 }
 
 @Composable

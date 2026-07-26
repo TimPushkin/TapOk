@@ -106,7 +106,4 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
 
     implementation(libs.google.accompanist.drawablepainter)
-
-    implementation(libs.saket.telephoto.zoomable)
-    implementation(libs.saket.telephoto.sub.sampling.image)
 }

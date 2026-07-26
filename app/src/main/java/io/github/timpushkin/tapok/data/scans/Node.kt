@@ -1,12 +1,14 @@
 package io.github.timpushkin.tapok.data.scans
 
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.toRect
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import kotlin.math.max
+import kotlin.math.min
 
 @Entity(
     foreignKeys = [
@@ -55,11 +57,17 @@ data class Node(
      */
     @ColumnInfo(name = "raw_info") val rawInfo: String
 ) {
-    val fractionalBounds by lazy {
+    val normalizedBounds by lazy {
         with(bounds) {
-            Rect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+            IntRect(
+                left = min(left, right),
+                top = min(top, bottom),
+                right = max(left, right),
+                bottom = max(top, bottom)
+            )
         }
     }
+    val normalizedFloatBounds by lazy { normalizedBounds.toRect() }
 
     val isReferenceableInRules by lazy {
         viewId != null || contentDescription != null || text != null

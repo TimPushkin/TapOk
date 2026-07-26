@@ -25,8 +25,6 @@ nav3 = "1.1.4"
 
 accompanist = "0.37.3"
 
-telephoto = "0.19.0"
-
 [libraries]
 
 # Overriding AGP's built-in Kotlin with a newer version
@@ -61,9 +59,6 @@ androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigat
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "nav3" }
 
 google-accompanist-drawablepainter = { group = "com.google.accompanist", name = "accompanist-drawablepainter", version.ref = "accompanist" }
-
-saket-telephoto-zoomable = { group = "me.saket.telephoto", name = "zoomable", version.ref = "telephoto" }
-saket-telephoto-sub-sampling-image = { group = "me.saket.telephoto", name = "sub-sampling-image", version.ref = "telephoto" }
 
 [plugins]
 
