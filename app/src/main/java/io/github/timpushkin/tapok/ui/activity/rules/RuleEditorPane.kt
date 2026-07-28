@@ -416,6 +416,7 @@ private fun <T> RuleDropdownMenu(
                     selected = selectedIndex == i,
                     onClick = {
                         textState.setTextAndPlaceCursorAtEnd(text)
+                        expanded = false
                         selectedIndex = i
                         onSelect(option)
                     },
