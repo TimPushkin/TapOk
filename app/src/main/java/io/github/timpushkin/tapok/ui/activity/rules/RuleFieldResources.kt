@@ -110,7 +110,10 @@ fun RuleInputValidity.ClassName.errorText(): String? {
 @Composable
 fun Rule.Action.icon(): Painter {
     val resId = when (this) {
-        Rule.Action.CLICK -> R.drawable.touch_app_outlined
+        Rule.Action.CLICK,
+        Rule.Action.CLICK_NEAREST_CLICKABLE_ANCESTOR,
+        Rule.Action.CLICK_NEAREST_CLICKABLE_DESCENDANT -> R.drawable.touch_app_outlined
+
         Rule.Action.MUTE_WHEN_PRESENT -> R.drawable.volume_off_outlined
     }
     return painterResource(resId)
@@ -120,6 +123,12 @@ fun Rule.Action.icon(): Painter {
 fun Rule.Action.name(): String {
     val resId = when (this) {
         Rule.Action.CLICK -> R.string.click
+
+        Rule.Action.CLICK_NEAREST_CLICKABLE_ANCESTOR -> R.string.click_nearest_clickable_ancestor
+
+        Rule.Action.CLICK_NEAREST_CLICKABLE_DESCENDANT ->
+            R.string.click_nearest_clickable_descendant
+
         Rule.Action.MUTE_WHEN_PRESENT -> R.string.mute_when_present
     }
     return stringResource(resId)
@@ -129,6 +138,13 @@ fun Rule.Action.name(): String {
 fun Rule.Action.explanation(): String {
     val resId = when (this) {
         Rule.Action.CLICK -> R.string.click_explanation
+
+        Rule.Action.CLICK_NEAREST_CLICKABLE_ANCESTOR ->
+            R.string.click_nearest_clickable_ancestor_explanation
+
+        Rule.Action.CLICK_NEAREST_CLICKABLE_DESCENDANT ->
+            R.string.click_nearest_clickable_descendant_explanation
+
         Rule.Action.MUTE_WHEN_PRESENT -> R.string.mute_when_present_explanation
     }
     return stringResource(resId)

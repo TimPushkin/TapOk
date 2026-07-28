@@ -123,6 +123,10 @@
     <!-- Rule editor: drop-down menu items and explanations -->
     <string name="click">Click</string>
     <string name="click_explanation">Click the matched element</string>
+    <string name="click_nearest_clickable_ancestor">Click nearest clickable ancestor</string>
+    <string name="click_nearest_clickable_ancestor_explanation">Click the nearest clickable element above the matched one in the UI hierarchy</string>
+    <string name="click_nearest_clickable_descendant">Click nearest clickable descendant</string>
+    <string name="click_nearest_clickable_descendant_explanation">Click the nearest clickable element below the matched one in the UI hierarchy, the iteration order for siblings is the same as in scans</string>
     <string name="mute_when_present">Mute when present</string>
     <string name="mute_when_present_explanation">Mute music when a matching element is present, unmute when it is not</string>
     <!-- Rule editor: supporting texts -->

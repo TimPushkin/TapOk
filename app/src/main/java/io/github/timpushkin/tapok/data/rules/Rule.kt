@@ -47,6 +47,8 @@ data class Rule(
 
     enum class Action {
         CLICK,
+        CLICK_NEAREST_CLICKABLE_ANCESTOR,
+        CLICK_NEAREST_CLICKABLE_DESCENDANT,
         MUTE_WHEN_PRESENT
     }
 }

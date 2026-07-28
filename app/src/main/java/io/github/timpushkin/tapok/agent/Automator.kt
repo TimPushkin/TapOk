@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.getSystemService
-import androidx.core.util.valueIterator
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -135,6 +134,14 @@ class Automator @AssistedInject constructor(
                 when (rule.action) {
                     Rule.Action.CLICK -> nodesToClick.addAll(findMatchingNodes(rule))
 
+                    Rule.Action.CLICK_NEAREST_CLICKABLE_ANCESTOR -> nodesToClick.addAll(
+                        findMatchingNodes(rule).mapNotNull { findNearestClickableAncestor(it) }
+                    )
+
+                    Rule.Action.CLICK_NEAREST_CLICKABLE_DESCENDANT -> nodesToClick.addAll(
+                        findMatchingNodes(rule).mapNotNull { findNearestClickableDescendant(it) }
+                    )
+
                     // No point in searching if we have already decided to mute
                     Rule.Action.MUTE_WHEN_PRESENT if muteDirection != Action.AudioChange.MUTE ->
                         muteDirection = if (findMatchingNodes(rule).isNotEmpty()) {
@@ -143,7 +150,7 @@ class Automator @AssistedInject constructor(
                             Action.AudioChange.UNMUTE
                         }
 
-                    else -> {}
+                    Rule.Action.MUTE_WHEN_PRESENT -> {}
                 }
             }
             return Action(nodesToClick, muteDirection)
@@ -249,6 +256,41 @@ class Automator @AssistedInject constructor(
                 }
             }
             return emptyList()
+        }
+
+        private fun findNearestClickableAncestor(
+            node: AccessibilityNodeInfo
+        ): AccessibilityNodeInfo? {
+            var parent = node.getParent(AccessibilityNodeInfo.FLAG_PREFETCH_ANCESTORS)
+            while (parent != null) {
+                if (parent.isClickable) {
+                    return parent
+                }
+                parent = parent.getParent(AccessibilityNodeInfo.FLAG_PREFETCH_ANCESTORS)
+            }
+            return null
+        }
+
+        private fun findNearestClickableDescendant(
+            node: AccessibilityNodeInfo
+        ): AccessibilityNodeInfo? {
+            val queue = ArrayDeque<AccessibilityNodeInfo>().apply { addLast(node) }
+            while (queue.isNotEmpty()) {
+                val dequeued = queue.removeFirst()
+                for (i in 0 until dequeued.childCount) {
+                    val child = dequeued.getChild(
+                        i,
+                        AccessibilityNodeInfo.FLAG_PREFETCH_SIBLINGS or
+                                AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
+                    ) ?: continue
+                    if (child.isClickable) {
+                        return child
+                    } else {
+                        queue.addLast(child)
+                    }
+                }
+            }
+            return null
         }
     }
 
