@@ -73,9 +73,9 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
                     stringResource(R.string.scan_all_windows),
                     supportingText = stringResource(
                         if (shouldScanAllWindows) {
-                            R.string.all_interactable_windows_will_be_scanned
+                            R.string.all_interactable_windows_will_be_captured
                         } else {
-                            R.string.only_active_window_will_be_scanned
+                            R.string.only_active_window_will_be_captured
                         }
                     ),
                     checked = shouldScanAllWindows,
