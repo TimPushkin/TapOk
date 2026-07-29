@@ -39,7 +39,11 @@ data class Rule(
     /**
      * What to do when the rule matches.
      */
-    val action: Action
+    val action: Action,
+    /**
+     * Whether the automation considers the rule.
+     */
+    @ColumnInfo(name = "is_active") val isActive: Boolean = true
 ) {
     init {
         require(viewId != null || containedText != null) { "No search criteria" }

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "0a6abda7bf572eea88033642bfda2566",
+    "identityHash": "2cb2181e38ca08746ec6dc6340ede3f6",
     "entities": [
       {
         "tableName": "Rule",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `source_package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `package_name` TEXT, `class_name` TEXT, `action` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `source_package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `package_name` TEXT, `class_name` TEXT, `action` TEXT NOT NULL, `is_active` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -50,6 +50,12 @@
             "fieldPath": "action",
             "columnName": "action",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -210,7 +216,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0a6abda7bf572eea88033642bfda2566')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2cb2181e38ca08746ec6dc6340ede3f6')"
     ]
   }
 }

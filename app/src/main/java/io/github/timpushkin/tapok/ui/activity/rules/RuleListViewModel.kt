@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val TAG = "RuleListViewModel"
@@ -36,8 +35,15 @@ class RuleListViewModel @Inject constructor(private val ruleRepo: RuleRepo) : Vi
             .launchIn(viewModelScope)
     }
 
+    fun switchRuleActivation(rule: Rule) {
+        Log.d(TAG, "Switching activation status of $rule")
+        viewModelScope.launch(Dispatchers.IO) {
+            ruleRepo.insertOrUpdateRule(rule.copy(isActive = !rule.isActive))
+        }
+    }
+
     fun deleteRule(rule: Rule) {
         Log.d(TAG, "Deleting $rule")
-        viewModelScope.launch { withContext(Dispatchers.IO) { ruleRepo.deleteRule(rule) } }
+        viewModelScope.launch(Dispatchers.IO) { ruleRepo.deleteRule(rule) }
     }
 }

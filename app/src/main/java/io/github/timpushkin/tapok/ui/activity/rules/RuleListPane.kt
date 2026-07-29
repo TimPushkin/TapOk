@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,6 +64,10 @@ fun RuleListPane(
                         rule,
                         selected = rule.id == selectedRuleId,
                         onClick = { onEditRule(rule) },
+                        onActiveChange = { active ->
+                            assert(active != rule.isActive)
+                            vm.switchRuleActivation(rule)
+                        },
                         onDelete = {
                             onDeleteRule(rule)
                             vm.deleteRule(rule)
@@ -91,6 +96,7 @@ private fun RuleItem(
     rule: Rule,
     selected: Boolean,
     onClick: () -> Unit,
+    onActiveChange: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     val colors = SegmentedListPaneDefaults.colors()
@@ -113,6 +119,7 @@ private fun RuleItem(
         leadingContent = {
             Icon(rule.action.icon(), contentDescription = rule.action.explanation())
         },
+        trailingContent = { Switch(rule.isActive, onActiveChange) },
         supportingContent = {
             Text(rule.sourcePackageName, maxLines = 1, overflow = TextOverflow.StartEllipsis)
         },

@@ -41,10 +41,11 @@ class Automator @AssistedInject constructor(
     // Used by one coroutine without locking, add a lock if start using this concurrently
     private var lastAudioChange = Action.AudioChange.NONE
 
-    private val rulesFlow = ruleRepo.loadAllRules().flowOn(Dispatchers.IO).stateIn(
-        coroutineScope, SharingStarted.Eagerly, emptyList()
-    )
-    val selectedPackagesFlow = rulesFlow
+    private val activeRulesFlow = ruleRepo.loadAllRules()
+        .map { rules -> rules.filter { it.isActive } }
+        .flowOn(Dispatchers.IO)
+        .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+    val selectedPackagesFlow = activeRulesFlow
         // Empty list would mean all packages are selected, so using an empty package instead
         .map { rules -> rules.mapTo(mutableSetOf()) { it.sourcePackageName }.ifEmpty { setOf("") } }
         .distinctUntilChanged()
@@ -77,7 +78,7 @@ class Automator @AssistedInject constructor(
     private fun process(event: AccessibilityEvent?) {
         val action = EventProcessor(
             event,
-            rulesFlow.value,
+            activeRulesFlow.value,
             accessibilityService::getRootsOfAllWindows
         ).run()
 
