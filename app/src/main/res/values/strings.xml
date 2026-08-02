@@ -7,9 +7,9 @@
     <string name="copy">Copy</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="discard">Discard</string>
     <string name="navigate_back">Navigate back</string>
     <string name="done">Done!</string>
-    <string name="saved">Saved!</string>
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="accept_and_proceed">Accept and proceed</string>
@@ -85,9 +85,11 @@
     <string name="rules">Rules</string>
     <!-- Placeholders for rule panes -->
     <string name="manage_rules_here">Manage the agent\'s rules here</string>
-    <string name="select_rule_or_create_one">Select a rule to edit, or create a new one</string>
+    <string name="select_rule_to_view">Select a rule to view</string>
     <!-- Rule list -->
     <string name="unnamed_rule">Unnamed rule</string>
+    <!-- Rule editor -->
+    <string name="changes_not_saved">Your changes have not been saved</string>
     <!-- Rule editor: headers and introduction paragraphs -->
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
@@ -103,13 +105,13 @@
     <string name="rule_name">Rule name</string>
     <string name="rule_name_placeholder">My rule</string>
     <string name="rule_name_explanation">Name of the rule for your own reference.</string>
-    <string name="window_level_package_ref">Window-level package *</string>
+    <string name="window_level_package">Window-level package</string>
     <string name="package_placeholder">com.example.app</string>
     <string name="window_level_package_explanation">\"Package name\" of the window\'s top-level element — normally the owning app\'s package. Visible in the top bar when viewing a scan.</string>
-    <string name="view_id_ref">View ID *</string>
+    <string name="view_id">View ID</string>
     <string name="view_id_placeholder">com.example.app:id/some_button</string>
     <string name="view_id_explanation">An element matches if its \"View ID\" is exactly this value.</string>
-    <string name="contained_text_ref">Contained text *</string>
+    <string name="contained_text">Contained text</string>
     <string name="contained_text_placeholder">Some text</string>
     <string name="contained_text_explanation">An element matches if this text appears as a substring of its \"Content description\" or \"Text\", case-insensitive. \"Text\" is usually only searched when the element\'s \"Class name\" is \"android.widget.TextView\".</string>
     <string name="element_level_package">Element-level package</string>
@@ -117,7 +119,6 @@
     <string name="view_class">View class</string>
     <string name="view_class_placeholder">android.widget.Button</string>
     <string name="view_class_explanation">An element matches if its \"Class name\" is exactly this value.</string>
-    <string name="action_ref">Action *</string>
     <string name="show_field_explanation">Show field explanation</string>
     <string name="hide_field_explanation">Hide field explanation</string>
     <!-- Rule editor: drop-down menu items and explanations -->
@@ -176,7 +177,6 @@
     <string name="package_name">Package name</string>
     <string name="class_name">Class name</string>
     <string name="text">Text</string>
-    <string name="view_id">View ID</string>
     <string name="content_description">Content description</string>
     <string name="raw_info">Raw info</string>
 </resources>

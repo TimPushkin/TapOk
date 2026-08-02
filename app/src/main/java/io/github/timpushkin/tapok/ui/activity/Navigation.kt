@@ -2,6 +2,7 @@ package io.github.timpushkin.tapok.ui.activity
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -36,7 +37,8 @@ open class PrimaryKey(
 @Serializable
 open class SecondaryKey(val fullScreen: Boolean = false) : NavKey
 
-typealias EntryProviderInstaller = EntryProviderScope<NavKey>.(Navigator) -> Unit
+typealias EntryProviderInstaller =
+        EntryProviderScope<NavKey>.(PaneScaffoldDirective, Navigator) -> Unit
 
 data class NavRoute(val primary: PrimaryKey, val secondaries: Iterable<SecondaryKey>)
 

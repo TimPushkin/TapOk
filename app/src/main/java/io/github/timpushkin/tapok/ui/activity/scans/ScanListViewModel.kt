@@ -29,7 +29,7 @@ class ScanListViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        scanRepo.loadAllScans()
+        scanRepo.observeAllScans()
             .flowOn(Dispatchers.IO)
             .onEach { scans -> _uiState.update { it.copy(scans = scans) } }
             .launchIn(viewModelScope)

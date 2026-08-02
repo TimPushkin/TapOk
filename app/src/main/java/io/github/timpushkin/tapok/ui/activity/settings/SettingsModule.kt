@@ -31,7 +31,7 @@ object SettingsModule {
 
     @Provides
     @IntoSet
-    fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
+    fun provideEntryProviderInstaller(): EntryProviderInstaller = {  _, navigator ->
         entry<SettingsKey> { SettingsPane(openTutorial = { navigator.navigateTo(TutorialKey) }) }
         entry<TutorialKey> { TutorialScreen(onDone = navigator::navigateBack) }
     }

@@ -16,3 +16,13 @@ fun NavigateBackButton(onClick: () -> Unit) {
         )
     }
 }
+
+@Composable
+fun CloseButton(onClick: () -> Unit) {
+    IconButton(onClick) {
+        Icon(
+            painterResource(R.drawable.close),
+            contentDescription = stringResource(R.string.close)
+        )
+    }
+}

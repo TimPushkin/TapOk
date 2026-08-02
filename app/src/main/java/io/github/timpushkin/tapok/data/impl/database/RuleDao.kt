@@ -8,13 +8,18 @@ import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.data.rules.RuleRepo
 import kotlinx.coroutines.flow.Flow
 
+private const val QUERY_LOAD_RULE = "SELECT * FROM rule WHERE rule.id = :ruleId"
+
 @Dao
 interface RuleDao : RuleRepo {
     @Query("SELECT * FROM rule")
-    override fun loadAllRules(): Flow<List<Rule>>
+    override fun observeAllRules(): Flow<List<Rule>>
 
-    @Query("SELECT * FROM rule WHERE rule.id = :ruleId")
+    @Query(QUERY_LOAD_RULE)
     override suspend fun loadRule(ruleId: Long): Rule
+
+    @Query(QUERY_LOAD_RULE)
+    override fun observeRuleOrNull(ruleId: Long): Flow<Rule?>
 
     @Upsert
     override suspend fun insertOrUpdateRule(rule: Rule): Long

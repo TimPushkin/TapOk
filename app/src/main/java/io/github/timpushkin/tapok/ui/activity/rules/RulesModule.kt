@@ -22,7 +22,11 @@ data object RuleListKey : PrimaryKey(
 )
 
 @Serializable
-data class RuleEditorKey(val ruleId: Long?, val prefilling: IncompleteRule?) : SecondaryKey()
+data class RuleViewerKey(val ruleId: Long) : SecondaryKey()
+
+@Serializable
+data class RuleEditorKey(val ruleId: Long?, val prefilling: IncompleteRule?) :
+    SecondaryKey(fullScreen = true) // Full-screen to give fewer ways to leave without saving
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -34,30 +38,46 @@ object RulesModule {
     @Provides
     @IntoSet
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-    fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
+    fun provideEntryProviderInstaller(): EntryProviderInstaller = { directive, navigator ->
         entry<RuleListKey>(
-            metadata = ListDetailSceneStrategy.listPane { RuleEditorPlaceholder() }
+            metadata = ListDetailSceneStrategy.listPane { RuleViewerPlaceholder() }
         ) {
             RuleListPane(
-                selectedRuleId = (navigator.currentKey as? RuleEditorKey)?.ruleId,
-                onEditRule = {
-                    if (navigator.currentKey is RuleEditorKey) {
+                selectedRuleId = (navigator.currentKey as? RuleViewerKey)?.ruleId,
+                onCreateRule = { navigator.navigateTo(RuleEditorKey(null, null)) },
+                onSelectRule = { rule ->
+                    if (navigator.currentKey is RuleViewerKey) {
                         navigator.navigateBack()
                     }
-                    navigator.navigateTo(RuleEditorKey(it?.id, prefilling = null))
+                    navigator.navigateTo(RuleViewerKey(rule.id))
                 },
-                onDeleteRule = { rule ->
-                    val deletingCurrent = navigator.currentKey.let {
-                        it is RuleEditorKey && it.ruleId == rule.id
-                    }
-                    if (deletingCurrent) {
-                        navigator.navigateBack()
-                    }
-                }
+                onDeleteRule = { /* Rule viewer self-evicts when affected */ }
             )
         }
-        entry<RuleEditorKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-            RuleEditorPane(key.ruleId, key.prefilling, onBack = navigator::navigateBack)
+        entry<RuleViewerKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+            RuleViewerPane(
+                key.ruleId,
+                onEdit = { navigator.navigateTo(RuleEditorKey(key.ruleId, prefilling = null)) },
+                onBack = navigator::navigateBack,
+                directive = directive
+            )
+        }
+        entry<RuleEditorKey> { key ->
+            RuleEditorScreen(
+                key.ruleId,
+                key.prefilling,
+                onSave = { rule ->
+                    navigator.navigateBack()
+                    // If viewing rules, display the saved rule
+                    if (navigator.currentKey is RuleViewerKey) {
+                        navigator.navigateBack()
+                    }
+                    if (navigator.currentKey is RuleListKey) {
+                        navigator.navigateTo(RuleViewerKey(rule.id))
+                    }
+                },
+                onClose = navigator::navigateBack
+            )
         }
     }
 }

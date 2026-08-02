@@ -10,7 +10,6 @@ import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
 import io.github.timpushkin.tapok.ui.activity.PrimaryKey
 import io.github.timpushkin.tapok.ui.activity.SecondaryKey
 import io.github.timpushkin.tapok.ui.activity.rules.RuleEditorKey
-import io.github.timpushkin.tapok.ui.activity.rules.RuleListKey
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -33,28 +32,21 @@ object ScansModule {
 
     @Provides
     @IntoSet
-    fun provideEntryProviderInstaller(): EntryProviderInstaller = { navigator ->
+    fun provideEntryProviderInstaller(): EntryProviderInstaller = { _, navigator ->
         entry<ScanListKey> {
             ScanListPane(
                 selectedScanId = (navigator.currentKey as? ScanInspectorKey)?.scanId,
                 onSelectScan = { scan ->
-                    if (navigator.currentKey is ScanInspectorKey) {
-                        navigator.navigateBack()
-                    }
                     navigator.navigateTo(ScanInspectorKey(scan.id))
                 },
-                onDeleteScan = {
-                    // Scan inspector is full-screen so it cannot be open now
-                    check(navigator.currentKey is ScanListKey)
-                }
+                onDeleteScan = { /* Scan viewer is full screen, so cannot be displayed now */ }
             )
         }
         entry<ScanInspectorKey> { key ->
             ScanInspectorScreen(
                 key.scanId,
                 onCreateRule = { prefilling ->
-                    navigator.navigateTo(RuleListKey)
-                    navigator.navigateTo(RuleEditorKey(ruleId = null, prefilling = prefilling))
+                    navigator.navigateTo(RuleEditorKey(null, prefilling))
                 },
                 onClose = navigator::navigateBack
             )

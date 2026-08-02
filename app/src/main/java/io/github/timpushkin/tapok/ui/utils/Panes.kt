@@ -1,6 +1,7 @@
 package io.github.timpushkin.tapok.ui.utils
 
 import androidx.compose.foundation.layout.requiredWidthIn
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -24,3 +25,5 @@ fun Modifier.requiredMinPaneWidth(): Modifier =
         // no multi-pane layout there anyway.
         this
     }
+
+fun PaneScaffoldDirective.isHorizontallyPartitioned() = maxHorizontalPartitions > 1

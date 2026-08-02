@@ -59,7 +59,7 @@ fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProvider
             entries = navigator.toDecoratedEntries(
                 entryProvider = entryProvider {
                     for (installer in entryProviderInstallers) {
-                        installer(navigator)
+                        installer(directive, navigator)
                     }
                 },
                 entryDecoratorsProvider = {

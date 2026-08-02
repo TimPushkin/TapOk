@@ -41,7 +41,7 @@ class Automator @AssistedInject constructor(
     // Used by one coroutine without locking, add a lock if start using this concurrently
     private var lastAudioChange = Action.AudioChange.NONE
 
-    private val activeRulesFlow = ruleRepo.loadAllRules()
+    private val activeRulesFlow = ruleRepo.observeAllRules()
         .map { rules -> rules.filter { it.isActive } }
         .flowOn(Dispatchers.IO)
         .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())

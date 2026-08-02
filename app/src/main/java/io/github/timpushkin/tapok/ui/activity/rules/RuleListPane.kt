@@ -31,13 +31,14 @@ import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 @Composable
 fun RuleListPane(
     selectedRuleId: Long?,
-    onEditRule: (Rule?) -> Unit,
+    onCreateRule: () -> Unit,
+    onSelectRule: (Rule) -> Unit,
     onDeleteRule: (Rule) -> Unit,
     vm: RuleListViewModel = hiltViewModel()
 ) {
     Scaffold(
         // TODO: hide FAB on content scroll
-        floatingActionButton = { CreateRuleFab(onClick = { onEditRule(null) }) },
+        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) },
         containerColor = Color.Transparent
     ) { padding ->
         val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -63,7 +64,7 @@ fun RuleListPane(
                         count,
                         rule,
                         selected = rule.id == selectedRuleId,
-                        onClick = { onEditRule(rule) },
+                        onClick = { onSelectRule(rule) },
                         onActiveChange = { active ->
                             assert(active != rule.isActive)
                             vm.switchRuleActivation(rule)

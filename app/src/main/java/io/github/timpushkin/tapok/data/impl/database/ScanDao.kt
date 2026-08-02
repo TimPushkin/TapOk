@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class ScanDao : ScanRepo {
     @Query("SELECT * FROM scan")
-    abstract override fun loadAllScans(): Flow<List<Scan>>
+    abstract override fun observeAllScans(): Flow<List<Scan>>
 
     @Query("SELECT * FROM scan JOIN node ON node.scan_id = scan.id WHERE scan.id = :scanId")
     protected abstract suspend fun loadScanWithNodesAsMap(scanId: Long): Map<Scan, List<Node>>

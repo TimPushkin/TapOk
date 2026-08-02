@@ -26,7 +26,7 @@ class RuleListViewModel @Inject constructor(private val ruleRepo: RuleRepo) : Vi
     val uiState = _uiState.asStateFlow()
 
     init {
-        ruleRepo.loadAllRules()
+        ruleRepo.observeAllRules()
             .flowOn(Dispatchers.IO)
             .onEach { rules ->
                 Log.d(TAG, "Loaded rules: $rules")

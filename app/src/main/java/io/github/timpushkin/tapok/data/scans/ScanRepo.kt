@@ -3,7 +3,7 @@ package io.github.timpushkin.tapok.data.scans
 import kotlinx.coroutines.flow.Flow
 
 interface ScanRepo {
-    fun loadAllScans(): Flow<List<Scan>>
+    fun observeAllScans(): Flow<List<Scan>>
 
     suspend fun loadScanWithNodes(scanId: Long): Pair<Scan, List<Node>>?
 
