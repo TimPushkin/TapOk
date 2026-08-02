@@ -171,40 +171,43 @@ class Automator @AssistedInject constructor(
         private fun findMatchingNodes(rule: Rule): List<AccessibilityNodeInfo> {
             Log.d(TAG, "Looking for nodes matching $rule")
 
-            if (event != null) {
-                if (event.packageName == rule.sourcePackageName) {
-                    val source = eventSource
-                    if (source != null) {
-                        Log.d(TAG, "Inspecting event's source")
-                        val nodes = findMatchingNodes(rule, source)
-                        Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
-                        if (nodes.isNotEmpty()) {
-                            return nodes
-                        }
-                    }
-                } else {
-                    Log.d(TAG, "Not inspecting event's source: its package name does not match")
-                }
-            }
-
-            val root = event?.run { windowRoots[windowId] }
-            if (event != null) {
-                if (root != null) {
-                    Log.d(TAG, "Inspecting event's window")
-                    val nodes = findMatchingNodes(rule, root)
+            if (event?.packageName == rule.sourcePackageName) {
+                val source = eventSource
+                if (source != null) {
+                    Log.d(TAG, "Inspecting event's source")
+                    val nodes = findMatchingNodes(rule, source)
                     Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
                     if (nodes.isNotEmpty()) {
                         return nodes
                     }
                 } else {
-                    Log.d(
-                        TAG, "Not inspecting event's window: " +
-                                "ID not in interactable windows' IDs ${windowRoots.keys}"
-                    )
+                    Log.d(TAG, "Not inspecting event's source: not available")
                 }
+            } else {
+                Log.d(
+                    TAG,
+                    "Not inspecting event's source: " +
+                            if (event == null) "no event" else "package mismatch"
+                )
             }
 
-            Log.d(TAG, "Inspecting the rest of the windows")
+            val root = event?.run { windowRoots[windowId] }
+            if (root != null) {
+                Log.d(TAG, "Inspecting event's window")
+                val nodes = findMatchingNodes(rule, root)
+                Log.d(TAG, "Matching nodes: ${nodes.toShortString()}")
+                if (nodes.isNotEmpty()) {
+                    return nodes
+                }
+            } else {
+                Log.d(
+                    TAG,
+                    "Not inspecting event's window: " +
+                            if (event == null) "no event" else "window not interactable"
+                )
+            }
+
+            Log.d(TAG, "Inspecting other interactable windows")
             val nodes = findMatchingNodes(
                 rule, root?.let { windowRoots.values - it } ?: windowRoots.values
             )
