@@ -70,12 +70,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorScreen(
     ruleId: Long?,
-    prefilling: IncompleteRule?,
+    basis: RuleBasis?,
     onSave: (Rule) -> Unit,
     onClose: () -> Unit,
     vm: RuleEditorViewModel = hiltViewModel(
-        key = "$ruleId-$prefilling"
-    ) { f: RuleEditorViewModelFactory -> f.create(ruleId, prefilling) }
+        key = "$ruleId-$basis"
+    ) { f: RuleEditorViewModelFactory -> f.create(ruleId, basis) }
 ) {
     var showUnsavedChangesWarning by remember { mutableStateOf(false) }
     if (showUnsavedChangesWarning) {
@@ -133,6 +133,7 @@ fun RuleEditorScreen(
                     vm.packageNameState,
                     vm.classNameState,
                     vm::selectAction,
+                    basedOnNonClickableNode = basis?.isTargetClickable == false,
                     enabled = loadedState.status != RuleEditorUiState.Status.SAVING,
                     contentPadding = PaddingValues(DefaultOuterSpacing)
                 )
@@ -178,6 +179,7 @@ private fun EditableFields(
     classNameState: TextFieldState,
     onSelectAction: (Rule.Action) -> Unit,
     modifier: Modifier = Modifier,
+    basedOnNonClickableNode: Boolean = false,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -284,6 +286,13 @@ private fun EditableFields(
                 getIcon = Rule.Action::icon,
                 getName = Rule.Action::name,
                 getExplanation = Rule.Action::explanation,
+                getWarning = { action ->
+                    if (basedOnNonClickableNode && action == Rule.Action.CLICK) {
+                        stringResource(R.string.caution_pre_filled_target_not_clickable)
+                    } else {
+                        ""
+                    }
+                },
                 onSelect = onSelectAction,
                 label = stringResourceWithAsterisk(R.string.action),
                 supportingText = stringResource(R.string.ref_required)
@@ -400,6 +409,7 @@ private fun <T> RuleDropdownMenu(
     getIcon: @Composable (T) -> Painter,
     getName: @Composable (T) -> String,
     getExplanation: @Composable (T) -> String,
+    getWarning: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     label: String,
     supportingText: String? = null
@@ -453,7 +463,16 @@ private fun <T> RuleDropdownMenu(
                             contentDescription = null
                         )
                     },
-                    supportingText = { Text(getExplanation(option)) },
+                    supportingText = {
+                        Column {
+                            Text(getExplanation(option))
+
+                            val warning = getWarning(option)
+                            if (warning.isNotEmpty()) {
+                                Text(warning, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )
             }

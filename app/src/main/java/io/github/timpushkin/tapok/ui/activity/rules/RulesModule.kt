@@ -25,7 +25,7 @@ data object RuleListKey : PrimaryKey(
 data class RuleViewerKey(val ruleId: Long) : SecondaryKey()
 
 @Serializable
-data class RuleEditorKey(val ruleId: Long?, val prefilling: IncompleteRule?) :
+data class RuleEditorKey(val ruleId: Long?, val basis: RuleBasis?) :
     SecondaryKey(fullScreen = true) // Full-screen to give fewer ways to leave without saving
 
 @Module
@@ -57,7 +57,7 @@ object RulesModule {
         entry<RuleViewerKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
             RuleViewerPane(
                 key.ruleId,
-                onEdit = { navigator.navigateTo(RuleEditorKey(key.ruleId, prefilling = null)) },
+                onEdit = { navigator.navigateTo(RuleEditorKey(key.ruleId, basis = null)) },
                 onBack = navigator::navigateBack,
                 directive = directive
             )
@@ -65,7 +65,7 @@ object RulesModule {
         entry<RuleEditorKey> { key ->
             RuleEditorScreen(
                 key.ruleId,
-                key.prefilling,
+                key.basis,
                 onSave = { rule ->
                     navigator.navigateBack()
                     // If viewing rules, display the saved rule

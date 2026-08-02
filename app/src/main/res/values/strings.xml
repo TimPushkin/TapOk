@@ -124,6 +124,7 @@
     <!-- Rule editor: drop-down menu items and explanations -->
     <string name="click">Click</string>
     <string name="click_explanation">Click the matched element</string>
+    <string name="caution_pre_filled_target_not_clickable">Caution: pre-filled target was not clickable</string>
     <string name="click_nearest_clickable_ancestor">Click nearest clickable ancestor</string>
     <string name="click_nearest_clickable_ancestor_explanation">Click the nearest clickable element above the matched one in the UI hierarchy</string>
     <string name="click_nearest_clickable_descendant">Click nearest clickable descendant</string>

@@ -103,8 +103,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.scans.Node
-import io.github.timpushkin.tapok.ui.activity.rules.IncompleteRule
-import io.github.timpushkin.tapok.ui.activity.rules.prefilledRuleFrom
+import io.github.timpushkin.tapok.ui.activity.rules.RuleBasis
+import io.github.timpushkin.tapok.ui.activity.rules.ruleBasisFrom
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
@@ -117,7 +117,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScanInspectorScreen(
     scanId: Long,
-    onCreateRule: (IncompleteRule) -> Unit,
+    onCreateRule: (RuleBasis) -> Unit,
     onClose: () -> Unit,
     vm: ScanInspectorViewModel = hiltViewModel(
         key = scanId.toString()
@@ -186,9 +186,7 @@ fun ScanInspectorScreen(
                             vm.selectNode(node)
                             sheetState.shrink()
                         },
-                        onCreateRuleFromNode = { node ->
-                            onCreateRule(prefilledRuleFrom(scan, node))
-                        }
+                        onCreateRuleFromNode = { node -> onCreateRule(ruleBasisFrom(scan, node)) }
                     )
                 }
             },

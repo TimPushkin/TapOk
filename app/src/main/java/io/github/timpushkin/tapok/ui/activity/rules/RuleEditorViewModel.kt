@@ -57,7 +57,7 @@ sealed interface RuleEditorUiState {
 class RuleEditorViewModel @AssistedInject constructor(
     private val ruleRepo: RuleRepo,
     @Assisted ruleId: Long?,
-    @Assisted prefilling: IncompleteRule?
+    @Assisted basis: RuleBasis?
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<RuleEditorUiState>(RuleEditorUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -83,30 +83,32 @@ class RuleEditorViewModel @AssistedInject constructor(
                 withContext(Dispatchers.IO) { ruleRepo.loadRule(id) }
             }
             if (rule != null) {
-                Log.d(TAG, "Editing $rule, prefilled with $prefilling")
+                Log.d(TAG, "Editing $rule, based on $basis")
             } else {
-                Log.d(TAG, "Creating new rule, prefilled with $prefilling")
+                Log.d(TAG, "Creating new rule, based on $basis")
             }
 
             rule?.name?.let {
                 nameState.setTextAndPlaceCursorAtEnd(it)
             }
-            (prefilling?.sourcePackageName ?: rule?.sourcePackageName)?.let {
+            (basis?.sourcePackageName ?: rule?.sourcePackageName)?.let {
                 sourcePackageNameState.setTextAndPlaceCursorAtEnd(it)
             }
-            (prefilling?.viewId ?: rule?.viewId)?.let {
+            (basis?.viewId ?: rule?.viewId)?.let {
                 viewIdState.setTextAndPlaceCursorAtEnd(it)
             }
-            (prefilling?.containedText ?: rule?.containedText)?.let {
+            (basis?.containedText ?: rule?.containedText)?.let {
                 containedTextState.setTextAndPlaceCursorAtEnd(it)
             }
-            (prefilling?.packageName ?: rule?.packageName)?.let {
+            (basis?.packageName ?: rule?.packageName)?.let {
                 packageNameState.setTextAndPlaceCursorAtEnd(it)
             }
-            (prefilling?.className ?: rule?.className)?.let {
+            (basis?.className ?: rule?.className)?.let {
                 classNameState.setTextAndPlaceCursorAtEnd(it)
             }
-            val action = (prefilling?.action ?: rule?.action) ?: Rule.Action.CLICK
+            val action = basis?.run {
+                if (isTargetClickable) Rule.Action.CLICK else Rule.Action.MUTE_WHEN_PRESENT
+            } ?: rule?.action ?: Rule.Action.CLICK
 
             launchTextValidationFlow(
                 nameState,
@@ -281,7 +283,7 @@ class RuleEditorViewModel @AssistedInject constructor(
 
 @AssistedFactory
 fun interface RuleEditorViewModelFactory {
-    fun create(ruleId: Long?, prefilling: IncompleteRule?): RuleEditorViewModel
+    fun create(ruleId: Long?, basis: RuleBasis?): RuleEditorViewModel
 }
 
 private fun MutableStateFlow<RuleEditorUiState>.updateIfLoaded(
