@@ -2,17 +2,18 @@
     <string name="app_name">TapOk</string>
 
     <!-- General -->
+    <string name="accept_and_proceed">Accept and proceed</string>
     <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
     <string name="close">Close</string>
     <string name="copy">Copy</string>
-    <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="discard">Discard</string>
-    <string name="navigate_back">Navigate back</string>
     <string name="done">Done!</string>
-    <string name="on">On</string>
+    <string name="navigate_back">Navigate back</string>
     <string name="off">Off</string>
-    <string name="accept_and_proceed">Accept and proceed</string>
+    <string name="on">On</string>
+    <string name="save">Save</string>
 
     <!-- System accessibility settings -->
     <string name="agent_service_description">Scans the screen to find targetable elements and perform tasks according to the specified rules.</string>
@@ -93,47 +94,43 @@
     <!-- Rule editor: headers and introduction paragraphs -->
     <string name="create_rule">Create rule</string>
     <string name="edit_rule">Edit rule</string>
-    <string name="triggering_ui_element">Triggering UI element</string>
-    <string name="triggering_ui_element_intro">The rule\'s action runs on any UI element that matches all the following criteria.</string>
-    <string name="search_criteria">Search criteria</string>
-    <string name="search_criteria_intro">One of these is used to find a matching element. If multiple are filled in, the topmost one is used for the search and the rest act as post-search filters.</string>
-    <string name="post_search_filters">Post-search filters</string>
-    <string name="post_search_filters_intro">After the search, these filters are applied. Only fill in when needed to distinguish between similar elements — additional filters slow down matching.</string>
-    <string name="action">Action</string>
-    <string name="action_intro">The action performed on the matched element. If multiple elements match simultaneously, the action may run only on some of them.</string>
+    <string-array name="rule_introduction">
+        <item>Define what action to perform when a certain UI element is displayed. If multiple elements match, the action may be performed only on some.</item>
+        <item>Fill in optional fields only when needed to uniquely identify the desired element: additional filters make searches slower.</item>
+    </string-array>
     <!-- Rule editor: field names, placeholders and explanations -->
+    <string name="required">required</string>
+    <string name="show_field_explanation">Show field explanation</string>
+    <string name="hide_field_explanation">Hide field explanation</string>
     <string name="rule_name">Rule name</string>
     <string name="rule_name_placeholder">My rule</string>
-    <string name="rule_name_explanation">Name of the rule for your own reference.</string>
-    <string name="window_level_package">Window-level package</string>
+    <string name="app_package">App package</string>
     <string name="package_placeholder">com.example.app</string>
-    <string name="window_level_package_explanation">\"Package name\" of the window\'s top-level element — normally the owning app\'s package. Visible in the top bar when viewing a scan.</string>
+    <string name="app_package_explanation">Package of the app where the desired element resides. Shown at the top when viewing a scan.</string>
     <string name="view_id">View ID</string>
     <string name="view_id_placeholder">com.example.app:id/some_button</string>
-    <string name="view_id_explanation">An element matches if its \"View ID\" is exactly this value.</string>
+    <string name="view_id_explanation">Element matches if its \"View ID\" is exactly this value.</string>
+    <string name="required_unless_got_contained_text">required unless contained text is provided</string>
     <string name="contained_text">Contained text</string>
     <string name="contained_text_placeholder">Some text</string>
-    <string name="contained_text_explanation">An element matches if this text appears as a substring of its \"Content description\" or \"Text\", case-insensitive. \"Text\" is usually only searched when the element\'s \"Class name\" is \"android.widget.TextView\".</string>
+    <string name="contained_text_explanation">Element matches if this appears case-insensitively in either its \"Content description\" or its \"Text\". \"Text\" is usually only searched for android.widget.TextView class.</string>
+    <string name="required_unless_got_view_id">required unless view ID is provided</string>
     <string name="element_level_package">Element-level package</string>
-    <string name="element_level_package_explanation">An element matches if its \"Package name\" is exactly this value. Usually the same as the window-level package, so should typically be left empty.</string>
+    <string name="element_level_package_explanation">Element matches if its \"Package name\" is exactly this value. Usually redundant because it is same as app package for all elements of the app.</string>
     <string name="view_class">View class</string>
     <string name="view_class_placeholder">android.widget.Button</string>
     <string name="view_class_explanation">An element matches if its \"Class name\" is exactly this value.</string>
-    <string name="show_field_explanation">Show field explanation</string>
-    <string name="hide_field_explanation">Hide field explanation</string>
+    <string name="action">Action</string>
     <!-- Rule editor: drop-down menu items and explanations -->
     <string name="click">Click</string>
     <string name="click_explanation">Click the matched element</string>
     <string name="caution_pre_filled_target_not_clickable">Caution: pre-filled target was not clickable</string>
     <string name="click_nearest_clickable_ancestor">Click nearest clickable ancestor</string>
-    <string name="click_nearest_clickable_ancestor_explanation">Click the nearest clickable element above the matched one in the UI hierarchy</string>
+    <string name="click_nearest_clickable_ancestor_explanation">Click the nearest clickable element that contains the matched element</string>
     <string name="click_nearest_clickable_descendant">Click nearest clickable descendant</string>
-    <string name="click_nearest_clickable_descendant_explanation">Click the nearest clickable element below the matched one in the UI hierarchy, the iteration order for siblings is the same as in scans</string>
+    <string name="click_nearest_clickable_descendant_explanation">Click the nearest clickable element contained by the matched element, iteration order for siblings is the same as in scans</string>
     <string name="mute_when_present">Mute when present</string>
     <string name="mute_when_present_explanation">Mute music when a matching element is present, unmute when it is not</string>
-    <!-- Rule editor: supporting texts -->
-    <string name="ref_required">* required</string>
-    <string name="ref_required_unless_filled_in_another_criterion">* required unless filled in another criterion</string>
     <!-- Rule editor: messages for invalid inputs -->
     <string name="invalid_input">Invalid input</string>
     <string name="error_no_search_criteria">At least one search criterion required</string>

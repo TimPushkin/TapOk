@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.AlertDialog
@@ -40,6 +41,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -64,6 +67,9 @@ import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.ui.activity.components.CloseButton
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
+import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
+import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
+import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import kotlinx.coroutines.launch
 
 @Composable
@@ -189,41 +195,39 @@ private fun EditableFields(
         modifier = modifier
     ) {
         val textInputValidity = state.textInputValidity
+
+        item {
+            val intro = annotatedStringArrayResource(R.array.rule_introduction)
+            Text(
+                rememberAnnotatedString(intro) { appendAnnotatedParagraphs(intro) },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(DefaultInnerSpacing))
+        }
+
         item {
             RuleTextField(
                 nameState,
                 enabled,
                 stringResource(R.string.rule_name),
                 stringResource(R.string.rule_name_placeholder),
-                explanation = stringResource(R.string.rule_name_explanation),
                 error = textInputValidity.name.errorText()
             )
         }
 
         item {
-            SectionHeader(
-                header = stringResource(R.string.triggering_ui_element),
-                subheader = stringResource(R.string.triggering_ui_element_intro)
-            )
-        }
-        item {
             RuleTextField(
                 sourcePackageNameState,
                 enabled,
-                stringResourceWithAsterisk(R.string.window_level_package),
+                stringResourceWithAsterisk(R.string.app_package),
                 stringResource(R.string.package_placeholder),
-                explanation = stringResource(R.string.window_level_package_explanation),
-                supportingText = stringResource(R.string.ref_required),
+                explanation = stringResource(R.string.app_package_explanation),
+                supportingText = stringResourceWithAsterisk(R.string.required, prepend = true),
                 error = textInputValidity.sourcePackageName.errorText()
             )
         }
 
-        item {
-            SubsectionHeader(
-                header = stringResource(R.string.search_criteria),
-                subheader = stringResource(R.string.search_criteria_intro)
-            )
-        }
         item {
             RuleTextField(
                 viewIdState,
@@ -231,28 +235,29 @@ private fun EditableFields(
                 stringResourceWithAsterisk(R.string.view_id),
                 stringResource(R.string.view_id_placeholder),
                 explanation = stringResource(R.string.view_id_explanation),
-                supportingText =
-                    stringResource(R.string.ref_required_unless_filled_in_another_criterion),
+                supportingText = stringResourceWithAsterisk(
+                    R.string.required_unless_got_contained_text,
+                    prepend = true
+                ),
                 error = textInputValidity.viewId.errorText()
             )
+        }
+
+        item {
             RuleTextField(
                 containedTextState,
                 enabled,
                 stringResourceWithAsterisk(R.string.contained_text),
                 stringResource(R.string.contained_text_placeholder),
                 explanation = stringResource(R.string.contained_text_explanation),
-                supportingText =
-                    stringResource(R.string.ref_required_unless_filled_in_another_criterion),
+                supportingText = stringResourceWithAsterisk(
+                    R.string.required_unless_got_view_id,
+                    prepend = true
+                ),
                 error = textInputValidity.containedText.errorText()
             )
         }
 
-        item {
-            SubsectionHeader(
-                header = stringResource(R.string.post_search_filters),
-                subheader = stringResource(R.string.post_search_filters_intro)
-            )
-        }
         item {
             RuleTextField(
                 packageNameState,
@@ -262,6 +267,9 @@ private fun EditableFields(
                 explanation = stringResource(R.string.element_level_package_explanation),
                 error = textInputValidity.packageName.errorText()
             )
+        }
+
+        item {
             RuleTextField(
                 classNameState,
                 enabled,
@@ -272,12 +280,6 @@ private fun EditableFields(
             )
         }
 
-        item {
-            SectionHeader(
-                header = stringResource(R.string.action),
-                subheader = stringResource(R.string.action_intro)
-            )
-        }
         item {
             RuleDropdownMenu(
                 selected = state.action,
@@ -295,7 +297,7 @@ private fun EditableFields(
                 },
                 onSelect = onSelectAction,
                 label = stringResourceWithAsterisk(R.string.action),
-                supportingText = stringResource(R.string.ref_required)
+                supportingText = stringResourceWithAsterisk(R.string.required, prepend = true)
             )
         }
     }
@@ -303,39 +305,8 @@ private fun EditableFields(
 
 @Composable
 @ReadOnlyComposable
-private fun stringResourceWithAsterisk(@StringRes id: Int) = "${stringResource(id)} *"
-
-@Composable
-private fun SectionHeader(header: String, subheader: String) {
-    Column {
-        Text(
-            header,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            subheader,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun SubsectionHeader(header: String, subheader: String) {
-    Column {
-        Text(
-            header,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            subheader,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
+private fun stringResourceWithAsterisk(@StringRes id: Int, prepend: Boolean = false) =
+    if (prepend) "* ${stringResource(id)}" else "${stringResource(id)} *"
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -344,10 +315,11 @@ private fun RuleTextField(
     enabled: Boolean,
     label: String,
     placeholder: String,
-    explanation: String,
+    explanation: String? = null,
     supportingText: String? = null,
     error: String? = null
 ) {
+    var focused by remember { mutableStateOf(false) }
     OutlinedTextField(
         state = state,
         enabled = enabled,
@@ -355,8 +327,25 @@ private fun RuleTextField(
         placeholder = { Text(placeholder) },
         supportingText = { TextOrSpacer(error ?: supportingText) },
         isError = error != null,
-        trailingIcon = {
-            if (error == null) {
+        trailingIcon = when {
+            focused && state.text.isNotEmpty() -> ({
+                IconButton(onClick = state::clearText) {
+                    Icon(
+                        painterResource(R.drawable.close),
+                        contentDescription = stringResource(R.string.clear)
+                    )
+                }
+            })
+
+            error != null -> ({
+                Icon(
+                    painterResource(R.drawable.error_filled),
+                    contentDescription = stringResource(R.string.invalid_input),
+                    modifier = Modifier.minimumInteractiveComponentSize()
+                )
+            })
+
+            explanation != null -> ({
                 val scope = rememberCoroutineScope()
                 val tooltipState = rememberTooltipState(isPersistent = true)
                 TooltipBox(
@@ -388,15 +377,14 @@ private fun RuleTextField(
                         }
                     }
                 }
-            } else {
-                Icon(
-                    painterResource(R.drawable.error_filled),
-                    contentDescription = stringResource(R.string.invalid_input)
-                )
-            }
+            })
+
+            else -> null
         },
         lineLimits = TextFieldLineLimits.SingleLine,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { state -> focused = state.isFocused }
     )
 }
 

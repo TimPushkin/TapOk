@@ -128,7 +128,7 @@ private fun RuleFields(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val fields = listOfNotNull(
-        RuleFieldDescriptor(rule.sourcePackageName, stringResource(R.string.window_level_package)),
+        RuleFieldDescriptor(rule.sourcePackageName, stringResource(R.string.app_package)),
         rule.viewId?.let { RuleFieldDescriptor(it, stringResource(R.string.view_id)) },
         rule.containedText?.let {
             RuleFieldDescriptor(it, stringResource(R.string.contained_text))

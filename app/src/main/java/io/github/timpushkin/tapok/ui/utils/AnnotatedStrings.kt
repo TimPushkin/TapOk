@@ -34,7 +34,7 @@ inline fun rememberAnnotatedString(
 ): AnnotatedString = remember(keys = keys) { buildAnnotatedString(builder) }
 
 fun AnnotatedString.Builder.appendAnnotatedParagraphs(
-    paragraphs: Array<CharSequence>,
+    paragraphs: Array<out CharSequence>,
     links: Iterable<LinkAnnotation.Clickable> = emptyList()
 ) {
     paragraphs.forEachIndexed { i, paragraph ->
