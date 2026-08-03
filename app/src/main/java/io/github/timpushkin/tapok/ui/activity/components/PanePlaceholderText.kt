@@ -1,5 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +15,9 @@ import androidx.compose.ui.text.style.TextAlign
 @Composable
 fun PanePlaceholderText(text: String, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(

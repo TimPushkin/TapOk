@@ -78,6 +78,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -123,7 +124,13 @@ fun ScanInspectorScreen(
         key = scanId.toString()
     ) { f: ScanInspectorViewModelFactory -> f.create(scanId) }
 ) {
-    Box(modifier = Modifier.dottedBackground()) {
+    Box(
+        modifier = Modifier
+            // Ensure bottom sheet and zoomed image are not shown out of bounds on predictive-back
+            // animation
+            .clipToBounds()
+            .dottedBackground()
+    ) {
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         val loadedUiState = uiState as? ScanInspectorUiState.Loaded
 

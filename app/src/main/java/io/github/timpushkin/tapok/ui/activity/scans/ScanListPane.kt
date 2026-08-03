@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -43,7 +42,7 @@ fun ScanListPane(
     onDeleteScan: (Scan) -> Unit,
     vm: ScanListViewModel = hiltViewModel()
 ) {
-    Scaffold(containerColor = Color.Transparent) { padding ->
+    Scaffold { padding ->
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.scans.isEmpty()) {
             PanePlaceholderText(

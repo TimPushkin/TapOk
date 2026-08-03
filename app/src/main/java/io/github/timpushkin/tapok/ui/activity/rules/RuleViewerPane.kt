@@ -94,7 +94,6 @@ fun RuleViewerPane(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color.Transparent,
         modifier = Modifier
             .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets)
             .requiredMinPaneWidth()

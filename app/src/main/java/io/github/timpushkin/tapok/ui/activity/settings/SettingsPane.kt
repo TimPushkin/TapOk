@@ -19,7 +19,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,7 +34,7 @@ import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 
 @Composable
 fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
-    Scaffold(containerColor = Color.Transparent) { padding ->
+    Scaffold { padding ->
         val agentEnabled = rememberIsAccessibilityServiceEnabled(AgentService::class)
         SegmentedListPane(
             contentPadding = PaddingValues(DefaultOuterSpacing) + padding,

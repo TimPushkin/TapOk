@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,8 +37,7 @@ fun RuleListPane(
 ) {
     Scaffold(
         // TODO: hide FAB on content scroll
-        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) },
-        containerColor = Color.Transparent
+        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) }
     ) { padding ->
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.rules.isEmpty()) {

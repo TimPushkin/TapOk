@@ -1,9 +1,10 @@
 package io.github.timpushkin.tapok.ui.activity.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
@@ -25,7 +26,8 @@ fun PaneScaffoldScope.PaneExpansionDragHandle(state: PaneExpansionState) {
                 LocalMinimumInteractiveComponentSize.current,
                 interactionSource
             )
-            .windowInsetsPadding(ScaffoldDefaults.contentWindowInsets),
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxHeight(),
         interactionSource = interactionSource
     )
 }
