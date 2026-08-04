@@ -17,11 +17,11 @@ dataStore = "1.2.1"
 
 composeBom = "2026.06.01"
 activityCompose = "1.13.0"
-material3 = "1.5.0-alpha24"
+material3 = "1.5.0-alpha25"
 material3Adaptive = "1.3.0-rc01"
 materialComponents = "1.14.0"
 
-nav3 = "1.1.4"
+nav3 = "1.1.5"
 
 accompanist = "0.37.3"
 

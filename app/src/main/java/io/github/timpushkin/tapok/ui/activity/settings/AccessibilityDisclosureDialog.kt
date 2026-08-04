@@ -1,7 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.settings
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -14,7 +13,6 @@ import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
 import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun AccessibilityDisclosureDialog(onAccept: () -> Unit, onHide: () -> Unit) {
     AlertDialog(
         icon = {

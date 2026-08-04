@@ -40,7 +40,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -449,7 +448,6 @@ private fun EmptyNodeListPlaceholder(filtered: Boolean) {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeList(nodes: List<Node>, onNodeClick: (Node) -> Unit) {
     val insetsPadding = PaddingValues(bottom = WindowInsets.safeContentBottomDp())
     LazyColumn(
@@ -528,7 +526,6 @@ private fun Node.horizontalBoundsAsString() = with(bounds) { "x=$left–${right}
 private fun Node.verticalBoundsAsString() = with(bounds) { "y=$top–${bottom}px" }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescription(node: Node, onCreateRuleFromNode: () -> Unit, onClose: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
@@ -659,7 +656,6 @@ private fun NodeDescriptionFlowRowDivider() {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeDescriptionElement(
     text: String?,
     label: String,
@@ -678,7 +674,6 @@ private fun NodeDescriptionElement(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun NodeRawInfo(info: String) {
     var collapsed by retain { mutableStateOf(true) }
     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {

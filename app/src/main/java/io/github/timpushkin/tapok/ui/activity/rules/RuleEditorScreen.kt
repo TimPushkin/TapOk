@@ -388,8 +388,8 @@ private fun RuleTextField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun <T> RuleDropdownMenu(
     selected: T,
     enabled: Boolean,

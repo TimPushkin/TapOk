@@ -20,12 +20,6 @@ object Version {
 
 kotlin {
     jvmToolchain(17)
-    compilerOptions {
-        freeCompilerArgs.addAll(
-            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
-            "-XXLanguage:+UnnamedLocalVariables"
-        )
-    }
 }
 
 android {

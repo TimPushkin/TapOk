@@ -6,13 +6,10 @@
     <string name="cancel">Cancel</string>
     <string name="clear">Clear</string>
     <string name="close">Close</string>
-    <string name="copy">Copy</string>
     <string name="delete">Delete</string>
     <string name="discard">Discard</string>
     <string name="done">Done!</string>
     <string name="navigate_back">Navigate back</string>
-    <string name="off">Off</string>
-    <string name="on">On</string>
     <string name="save">Save</string>
 
     <!-- System accessibility settings -->

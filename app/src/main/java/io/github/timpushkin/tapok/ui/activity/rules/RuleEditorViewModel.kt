@@ -161,7 +161,7 @@ class RuleEditorViewModel @AssistedInject constructor(
         onValidated: RuleInputValidity.(T) -> RuleInputValidity
     ) {
         snapshotFlow { textState.text }
-            // Without this Dispatchers.Default misses the initial value of textState set in init
+            // Without this, Dispatchers.Default misses the initial value of textState set in init
             .flowOn(Dispatchers.Main.immediate)
             .onEach { _ ->
                 _uiState.updateIfLoaded {

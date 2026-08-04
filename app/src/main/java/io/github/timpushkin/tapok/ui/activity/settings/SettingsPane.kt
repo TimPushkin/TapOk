@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.plus
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -91,7 +90,6 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun AgentStatusItem(
     index: Int,
     count: Int,
@@ -148,7 +146,6 @@ private fun AgentStatusItem(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SwitchItem(
     index: Int,
     count: Int,
@@ -171,7 +168,6 @@ private fun SwitchItem(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun ClickItem(
     index: Int,
     count: Int,

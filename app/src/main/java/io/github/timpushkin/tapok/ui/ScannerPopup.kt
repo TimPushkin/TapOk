@@ -20,8 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.SplitButton
 import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
@@ -54,7 +54,7 @@ fun ScannerPopup(
 ) {
     Box(Modifier.draggable2D(rememberDraggable2DState(onDrag))) {
         var checked by remember { mutableStateOf(false) }
-        SplitButtonLayout(
+        SplitButton(
             leadingButton = { LeadingIcon(scanning, onScan) },
             trailingButton = { TrailingIcon(checked) { checked = it } }
         )

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -23,7 +22,6 @@ import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +48,6 @@ import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 import kotlinx.coroutines.launch
 
 @Composable
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleViewerPane(
     ruleId: Long,
     onEdit: (Rule) -> Unit,
@@ -168,7 +165,6 @@ private data class RuleFieldDescriptor(
 )
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun CopyableRuleField(
     index: Int,
     count: Int,
@@ -194,7 +190,6 @@ private fun CopyableRuleField(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun RuleField(
     index: Int,
     count: Int,

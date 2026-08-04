@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -28,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import io.github.timpushkin.tapok.R
 import kotlin.math.absoluteValue
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeletableSegmentedListItem(
     index: Int,

@@ -186,7 +186,7 @@ class Scanner @AssistedInject constructor(
 
         screenshot?.run {
             accessibilityService.screenshotFile(scan).outputStream().use { out ->
-                compress(Bitmap.CompressFormat.WEBP, 100, out)
+                compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 100, out)
             }
         }
     }
