@@ -1,15 +1,22 @@
 package io.github.timpushkin.tapok.data.scans
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import io.github.timpushkin.tapok.data.Deletion
 import kotlinx.coroutines.flow.Flow
 
 interface ScanRepo {
     fun observeAllScans(): Flow<List<Scan>>
 
-    suspend fun loadScanWithNodes(scanId: Long): Pair<Scan, List<Node>>?
+    suspend fun loadScan(id: Long, options: BitmapFactory.Options? = null): ScanWithDependencies?
 
-    suspend fun insertScan(scan: Scan): Long
+    suspend fun insertScan(scan: Scan, nodes: List<Node>, screenshot: Bitmap?): Long
 
-    suspend fun insertNodes(nodes: List<Node>)
+    suspend fun deleteScan(id: Long, mode: Deletion = Deletion.HARD)
 
-    suspend fun deleteScan(scan: Scan)
+    suspend fun undoDeleteScan(id: Long): Boolean
+
+    fun scheduleCleanupOfDeletedScans()
 }
+
+data class ScanWithDependencies(val scan: Scan, val nodes: List<Node>, val screenshot: Bitmap?)

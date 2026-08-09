@@ -38,8 +38,7 @@ object ScansModule {
                 selectedScanId = (navigator.currentKey as? ScanInspectorKey)?.scanId,
                 onSelectScan = { scan ->
                     navigator.navigateTo(ScanInspectorKey(scan.id))
-                },
-                onDeleteScan = { /* Scan viewer is full screen, so cannot be displayed now */ }
+                }
             )
         }
         entry<ScanInspectorKey> { key ->

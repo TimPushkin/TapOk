@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "2cb2181e38ca08746ec6dc6340ede3f6",
+    "identityHash": "e2f70addeaeee21c544d7b280229534f",
     "entities": [
       {
         "tableName": "Rule",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `source_package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `package_name` TEXT, `class_name` TEXT, `action` TEXT NOT NULL, `is_active` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `source_package_name` TEXT NOT NULL, `view_id` TEXT, `contained_text` TEXT, `package_name` TEXT, `class_name` TEXT, `action` TEXT NOT NULL, `is_active` INTEGER NOT NULL, `is_pending_delete` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -55,6 +55,12 @@
           {
             "fieldPath": "isActive",
             "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPendingDelete",
+            "columnName": "is_pending_delete",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -186,7 +192,7 @@
       },
       {
         "tableName": "Scan",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_package_name` TEXT, `timestamp` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_package_name` TEXT, `timestamp` TEXT NOT NULL, `liveness` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -204,6 +210,12 @@
             "columnName": "timestamp",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "liveness",
+            "columnName": "liveness",
+            "affinity": "TEXT",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -216,7 +228,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2cb2181e38ca08746ec6dc6340ede3f6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e2f70addeaeee21c544d7b280229534f')"
     ]
   }
 }

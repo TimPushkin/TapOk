@@ -11,6 +11,7 @@
     <string name="done">Done!</string>
     <string name="navigate_back">Navigate back</string>
     <string name="save">Save</string>
+    <string name="undo">Undo</string>
 
     <!-- System accessibility settings -->
     <string name="agent_service_description">Scans the screen to find targetable elements and perform tasks according to the specified rules.</string>
@@ -86,6 +87,7 @@
     <string name="select_rule_to_view">Select a rule to view</string>
     <!-- Rule list -->
     <string name="unnamed_rule">Unnamed rule</string>
+    <string name="deleted_rule">Deleted rule %s</string>
     <!-- Rule editor -->
     <string name="changes_not_saved">Your changes have not been saved</string>
     <!-- Rule editor: headers and introduction paragraphs -->
@@ -153,6 +155,7 @@
     <string name="scans_will_be_here">Scans you make will be listed here</string>
     <!-- Scan list -->
     <string name="unidentifiable_app">Unidentifiable app</string>
+    <string name="deleted_scan">Deleted scan of %s</string>
     <!-- Scan inspector -->
     <string name="show_hide_elements_that_cannot_be_referenced">Show/hide elements that cannot be referenced in rules</string>
     <string name="could_not_take_screenshot">Could not take a screenshot</string>

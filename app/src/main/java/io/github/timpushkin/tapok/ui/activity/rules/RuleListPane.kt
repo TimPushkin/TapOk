@@ -8,10 +8,15 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -24,6 +29,7 @@ import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListI
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
+import io.github.timpushkin.tapok.ui.activity.components.rememberDeletableItemEpochs
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
 
@@ -32,12 +38,13 @@ fun RuleListPane(
     selectedRuleId: Long?,
     onCreateRule: () -> Unit,
     onSelectRule: (Rule) -> Unit,
-    onDeleteRule: (Rule) -> Unit,
     vm: RuleListViewModel = hiltViewModel()
 ) {
+    val snackbarHostState = retain { SnackbarHostState() }
     Scaffold(
         // TODO: hide FAB on content scroll
-        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) }
+        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.rules.isEmpty()) {
@@ -49,6 +56,7 @@ fun RuleListPane(
                     .requiredMinPaneWidth()
             )
         } else {
+            val epochs = rememberDeletableItemEpochs(uiState.rules.map { it.id })
             SegmentedListPane(
                 contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
                 modifier = Modifier
@@ -56,7 +64,15 @@ fun RuleListPane(
                     .requiredMinPaneWidth()
             ) {
                 val count = uiState.rules.size
-                itemsIndexed(uiState.rules, key = { _, rule -> rule.id }) { index, rule ->
+                itemsIndexed(
+                    uiState.rules,
+                    key = { _, rule -> "${rule.id}-${epochs[rule.id]}" }
+                ) { index, rule ->
+                    val deletionMessage = stringResource(
+                        R.string.deleted_rule,
+                        rule.name.ifEmpty { stringResource(R.string.unnamed_rule) }
+                    )
+                    val undoString = stringResource(R.string.undo)
                     RuleItem(
                         index,
                         count,
@@ -68,8 +84,13 @@ fun RuleListPane(
                             vm.switchRuleActivation(rule)
                         },
                         onDelete = {
-                            onDeleteRule(rule)
-                            vm.deleteRule(rule)
+                            vm.launchDeleteWithUndo(rule) {
+                                snackbarHostState.showSnackbar(
+                                    deletionMessage,
+                                    undoString,
+                                    duration = SnackbarDuration.Short
+                                ) == SnackbarResult.ActionPerformed
+                            }
                         }
                     )
                 }

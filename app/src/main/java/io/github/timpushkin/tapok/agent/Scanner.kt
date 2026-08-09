@@ -25,7 +25,6 @@ import io.github.timpushkin.tapok.data.preferences.PreferencesRepo
 import io.github.timpushkin.tapok.data.scans.Node
 import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.data.scans.ScanRepo
-import io.github.timpushkin.tapok.data.scans.screenshotFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.async
@@ -159,9 +158,7 @@ class Scanner @AssistedInject constructor(
         a11yState: AccessibilityState,
         screenshot: Bitmap?
     ) {
-        val scan = Scan(0, a11yState.nodes.first().packageName?.toString(), timestamp).let {
-            it.copy(id = scanRepo.insertScan(it))
-        }
+        val scan = Scan(0, a11yState.nodes.first().packageName?.toString(), timestamp)
 
         val nodeOffset = screenshot?.run {
             calculateScreenToScreenshotOffset(a11yState.windowBounds, Size(width, height))
@@ -171,7 +168,7 @@ class Scanner @AssistedInject constructor(
             node.calculateBoundsInScreenshot(nodeOffset, a11yState.magnification, nodeBounds)
             Node(
                 0,
-                scan.id,
+                0,
                 with(nodeBounds) { IntRect(left, top, right, bottom) },
                 node.packageName?.toString(),
                 node.className?.toString(),
@@ -182,13 +179,8 @@ class Scanner @AssistedInject constructor(
                 node.toString()
             )
         }
-        scanRepo.insertNodes(nodes)
 
-        screenshot?.run {
-            accessibilityService.screenshotFile(scan).outputStream().use { out ->
-                compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 100, out)
-            }
-        }
+        scanRepo.insertScan(scan, nodes, screenshot)
     }
 
     private fun calculateScreenToScreenshotOffset(

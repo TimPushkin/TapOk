@@ -50,8 +50,7 @@ object RulesModule {
                         navigator.navigateBack()
                     }
                     navigator.navigateTo(RuleViewerKey(rule.id))
-                },
-                onDeleteRule = { /* Rule viewer self-evicts when affected */ }
+                }
             )
         }
         entry<RuleViewerKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->

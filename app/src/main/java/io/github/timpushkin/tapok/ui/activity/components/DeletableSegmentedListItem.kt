@@ -18,6 +18,14 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -25,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.timpushkin.tapok.R
+import java.io.Serializable
 import kotlin.math.absoluteValue
 
 @Composable
@@ -42,12 +51,19 @@ fun DeletableSegmentedListItem(
     content: @Composable (() -> Unit)
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
+    var deleted by rememberSaveable { mutableStateOf(false) }
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = { Background(dismissState) },
         modifier = Modifier.fillMaxSize(),
         enableDismissFromStartToEnd = false,
-        onDismiss = { onDelete() }
+        onDismiss = {
+            // onDismiss may be called multiple times even if the dismissal occurred just once
+            if (!deleted) {
+                deleted = true
+                onDelete()
+            }
+        }
     ) {
         SegmentedListItem(
             onClick = onClick,
@@ -87,3 +103,33 @@ private fun Background(state: SwipeToDismissBoxState) {
         )
     }
 }
+
+/**
+ * Returns a map that counts how many times each ID reappeared after deletion from the list.
+ *
+ * This is intended to be used when implementing the delete-undo pattern. The counts are to be
+ * added to item's keys (e.g. "id-count") to make compose create new states for deleted-then-revived
+ * items instead of reusing the old states.
+ */
+@Composable
+inline fun <reified T : Serializable> rememberDeletableItemEpochs(
+    itemIds: Iterable<T>
+): Map<T, Int> {
+    val epochs = rememberSaveable(saver = stateMapSaver()) { mutableStateMapOf<T, Int>() }
+    var previousIds by rememberSaveable { mutableStateOf(emptySet<T>()) }
+    val currentIds = remember(itemIds) { itemIds.toSet() }
+    if (currentIds != previousIds) {
+        val newIds = currentIds - previousIds
+        for (id in newIds) {
+            epochs[id] = (epochs[id] ?: -1) + 1
+        }
+        previousIds = currentIds
+    }
+    return epochs
+}
+
+inline fun <reified K : Serializable, reified V : Serializable> stateMapSaver() =
+    listSaver<SnapshotStateMap<K, V>, Pair<K, V>>(
+        save = { it.map { entry -> entry.toPair() } },
+        restore = { mutableStateMapOf<K, V>().apply { putAll(it) } }
+    )

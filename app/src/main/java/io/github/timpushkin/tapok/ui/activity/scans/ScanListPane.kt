@@ -11,9 +11,14 @@ import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +34,7 @@ import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListI
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
+import io.github.timpushkin.tapok.ui.activity.components.rememberDeletableItemEpochs
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import java.time.DateTimeException
 import java.time.ZoneId
@@ -39,10 +45,10 @@ import kotlin.time.toJavaInstant
 fun ScanListPane(
     selectedScanId: Long?,
     onSelectScan: (Scan) -> Unit,
-    onDeleteScan: (Scan) -> Unit,
     vm: ScanListViewModel = hiltViewModel()
 ) {
-    Scaffold { padding ->
+    val snackbarHostState = retain { SnackbarHostState() }
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.scans.isEmpty()) {
             PanePlaceholderText(
@@ -52,13 +58,23 @@ fun ScanListPane(
                     .consumeWindowInsets(padding)
             )
         } else {
+            val epochs = rememberDeletableItemEpochs(uiState.scans.map { it.id })
             SegmentedListPane(
                 contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
                 modifier = Modifier.consumeWindowInsets(padding)
             ) {
                 val scans = uiState.scans.sortedByDescending { it.timestamp }
                 val count = scans.size
-                itemsIndexed(scans, key = { _, scan -> scan.id }) { index, scan ->
+                itemsIndexed(
+                    scans,
+                    key = { _, scan -> "${scan.id}-${epochs[scan.id]}" }
+                ) { index, scan ->
+                    val deletionMessage = stringResource(
+                        R.string.deleted_scan,
+                        scan.rootPackageName
+                            ?: stringResource(R.string.unidentifiable_app).lowercase()
+                    )
+                    val undoString = stringResource(R.string.undo)
                     ScanItem(
                         index,
                         count,
@@ -66,8 +82,13 @@ fun ScanListPane(
                         selected = scan.id == selectedScanId,
                         onClick = { onSelectScan(scan) },
                         onDelete = {
-                            onDeleteScan(scan)
-                            vm.deleteScan(scan)
+                            vm.launchDeleteWithUndo(scan) {
+                                snackbarHostState.showSnackbar(
+                                    deletionMessage,
+                                    undoString,
+                                    duration = SnackbarDuration.Short
+                                ) == SnackbarResult.ActionPerformed
+                            }
                         }
                     )
                 }

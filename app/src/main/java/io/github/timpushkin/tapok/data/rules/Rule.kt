@@ -43,7 +43,11 @@ data class Rule(
     /**
      * Whether the automation considers the rule.
      */
-    @ColumnInfo(name = "is_active") val isActive: Boolean = true
+    @ColumnInfo(name = "is_active") val isActive: Boolean = true,
+    /**
+     * Whether the rule has been marked for deletion.
+     */
+    @ColumnInfo(name = "is_pending_delete") val isPendingDelete: Boolean = false
 ) {
     init {
         require(viewId != null || containedText != null) { "No search criteria" }

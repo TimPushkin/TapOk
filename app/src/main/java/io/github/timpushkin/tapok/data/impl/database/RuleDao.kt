@@ -1,29 +1,37 @@
 package io.github.timpushkin.tapok.data.impl.database
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import io.github.timpushkin.tapok.data.rules.Rule
-import io.github.timpushkin.tapok.data.rules.RuleRepo
 import kotlinx.coroutines.flow.Flow
 
-private const val QUERY_LOAD_RULE = "SELECT * FROM rule WHERE rule.id = :ruleId"
-
 @Dao
-interface RuleDao : RuleRepo {
-    @Query("SELECT * FROM rule")
-    override fun observeAllRules(): Flow<List<Rule>>
+abstract class RuleDao {
+    @Query("SELECT * FROM rule WHERE is_pending_delete = 0")
+    abstract fun observeAllRules(): Flow<List<Rule>>
 
-    @Query(QUERY_LOAD_RULE)
-    override suspend fun loadRule(ruleId: Long): Rule
+    @Query("SELECT * FROM rule WHERE is_pending_delete = 1")
+    abstract suspend fun loadSoftDeletedRules(): List<Rule>
 
-    @Query(QUERY_LOAD_RULE)
-    override fun observeRuleOrNull(ruleId: Long): Flow<Rule?>
+    @Query("SELECT * FROM rule WHERE rule.id = :id")
+    abstract suspend fun loadRule(id: Long): Rule
+
+    @Query("SELECT * FROM rule WHERE rule.id = :id AND is_pending_delete = 0")
+    abstract fun observeRuleOrNull(id: Long): Flow<Rule?>
 
     @Upsert
-    override suspend fun insertOrUpdateRule(rule: Rule): Long
+    abstract suspend fun insertOrUpdateRule(rule: Rule): Long
 
-    @Delete
-    override suspend fun deleteRule(rule: Rule)
+    @Query("UPDATE rule SET is_pending_delete = 1 WHERE id = :id")
+    abstract suspend fun softDeleteRule(id: Long)
+
+    @Query("UPDATE rule SET is_pending_delete = 0 WHERE id = :id")
+    abstract suspend fun undoSoftDeleteRule(id: Long): Int
+
+    @Query("DELETE FROM rule WHERE id = :id")
+    abstract suspend fun deleteRule(id: Long)
+
+    @Query("DELETE FROM rule WHERE id = :id AND is_pending_delete = 1")
+    abstract suspend fun deleteRuleIfSoftDeleted(id: Long): Int
 }

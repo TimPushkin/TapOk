@@ -14,13 +14,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.timpushkin.tapok.data.scans.Node
 import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.data.scans.ScanRepo
-import io.github.timpushkin.tapok.data.scans.screenshotFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
 
 sealed interface ScanInspectorUiState {
     data object Loading : ScanInspectorUiState
@@ -50,26 +48,17 @@ class ScanInspectorViewModel @AssistedInject constructor(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             // If the scan has been deleted concurrently the VM won't be used
-            val (scan, nodes) = scanRepo.loadScanWithNodes(scanId) ?: return@launch
-            val screenshot = loadScreenshotIfExists(application.screenshotFile(scan))
+            val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.HARDWARE }
+            val (scan, nodes, screenshot) = scanRepo.loadScan(scanId, opts) ?: return@launch
             _uiState.value = ScanInspectorUiState.Loaded(
                 scan,
-                screenshot,
+                screenshot?.asImageBitmap(),
                 nodes,
                 null,
                 // If no referenceable nodes show at least something by default
                 nodes.all { !it.isReferenceableInRules }
             )
         }
-    }
-
-    private fun loadScreenshotIfExists(file: File): ImageBitmap? {
-        if (!file.exists()) {
-            return null
-        }
-        val path = file.toString()
-        val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.HARDWARE }
-        return BitmapFactory.decodeFile(path, options).asImageBitmap()
     }
 
     fun switchShowUnreferenceableNodes() {

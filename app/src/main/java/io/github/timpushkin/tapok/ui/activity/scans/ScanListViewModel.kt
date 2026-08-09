@@ -1,22 +1,22 @@
 package io.github.timpushkin.tapok.ui.activity.scans
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.timpushkin.tapok.data.Deletion
 import io.github.timpushkin.tapok.data.scans.Scan
 import io.github.timpushkin.tapok.data.scans.ScanRepo
-import io.github.timpushkin.tapok.data.scans.screenshotFile
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "ScanListViewModel"
 
 data class ScanListUiState(val scans: List<Scan>)
 
@@ -30,15 +30,26 @@ class ScanListViewModel @Inject constructor(
 
     init {
         scanRepo.observeAllScans()
-            .flowOn(Dispatchers.IO)
             .onEach { scans -> _uiState.update { it.copy(scans = scans) } }
             .launchIn(viewModelScope)
     }
 
-    fun deleteScan(scan: Scan) {
-        viewModelScope.launch(Dispatchers.IO) {
-            scanRepo.deleteScan(scan)
-            application.screenshotFile(scan).delete() // no-op if no screenshot exists
+    fun launchDeleteWithUndo(scan: Scan, promptForUndo: suspend () -> Boolean) {
+        Log.d(TAG, "Deleting $scan - requested")
+        viewModelScope.launch {
+            scanRepo.deleteScan(scan.id, Deletion.SOFT)
+            if (promptForUndo()) {
+                val undone = scanRepo.undoDeleteScan(scan.id)
+                Log.d(TAG, "Deleting $scan - ${if (undone) "undone" else "failed to undo"}")
+            } else {
+                scanRepo.deleteScan(scan.id, Deletion.HARD_AFTER_SOFT)
+                Log.d(TAG, "Deleting $scan - done")
+            }
         }
+    }
+
+    override fun onCleared() {
+        // Cleanup after possible canceled deletions
+        scanRepo.scheduleCleanupOfDeletedScans()
     }
 }
