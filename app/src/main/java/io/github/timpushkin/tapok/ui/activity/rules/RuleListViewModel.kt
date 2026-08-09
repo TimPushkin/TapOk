@@ -27,8 +27,9 @@ class RuleListViewModel @Inject constructor(private val ruleRepo: RuleRepo) : Vi
     init {
         ruleRepo.observeAllRules()
             .onEach { rules ->
-                Log.d(TAG, "Loaded rules: $rules")
-                _uiState.update { it.copy(rules = rules) }
+                val sortedRules = rules.sortedByDescending { it.id }
+                Log.d(TAG, "Loaded rules: $sortedRules")
+                _uiState.update { it.copy(rules = sortedRules) }
             }
             .launchIn(viewModelScope)
     }

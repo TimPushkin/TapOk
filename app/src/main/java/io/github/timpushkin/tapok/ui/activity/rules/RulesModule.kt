@@ -11,6 +11,7 @@ import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.ui.activity.EntryProviderInstaller
 import io.github.timpushkin.tapok.ui.activity.PrimaryKey
 import io.github.timpushkin.tapok.ui.activity.SecondaryKey
+import io.github.timpushkin.tapok.ui.utils.isHorizontallyPartitioned
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -67,12 +68,18 @@ object RulesModule {
                 key.basis,
                 onSave = { rule ->
                     navigator.navigateBack()
-                    // If viewing rules, display the saved rule
-                    if (navigator.currentKey is RuleViewerKey) {
-                        navigator.navigateBack()
-                    }
-                    if (navigator.currentKey is RuleListKey) {
-                        navigator.navigateTo(RuleViewerKey(rule.id))
+                    if (directive.isHorizontallyPartitioned()) {
+                        // If viewing rules, display the saved rule
+                        if (
+                            navigator.currentKey.let {
+                                it is RuleViewerKey && it.ruleId != rule.id
+                            }
+                        ) {
+                            navigator.navigateBack()
+                        }
+                        if (navigator.currentKey is RuleListKey) {
+                            navigator.navigateTo(RuleViewerKey(rule.id))
+                        }
                     }
                 },
                 onClose = navigator::navigateBack

@@ -1,10 +1,12 @@
 package io.github.timpushkin.tapok.ui.activity.rules
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.Scaffold
@@ -15,8 +17,13 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,13 +47,37 @@ fun RuleListPane(
     onSelectRule: (Rule) -> Unit,
     vm: RuleListViewModel = hiltViewModel()
 ) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+
     val snackbarHostState = retain { SnackbarHostState() }
+
+    val listState = rememberLazyListState()
+    var showFab by remember { mutableStateOf(true) } // Not savable to reset on rotation
+    LaunchedEffect(listState) {
+        var previousIndex = listState.firstVisibleItemIndex
+        var previousScrollOffset = listState.firstVisibleItemScrollOffset
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collect { (currentIndex, currentOffset) ->
+            // Hide when scrolling down, show when scrolling up
+            if (currentIndex != previousIndex) {
+                showFab = currentIndex < previousIndex
+            } else if (currentOffset != previousScrollOffset) {
+                showFab = currentOffset < previousScrollOffset
+            }
+            previousIndex = currentIndex
+            previousScrollOffset = currentOffset
+        }
+    }
+
     Scaffold(
-        // TODO: hide FAB on content scroll
-        floatingActionButton = { CreateRuleFab(onClick = onCreateRule) },
+        floatingActionButton = {
+            AnimatedVisibility(showFab) {
+                CreateRuleFab(onClick = onCreateRule)
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        val uiState by vm.uiState.collectAsStateWithLifecycle()
         if (uiState.rules.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.manage_rules_here),
@@ -58,6 +89,7 @@ fun RuleListPane(
         } else {
             val epochs = rememberDeletableItemEpochs(uiState.rules.map { it.id })
             SegmentedListPane(
+                state = listState,
                 contentPadding = PaddingValues(DefaultOuterSpacing) + padding,
                 modifier = Modifier
                     .consumeWindowInsets(padding)

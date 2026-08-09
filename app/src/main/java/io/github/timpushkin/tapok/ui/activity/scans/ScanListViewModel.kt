@@ -30,7 +30,13 @@ class ScanListViewModel @Inject constructor(
 
     init {
         scanRepo.observeAllScans()
-            .onEach { scans -> _uiState.update { it.copy(scans = scans) } }
+            .onEach { scans ->
+                val sortedScans = scans.sortedWith(
+                    compareByDescending<Scan> { it.timestamp }.thenByDescending { it.id }
+                )
+                Log.d(TAG, "Loaded scans: $sortedScans")
+                _uiState.update { it.copy(scans = sortedScans) }
+            }
             .launchIn(viewModelScope)
     }
 
