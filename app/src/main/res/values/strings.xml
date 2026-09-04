@@ -39,6 +39,8 @@
     <string name="view_tutorial">View tutorial</string>
     <string name="skip_tutorial">Skip tutorial</string>
     <string name="complete_tutorial">Complete tutorial</string>
+    <string name="to_previous_page">Go to the previous page</string>
+    <string name="to_next_page">Go to the next page</string>
     <!-- Tutorial: texts -->
     <string name="tutorial_intro_headline">Welcome!</string>
     <string-array name="tutorial_intro_body">
