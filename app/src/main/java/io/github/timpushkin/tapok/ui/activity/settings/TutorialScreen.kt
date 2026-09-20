@@ -1,5 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.settings
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,10 +43,7 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -211,56 +208,44 @@ private fun PageIndicator(
 @Composable
 private fun TutorialCard(
     wideLayout: Boolean,
+    @DrawableRes iconId: Int,
     headline: String,
     bodyParagraphs: Array<CharSequence>,
     bodyLinks: Iterable<LinkAnnotation.Clickable> = emptyList(),
     bodyInlineContent: Map<String, InlineTextContent> = emptyMap()
 ) {
-    // TODO: actual graphics
-    val image = remember {
-        ImageVector.Builder(
-            name = "Placeholder",
-            defaultWidth = 128.dp,
-            defaultHeight = 128.dp,
-            viewportWidth = 128f,
-            viewportHeight = 128f
-        ).apply {
-            path(
-                fill = SolidColor(Color.LightGray),
-                strokeAlpha = 1.0f
-            ) {
-                moveTo(64f, 0f)
-                curveTo(99.35f, 0f, 128f, 28.65f, 128f, 64f)
-                curveTo(128f, 99.35f, 99.35f, 128f, 64f, 128f)
-                curveTo(28.65f, 128f, 0f, 99.35f, 0f, 64f)
-                curveTo(0f, 28.65f, 28.65f, 0f, 64f, 0f)
-                close()
-            }
-        }.build()
-    }
     val layoutArrangement = Arrangement.spacedBy(DefaultOuterSpacing)
     val layoutModifier = Modifier.padding(DefaultOuterSpacing)
     if (wideLayout) {
-        Row(horizontalArrangement = layoutArrangement, modifier = layoutModifier) {
-            val elementModifier = Modifier.weight(1f).fillMaxSize()
-            TutorialGraphic(image, elementModifier)
+        Row(
+            horizontalArrangement = layoutArrangement,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = layoutModifier
+        ) {
+            val elementModifier = Modifier.weight(1f)
+            TutorialIcon(iconId, elementModifier)
             TutorialText(headline, bodyParagraphs, bodyLinks, bodyInlineContent, elementModifier)
         }
     } else {
-        Column( verticalArrangement = layoutArrangement, modifier = layoutModifier) {
-            val elementModifier = Modifier.weight(1f).fillMaxSize()
-            TutorialGraphic(image, elementModifier)
+        Column(
+            verticalArrangement = layoutArrangement,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = layoutModifier
+        ) {
+            val elementModifier = Modifier.weight(1f)
+            TutorialIcon(iconId, elementModifier)
             TutorialText(headline, bodyParagraphs, bodyLinks, bodyInlineContent, elementModifier)
         }
     }
 }
 
 @Composable
-private fun TutorialGraphic(imageVector: ImageVector, modifier: Modifier = Modifier) {
+private fun TutorialIcon(@DrawableRes id: Int, modifier: Modifier = Modifier) {
     Image(
-        imageVector,
+        painterResource(id),
         contentDescription = null,
-        modifier = modifier
+        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+        modifier = modifier.size(500.dp)
     )
 }
 
@@ -304,6 +289,7 @@ private val ICON_PLACEHOLDER = Placeholder(1.em, 1.em, PlaceholderVerticalAlign.
 private fun Intro(wideLayout: Boolean) {
     TutorialCard(
         wideLayout,
+        R.drawable.tapok,
         headline = stringResource(R.string.tutorial_intro_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_intro_body)
     )
@@ -331,6 +317,7 @@ private fun Step1(
 
     TutorialCard(
         wideLayout,
+        R.drawable.accessibility_new,
         headline = stringResource(R.string.tutorial_step1_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step1_body),
         bodyLinks = listOf(
@@ -349,6 +336,7 @@ private fun Step1(
 private fun Step2(wideLayout: Boolean) {
     TutorialCard(
         wideLayout,
+        R.drawable.screenshot_frame,
         headline = stringResource(R.string.tutorial_step2_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step2_body),
         bodyInlineContent = mapOf(
@@ -363,6 +351,7 @@ private fun Step2(wideLayout: Boolean) {
 private fun Step3(wideLayout: Boolean) {
     TutorialCard(
         wideLayout,
+        R.drawable.home_storage_outlined,
         headline = stringResource(R.string.tutorial_step3_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step3_body),
         bodyInlineContent = mapOf(
@@ -380,6 +369,7 @@ private fun Step3(wideLayout: Boolean) {
 private fun Step4(wideLayout: Boolean) {
     TutorialCard(
         wideLayout,
+        R.drawable.page_info_outlined,
         headline = stringResource(R.string.tutorial_step4_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step4_body)
     )
