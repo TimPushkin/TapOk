@@ -55,6 +55,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
@@ -321,6 +323,7 @@ private fun RuleTextField(
     error: String? = null
 ) {
     var focused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
         state = state,
         enabled = enabled,
@@ -330,7 +333,12 @@ private fun RuleTextField(
         isError = error != null,
         trailingIcon = when {
             focused && state.text.isNotEmpty() -> ({
-                IconButton(onClick = state::clearText) {
+                IconButton(
+                    onClick = {
+                        state.clearText()
+                        focusRequester.requestFocus()
+                    }
+                ) {
                     Icon(
                         painterResource(R.drawable.close),
                         contentDescription = stringResource(R.string.clear)
@@ -385,7 +393,8 @@ private fun RuleTextField(
         lineLimits = TextFieldLineLimits.SingleLine,
         modifier = Modifier
             .fillMaxWidth()
-            .onFocusChanged { state -> focused = state.isFocused }
+            .onFocusChanged { focused = it.hasFocus }
+            .focusRequester(focusRequester)
     )
 }
 

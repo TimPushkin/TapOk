@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
@@ -132,21 +133,26 @@ private fun PageIndicator(
     ) {
         val scope = rememberCoroutineScope()
 
-        AnimatedContent(
-            state.currentPage == 0,
-            transitionSpec = { fadeIn() togetherWith fadeOut() }
-        ) { firstPage ->
-            if (firstPage) {
-                IconButton(onSkip) {
+        val firstPage = state.currentPage == 0
+        IconButton(
+            {
+                if (firstPage) {
+                    onSkip()
+                } else {
+                    scope.launch { state.animateScrollToPage(state.currentPage - 1) }
+                }
+            }
+        ) {
+            AnimatedContent(
+                firstPage,
+                transitionSpec = { fadeIn() togetherWith fadeOut() }
+            ) { firstPage ->
+                if (firstPage) {
                     Icon(
                         painterResource(R.drawable.close),
                         contentDescription = stringResource(R.string.skip_tutorial)
                     )
-                }
-            } else {
-                IconButton(
-                    onClick = { scope.launch { state.animateScrollToPage(state.currentPage - 1) } }
-                ) {
+                } else {
                     Icon(
                         painterResource(R.drawable.arrow_back),
                         contentDescription = stringResource(R.string.to_previous_page)
@@ -180,21 +186,31 @@ private fun PageIndicator(
             }
         }
 
-        AnimatedContent(
-            state.currentPage == state.pageCount - 1,
-            transitionSpec = { fadeIn() togetherWith fadeOut() }
-        ) { lastPage ->
-            if (lastPage) {
-                FilledTonalIconButton(onComplete) {
+        val lastPage = state.currentPage == state.pageCount - 1
+        FilledTonalIconButton(
+            {
+                if (lastPage) {
+                    onComplete()
+                } else {
+                    scope.launch { state.animateScrollToPage(state.currentPage + 1) }
+                }
+            },
+            colors = if (lastPage) {
+                IconButtonDefaults.filledTonalIconButtonColors()
+            } else {
+                IconButtonDefaults.iconButtonColors()
+            }
+        ) {
+            AnimatedContent(
+                lastPage,
+                transitionSpec = { fadeIn() togetherWith fadeOut() }
+            ) { lastPage ->
+                if (lastPage) {
                     Icon(
                         painterResource(R.drawable.check),
                         contentDescription = stringResource(R.string.complete_tutorial)
                     )
-                }
-            } else {
-                IconButton(
-                    onClick = { scope.launch { state.animateScrollToPage(state.currentPage + 1) } }
-                ) {
+                } else {
                     Icon(
                         painterResource(R.drawable.arrow_forward),
                         contentDescription = stringResource(R.string.to_next_page)

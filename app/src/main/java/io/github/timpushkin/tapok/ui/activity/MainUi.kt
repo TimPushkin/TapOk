@@ -3,21 +3,22 @@ package io.github.timpushkin.tapok.ui.activity
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldState
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
@@ -27,12 +28,20 @@ import io.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExp
 @Composable
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProviderInstaller>) {
-    val targetNavValue = rememberCurrentNavScaffoldValue(navigator.currentKey)
-    val navState = rememberNavigationSuiteScaffoldState(targetNavValue)
-    LaunchedEffect(targetNavValue) { if (navState.targetValue != targetNavValue) navState.toggle() }
+    val navState = rememberNavigationSuiteScaffoldState()
+    LaunchedEffect(navigator.currentKey) {
+        val currentKey = navigator.currentKey
+        val targetScaffoldValue = if (currentKey is SecondaryKey && currentKey.fullScreen) {
+            NavigationSuiteScaffoldValue.Hidden
+        } else {
+            NavigationSuiteScaffoldValue.Visible
+        }
+        if (navState.targetValue != targetScaffoldValue) {
+            navState.toggle()
+        }
+    }
 
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
-    val navType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
 
     NavigationSuiteScaffold(
         navigationItems = {
@@ -51,7 +60,7 @@ fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProvider
                 )
             }
         },
-        navigationSuiteType = navType,
+        navigationSuiteType = navigationSuiteType(navState, adaptiveInfo),
         state = navState
     ) {
         val directive = calculatePaneScaffoldDirective(adaptiveInfo)
@@ -81,11 +90,16 @@ fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProvider
     }
 }
 
-@Composable
-private fun rememberCurrentNavScaffoldValue(currentKey: NavKey) = remember(currentKey) {
-    if (currentKey is SecondaryKey && currentKey.fullScreen) {
-        NavigationSuiteScaffoldValue.Hidden
+private fun navigationSuiteType(
+    state: NavigationSuiteScaffoldState,
+    adaptiveInfo: WindowAdaptiveInfo
+): NavigationSuiteType {
+    val invisible = state.currentValue == state.targetValue &&
+            state.currentValue == NavigationSuiteScaffoldValue.Hidden
+    return if (invisible) {
+        // Ensures the navigation is not focusable while it is not visible
+        NavigationSuiteType.None
     } else {
-        NavigationSuiteScaffoldValue.Visible
+        NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
     }
 }
