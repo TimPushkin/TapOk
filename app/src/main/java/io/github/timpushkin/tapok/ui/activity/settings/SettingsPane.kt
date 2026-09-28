@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,7 +57,7 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
                 val shouldShowScannerOverlay by viewModel.shouldShowScannerOverlay
                     .collectAsStateWithLifecycle()
                 SwitchItem(
-                    0, 2,
+                    0, 3,
                     stringResource(R.string.show_scanner_overlay),
                     checked = shouldShowScannerOverlay,
                     onCheckedChange = viewModel::setShouldShowScannerOverlay,
@@ -64,10 +65,33 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
                 )
             }
             item {
+                val scanShortcut by viewModel.scanShortcut.collectAsStateWithLifecycle()
+                var showKeySelectionDialog by rememberSaveable(agentEnabled) { mutableStateOf(false) }
+                if (showKeySelectionDialog) {
+                    ShortcutConfigurationDialog(
+                        stringResource(R.string.scanner_shortcut_key),
+                        scanShortcut,
+                        onRecord = viewModel::recordScanShortcut,
+                        onSave = viewModel::setScanShortcut,
+                        onHide = { showKeySelectionDialog = false }
+                    )
+                }
+                ClickItem(
+                    1, 3,
+                    stringResource(R.string.scanner_shortcut_key),
+                    supportingText = scanShortcut?.run {
+                        val l = key.label()
+                        if (isLongPress) stringResource(R.string.key_label_long_press, l) else l
+                    } ?: stringResource(R.string.none),
+                    onClick = { showKeySelectionDialog = true },
+                    enabled = agentEnabled
+                )
+            }
+            item {
                 val shouldScanAllWindows by viewModel.shouldScanAllWindows
                     .collectAsStateWithLifecycle()
                 SwitchItem(
-                    1, 2,
+                    2, 3,
                     stringResource(R.string.scan_all_windows),
                     supportingText = stringResource(
                         if (shouldScanAllWindows) {
@@ -84,7 +108,7 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
 
             item { SegmentedListPaneDefaults.GroupSpacer() }
 
-            item { ClickItem(0, 1, stringResource(R.string.view_tutorial), openTutorial) }
+            item { ClickItem(0, 1, stringResource(R.string.view_tutorial), onClick = openTutorial) }
         }
     }
 }
@@ -172,11 +196,15 @@ private fun ClickItem(
     index: Int,
     count: Int,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    supportingText: String? = null,
+    enabled: Boolean = true,
 ) {
     SegmentedListItem(
         content = { Text(text) },
+        supportingContent = supportingText?.let { { Text(it) } },
         onClick = onClick,
+        enabled = enabled,
         shapes = ListItemDefaults.segmentedShapes(index, count),
         colors = SegmentedListPaneDefaults.colors(),
         modifier = Modifier.fillMaxSize()

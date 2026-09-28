@@ -10,9 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class RuleRepoImpl @Inject constructor(private val dao: RuleDao) : RuleRepo {
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val cleanupRequestChannel = Channel<Unit>(Channel.CONFLATED)

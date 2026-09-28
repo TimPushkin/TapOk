@@ -12,6 +12,9 @@ interface PreferencesRepo {
     fun shouldShowScannerOverlay(): Flow<Boolean>
     suspend fun setShouldShowScannerOverlay(value: Boolean)
 
+    fun scanShortcut(): Flow<Shortcut?>
+    suspend fun setScanShortcut(value: Shortcut?)
+
     fun shouldScanAllWindows(): Flow<Boolean>
     suspend fun setShouldScanAllWindows(value: Boolean)
 }

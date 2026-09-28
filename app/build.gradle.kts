@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.parcelize)
 }
 
 object Version {
@@ -100,4 +101,6 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
 
     implementation(libs.google.accompanist.drawablepainter)
+
+    implementation(libs.kotlinx.serialization.json)
 }

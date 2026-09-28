@@ -10,6 +10,7 @@
     <string name="discard">Discard</string>
     <string name="done">Done!</string>
     <string name="navigate_back">Navigate back</string>
+    <string name="none">None</string>
     <string name="save">Save</string>
     <string name="undo">Undo</string>
 
@@ -32,9 +33,16 @@
     <string name="enable_agent_to_run_automations">Enable the agent to be able to scan screen contents and run automations</string>
     <!-- Other settings -->
     <string name="show_scanner_overlay">Show scanner overlay</string>
+    <string name="scanner_shortcut_key">Scanner shortcut key</string>
     <string name="scan_all_windows">Capture all windows when pressing scan button</string>
     <string name="all_interactable_windows_will_be_captured">All interactable windows will be captured</string>
     <string name="only_active_window_will_be_captured">Only the active window will be captured</string>
+    <!-- Scanner shortcut dialog -->
+    <string name="press_key">Press a key…</string>
+    <string name="start_recording_key_presses">Start recording key presses</string>
+    <string name="stop_recording_key_presses">Stop recording key presses</string>
+    <string name="long_press">Long press</string>
+    <string name="key_label_long_press">%s (long press)</string>
     <!-- Tutorial: buttons -->
     <string name="view_tutorial">View tutorial</string>
     <string name="skip_tutorial">Skip tutorial</string>

@@ -41,18 +41,18 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun providePreferencesDataStore(@ApplicationContext context: Context) =
-            PreferenceDataStoreFactory.create(
-                produceFile = { context.preferencesDataStoreFile("preferences") },
-                corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
-            )
-
-        @Provides
-        @Singleton
         fun provideRuleDao(db: AppDatabase): RuleDao = db.ruleDao()
 
         @Provides
         @Singleton
         fun provideScanDao(db: AppDatabase): ScanDao = db.scanDao()
+
+        @Provides
+        @Singleton
+        fun providePreferencesDataStore(@ApplicationContext context: Context) =
+            PreferenceDataStoreFactory.create(
+                produceFile = { context.preferencesDataStoreFile("preferences") },
+                corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
+            )
     }
 }

@@ -10,8 +10,11 @@ accessibilityFlags:
 - flagDefault - step back if there are more specific services
 - flagReportViewIds - required to search by view ID for view-ID-based rules
 - flagRetrieveInteractiveWindows - required for scanning, e.g. to get window bounds
+- flagRequestFilterKeyEvents (conditional at runtime) - for shortcuts
 
 canRetrieveWindowContent - required to retrieve active window's root node
+
+canRequestFilterKeyEvents - required to set flagRequestFilterKeyEvents, for shortcuts
 
 canTakeScreenshot - required to take screenshots for scans
 
@@ -24,6 +27,7 @@ packageNames - empty to receive no events by default, changed dynamically based 
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault|flagReportViewIds|flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"
+    android:canRequestFilterKeyEvents="true"
     android:canTakeScreenshot="true"
     android:description="@string/agent_service_description"
     android:notificationTimeout="100"

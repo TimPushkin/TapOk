@@ -19,11 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val SCREENSHOTS_DIR = "screenshots"
 
-@Singleton
 class ScanRepoImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dao: ScanDao

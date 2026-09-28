@@ -1,11 +1,16 @@
 package io.github.timpushkin.tapok.agent
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.net.Uri
+import android.os.Build
+import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.runtime.getValue
@@ -14,22 +19,28 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timpushkin.tapok.data.preferences.PreferencesRepo
+import io.github.timpushkin.tapok.data.preferences.Shortcut
 import io.github.timpushkin.tapok.ui.ScannerPopup
 import io.github.timpushkin.tapok.ui.activity.MainActivity
 import io.github.timpushkin.tapok.ui.theme.TapOkTheme
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.roundToInt
+
+private const val TAG = "AgentService"
 
 @SuppressLint("AccessibilityPolicy")
 @AndroidEntryPoint
@@ -50,15 +61,27 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
     @Inject
     lateinit var preferencesRepo: PreferencesRepo
 
-    private lateinit var windowManager: WindowManager
+    private val windowManager: WindowManager by lazy { checkNotNull(getSystemService()) }
+    private val viewConfiguration: ViewConfiguration by lazy { ViewConfiguration.get(this) }
     private var scannerView: View? = null
+
+    @Inject
+    lateinit var scanShortcutRequester: ShortcutRequestBroker
+    private val keyTrackingState = MutableStateFlow<KeyTrackingState?>(null)
+
+    // Key tracking must be reset each time a new shortcut or request for it is sent to ensure
+    // in-progress gestures are not accepted
+    private data class KeyTrackingState(
+        val shortcut: Shortcut?,
+        val shortcutRequest: CompletableDeferred<Shortcut>?,
+        val tracker: KeyTracker = KeyTracker()
+    )
 
     override fun onCreate() {
         savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(null)
         lifecycleDispatcher.onServicePreSuperOnCreate()
         super.onCreate()
-        windowManager = checkNotNull(getSystemService())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -72,11 +95,31 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
 
         preferencesRepo.shouldShowScannerOverlay()
             .onEach { shouldShow -> if (shouldShow) showScannerOverlay() else hideScannerOverlay() }
-            .launchIn(lifecycle.coroutineScope)
+            .launchIn(lifecycleScope)
+
+        preferencesRepo.scanShortcut()
+            .onEach { shortcut ->
+                keyTrackingState.update { keyTrackingStateIfNeeded(shortcut, it?.shortcutRequest) }
+            }
+            .launchIn(lifecycleScope)
+        lifecycleScope.launch {
+            scanShortcutRequester.serve {
+                val request = CompletableDeferred<Shortcut>()
+                keyTrackingState.update { keyTrackingStateIfNeeded(it?.shortcut, request) }
+                try {
+                    request.await()
+                } finally {
+                    keyTrackingState.update { keyTrackingStateIfNeeded(it?.shortcut, null) }
+                }
+            }
+        }
+        keyTrackingState
+            .onEach { setupKeyTracking(it != null) }
+            .launchIn(lifecycleScope)
 
         automator.selectedPackagesFlow
             .onEach { serviceInfo = serviceInfo.apply { packageNames = it.toTypedArray() } }
-            .launchIn(lifecycle.coroutineScope)
+            .launchIn(lifecycleScope)
     }
 
     private fun showScannerOverlay() {
@@ -96,13 +139,12 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
             setContent {
                 TapOkTheme {
                     val scanning by scanner.isScanningFlow.collectAsStateWithLifecycle()
-                    val scope = lifecycle.coroutineScope
                     ScannerPopup(
                         scanning = scanning,
-                        onScan = { scope.launch(Dispatchers.Default) { scanner.scan() } },
+                        onScan = ::launchScan,
                         onViewScans = ::showScans,
                         onHide = {
-                            scope.launch(Dispatchers.IO) {
+                            lifecycleScope.launch(Dispatchers.IO) {
                                 preferencesRepo.setShouldShowScannerOverlay(false)
                             }
                         },
@@ -118,11 +160,8 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
         windowManager.addView(scannerView, params)
     }
 
-    private fun hideScannerOverlay() {
-        if (scannerView != null) {
-            windowManager.removeView(scannerView)
-            scannerView = null
-        }
+    private fun launchScan() {
+        lifecycleScope.launch(Dispatchers.Default) { scanner.scan() }
     }
 
     private fun showScans() {
@@ -136,9 +175,60 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
         startActivity(intent)
     }
 
+    private fun hideScannerOverlay() {
+        if (scannerView != null) {
+            windowManager.removeView(scannerView)
+            scannerView = null
+        }
+    }
+
+    private fun keyTrackingStateIfNeeded(
+        shortcut: Shortcut?,
+        request: CompletableDeferred<Shortcut>?
+    ) = if (shortcut != null || request != null) KeyTrackingState(shortcut, request) else null
+
+    private fun setupKeyTracking(enable: Boolean) {
+        val info = serviceInfo ?: AccessibilityServiceInfo()
+        val newFlags = if (enable) {
+            info.flags or AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+        } else {
+            info.flags and AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS.inv()
+        }
+        if (info.flags == newFlags) {
+            return
+        }
+        serviceInfo = info.apply { flags = newFlags }
+        Log.i(TAG, "Key tracking ${if (enable) "enabled" else "disabled"}")
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         automator.scheduleProcessing(event)
     }
+
+    override fun onKeyEvent(event: KeyEvent): Boolean {
+        processKeyEvent(event)
+        return false // Never consume the event
+    }
+
+    private fun processKeyEvent(event: KeyEvent) {
+        val state = keyTrackingState.value ?: return
+        val shortcut = state.tracker.onKeyEvent(event)?.run {
+            Shortcut(key, isLongPress = holdMillis >= longPressTimeoutMillis())
+        } ?: return
+        if (state.shortcutRequest?.complete(shortcut) == true) {
+            return
+        }
+        if (state.shortcut?.matches(shortcut) == true) {
+            launchScan()
+        }
+    }
+
+    private fun longPressTimeoutMillis(): Long =
+        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
+            viewConfiguration.longPressTimeoutMillis
+        } else {
+            ViewConfiguration.getLongPressTimeout()
+        }.toLong()
 
     override fun onInterrupt() {}
 
