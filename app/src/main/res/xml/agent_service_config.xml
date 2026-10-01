@@ -32,4 +32,4 @@ packageNames - empty to receive no events by default, changed dynamically based 
     android:description="@string/agent_service_description"
     android:notificationTimeout="100"
     android:packageNames=""
-    android:settingsActivity="io.github.timpushkin.tapok.MainActivity" />
+    android:settingsActivity="io.github.timpushkin.tapok.ui.activity.MainActivity" />
