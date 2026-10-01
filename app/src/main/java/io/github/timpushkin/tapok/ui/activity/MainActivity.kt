@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
         val newIntentChannel = Channel<Intent>(Channel.CONFLATED)
         addOnNewIntentListener(newIntentChannel::trySend)
 
+        // TODO: use deep link API
         var initialRoute by mutableStateOf(
             // If there is saved state the initial route will be ignored and the saved one will be
             // restored. The launching intent should be already reflected in that state.
