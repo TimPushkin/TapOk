@@ -68,9 +68,7 @@ fun ShortcutConfigurationDialog(
         title = { Text(title) },
         text = {
             Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (recording) {
                             stringResource(R.string.press_key)

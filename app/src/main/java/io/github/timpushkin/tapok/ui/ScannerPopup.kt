@@ -9,9 +9,13 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.draggable2D
 import androidx.compose.foundation.gestures.rememberDraggable2DState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,48 +36,73 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.dp
 import io.github.timpushkin.tapok.R
+import io.github.timpushkin.tapok.data.preferences.Shortcut
+import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
+import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.ConcurrentWorkerState
 import io.github.timpushkin.tapok.ui.utils.rememberConcurrentWorkerState
+import io.github.timpushkin.tapok.ui.utils.rememberHasPointerInput
 
 @Composable
 fun ScannerPopup(
     scanning: Boolean,
+    shortcut: Shortcut?,
     onScan: () -> Unit,
     onViewScans: () -> Unit,
     onHide: () -> Unit,
     onDrag: (Offset) -> Unit
 ) {
     Box(Modifier.draggable2D(rememberDraggable2DState(onDrag))) {
-        var checked by remember { mutableStateOf(false) }
-        SplitButtonLayout(
-            leadingButton = { LeadingIcon(scanning, onScan) },
-            trailingButton = { TrailingIcon(checked) { checked = it } }
-        )
-        DropdownMenu(expanded = checked, onDismissRequest = { checked = false }) {
-            ViewScansItem(onViewScans)
-            HideItem(onHide)
+        val hasPointerInput = rememberHasPointerInput()
+        AnimatedContent(hasPointerInput) { interactive ->
+            if (interactive) {
+                InteractivePopup(scanning, onScan, onViewScans, onHide)
+            } else {
+                NoninteractivePopup(scanning, shortcut)
+            }
         }
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+private fun InteractivePopup(
+    scanning: Boolean,
+    onScan: () -> Unit,
+    onViewScans: () -> Unit,
+    onHide: () -> Unit
+) {
+    var checked by remember { mutableStateOf(false) }
+    SplitButtonLayout(
+        leadingButton = { LeadingIcon(scanning, onScan) },
+        trailingButton = { TrailingIcon(checked) { checked = it } }
+    )
+    DropdownMenu(expanded = checked, onDismissRequest = { checked = false }) {
+        ViewScansItem(onViewScans)
+        HideItem(onHide)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
-    val description = stringResource(R.string.scan_screen)
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
             TooltipAnchorPosition.Below
         ),
-        tooltip = { PlainTooltip { Text(description) } },
+        tooltip = { PlainTooltip { Text(stringResource(R.string.scan_screen)) } },
         state = rememberTooltipState()
     ) {
         SplitButtonDefaults.LeadingButton(
@@ -87,34 +116,52 @@ private fun LeadingIcon(scanning: Boolean, onScan: () -> Unit) {
                 )
             }
         ) {
-            val state = rememberConcurrentWorkerState(scanning)
-            AnimatedContent(
-                state,
-                transitionSpec = {
-                    if (targetState == ConcurrentWorkerState.IDLE) {
-                        fadeIn() togetherWith fadeOut()
-                    } else {
-                        (fadeIn() + scaleIn()) togetherWith (fadeOut() + scaleOut())
-                    }
-                },
-                modifier = Modifier.size(SplitButtonDefaults.LeadingIconSize)
-            ) { state ->
-                when (state) {
-                    ConcurrentWorkerState.IDLE -> Icon(
-                        painterResource(R.drawable.screenshot_frame),
-                        contentDescription = description
-                    )
+            ScanIndicator(scanning, modifier = Modifier.size(SplitButtonDefaults.LeadingIconSize))
+        }
+    }
+}
 
-                    ConcurrentWorkerState.BUSY -> LoadingIndicator(
-                        color = LocalContentColor.current
-                    )
-
-                    ConcurrentWorkerState.FINISHED_RECENTLY -> Icon(
-                        painterResource(R.drawable.check),
-                        contentDescription = stringResource(R.string.done)
-                    )
-                }
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun ScanIndicator(
+    scanning: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val state = rememberConcurrentWorkerState(scanning)
+    AnimatedContent(
+        state,
+        transitionSpec = {
+            if (targetState == ConcurrentWorkerState.IDLE) {
+                fadeIn() togetherWith fadeOut()
+            } else {
+                (fadeIn() + scaleIn()) togetherWith (fadeOut() + scaleOut())
             }
+        },
+        modifier = modifier
+    ) { state ->
+        when (state) {
+            ConcurrentWorkerState.IDLE -> Icon(
+                painterResource(R.drawable.screenshot_frame),
+                contentDescription = stringResource(R.string.scan_screen)
+            )
+
+            ConcurrentWorkerState.BUSY -> {
+                val description = stringResource(R.string.scanning)
+                LoadingIndicator(
+                    color = LocalContentColor.current,
+                    modifier = Modifier
+                        .semantics {
+                            contentDescription = description
+                            role = Role.Image
+                        }
+                        .size(24.dp)
+                )
+            }
+
+            ConcurrentWorkerState.FINISHED_RECENTLY -> Icon(
+                painterResource(R.drawable.check),
+                contentDescription = stringResource(R.string.done)
+            )
         }
     }
 }
@@ -163,7 +210,7 @@ private fun ViewScansItem(onClick: () -> Unit) {
                 painterResource(R.drawable.home_storage_outlined),
                 contentDescription = null
             )
-        },
+        }
     )
 }
 
@@ -177,6 +224,28 @@ private fun HideItem(onClick: () -> Unit) {
                 painterResource(R.drawable.visibility_off_outlined),
                 contentDescription = null
             )
-        },
+        }
     )
+}
+
+@Composable
+private fun NoninteractivePopup(scanning: Boolean, shortcut: Shortcut?) {
+    Card {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(DefaultOuterSpacing)
+        ) {
+            ScanIndicator(scanning)
+            AnimatedContent(shortcut, modifier = Modifier.weight(1f, fill = false)) { shortcut ->
+                Text(
+                    if (shortcut != null) {
+                        "Press ${shortcut.key.label()} to scan"
+                    } else {
+                        "No pointer input (touchscreen, mouse…) found. Configure a shortcut key instead."
+                    }
+                )
+            }
+        }
+    }
 }

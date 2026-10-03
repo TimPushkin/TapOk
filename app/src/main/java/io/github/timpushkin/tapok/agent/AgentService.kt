@@ -132,19 +132,23 @@ class AgentService : AccessibilityService(), LifecycleOwner, SavedStateRegistryO
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
-        )
+        ).apply {
+            verticalMargin = 0.3f
+        }
         scannerView = ComposeView(this).apply {
             setViewTreeLifecycleOwner(this@AgentService)
             setViewTreeSavedStateRegistryOwner(this@AgentService)
             setContent {
                 TapOkTheme {
                     val scanning by scanner.isScanningFlow.collectAsStateWithLifecycle()
+                    val keyTrackingState by keyTrackingState.collectAsStateWithLifecycle()
                     ScannerPopup(
                         scanning = scanning,
+                        shortcut = keyTrackingState?.shortcut,
                         onScan = ::launchScan,
                         onViewScans = ::showScans,
                         onHide = {
-                            lifecycleScope.launch(Dispatchers.IO) {
+                            lifecycleScope.launch {
                                 preferencesRepo.setShouldShowScannerOverlay(false)
                             }
                         },

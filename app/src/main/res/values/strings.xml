@@ -8,7 +8,7 @@
     <string name="close">Close</string>
     <string name="delete">Delete</string>
     <string name="discard">Discard</string>
-    <string name="done">Done!</string>
+    <string name="done">Done</string>
     <string name="navigate_back">Navigate back</string>
     <string name="none">None</string>
     <string name="save">Save</string>
@@ -19,6 +19,7 @@
 
     <!-- Scanner overlay -->
     <string name="scan_screen">Scan screen</string>
+    <string name="scanning">Scanning</string>
     <string name="view_scans">View scans</string>
     <string name="hide_overlay">Hide overlay</string>
     <string name="toggle_button">Toggle button</string>
@@ -59,19 +60,30 @@
     <string-array name="tutorial_step1_body">
         <item>TapOk requires a background service to scan the screen and run your automations.</item>
         <item><b><annotation link="agent_settings">Open Accessibility settings</annotation></b>, <b>find TapOk</b> (it may be under \"Installed apps\" or \"Downloaded services\") and <b>switch it on</b>.</item>
-        <item>Once enabled, a floating button will appear on your screen. You\'ll use it in the next step.</item>
+        <item>Once enabled, an overlay will appear on your screen (can be hidden later in the settings). You\'ll use it in the next step.</item>
     </string-array>
     <string name="tutorial_step2_headline">Step 2: inspect the target app</string>
-    <string-array name="tutorial_step2_body">
+    <string-array name="tutorial_step2_pointer_body">
         <item>To write an automation you need to know what screen elements TapOk can interact with. A screen scanner is provided to help with that.</item>
-        <item><b>Open the app you want to automate</b>, then <b>tap <annotation inline="scan_icon">\"Scan screen\"</annotation></b> on TapOk\'s floating button to capture a scan of the active window.</item>
+        <item><b>Open the app you want to automate</b>, then <b>tap <annotation inline="scan_icon">\"Scan screen\"</annotation></b> on TapOk\'s overlay to capture a scan of the active window.</item>
+    </string-array>
+    <string-array name="tutorial_step2_keys_body">
+        <item>To write an automation you need to know what screen elements TapOk can interact with. A screen scanner is provided to help with that.</item>
+        <item>First, <b><annotation link="configure_shortcut">configure a shortcut key</annotation></b> for the scanner.</item>
+        <item>Once configured, <b>open the app you want to automate</b> and <b>press the shortcut key</b> to capture a scan of the active window.</item>
     </string-array>
     <string name="tutorial_step3_headline">Step 3: find a target</string>
-    <string-array name="tutorial_step3_body">
-        <item>Open your recent scan from the floating button menu (<b><annotation inline="expand_icon">\"Toggle button\"</annotation> \> \"View scans\"</b>).</item>
+    <string-array name="tutorial_step3_pointer_body">
+        <item>Open your recent scan from the overlay menu (<b><annotation inline="expand_icon">\"Toggle button\"</annotation> \> \"View scans\"</b>).</item>
         <item>Elements that TapOk can interact with will be highlighted.</item>
         <item><li><b>Tap an element</b> (e.g. a button) to select it.</li></item>
         <item><li><b>Tap <annotation inline="create_rule_icon">\"Create rule from this element\"</annotation></b> to start creating a rule for this element.</li></item>
+    </string-array>
+    <string-array name="tutorial_step3_keys_body">
+        <item>Return back to TapOk and open your recent scan.</item>
+        <item>Elements that TapOk can interact with will be highlighted.</item>
+        <item><li><b>Select an element</b> (e.g. a button) from the list.</li></item>
+        <item><li><b>Press <annotation inline="create_rule_icon">\"Create rule from this element\"</annotation></b> to start creating a rule for this element.</li></item>
     </string-array>
     <string name="tutorial_step4_headline">Step 4: create a rule</string>
     <string-array name="tutorial_step4_body">
@@ -81,6 +93,7 @@
         <item><li><b>Save the rule</b>.</li></item>
         <item>That\'s it! TapOk will now perform this action automatically whenever it sees an element matching your description.</item>
     </string-array>
+    <string name="follow_previous_step_to_enable_service">Follow the previous step to enable TapOk service first</string>
     <!-- Accessibility API usage disclosure -->
     <string name="accessibility_api_usage">Accessibility API usage</string>
     <string-array name="accessibility_api_usage_disclosure">

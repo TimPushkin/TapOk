@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,7 +29,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,12 +62,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.agent.AgentService
+import io.github.timpushkin.tapok.data.preferences.Shortcut
 import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
 import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
 import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
+import io.github.timpushkin.tapok.ui.utils.rememberHasPointerInput
+import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
@@ -75,45 +80,56 @@ private const val TUTORIAL_PAGES_NUM = 5
 
 @Composable
 fun TutorialScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
-    val adaptiveInfo = currentWindowAdaptiveInfoV2()
-    val wideLayout = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
-        WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-    )
-    Column(
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        // Not applying DefaultOuterSpacing here because it needs to be inside HorizontalPager to
-        // separate the pages from each other
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.background)
-            // Add insets padding even if it has already been consumed. This is needed to not have
-            // the contents jump when the outer NavigationSuiteScaffold's bottom navigation
-            // shows/hides and starts/stops consuming the insets.
-            .padding(ScaffoldDefaults.contentWindowInsets.asPaddingValues())
-            .consumeWindowInsets(ScaffoldDefaults.contentWindowInsets)
-    ) {
-        val state = rememberPagerState { TUTORIAL_PAGES_NUM }
-        HorizontalPager(state, modifier = Modifier.weight(1f)) { i ->
-            when (i) {
-                0 -> Intro(wideLayout)
-                1 -> {
-                    val a11yUsageAccepted by viewModel.isAccessibilityUsageAccepted
-                        .collectAsStateWithLifecycle()
-                    Step1(
-                        wideLayout,
-                        a11yUsageAccepted,
-                        viewModel::markAccessibilityUsageAccepted
-                    )
-                }
+    val snackbarHostState = remember { SnackbarHostState() }
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // Not applying DefaultOuterSpacing here because it needs to be inside HorizontalPager
+            // to separate the pages from each other
+            modifier = Modifier.consumeWindowInsets(padding)
+        ) {
+            val state = rememberPagerState { TUTORIAL_PAGES_NUM }
+            val wideLayout = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
+                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+            )
+            HorizontalPager(state, modifier = Modifier.weight(1f)) { i ->
+                when (i) {
+                    0 -> Intro(wideLayout)
+                    1 -> {
+                        val a11yUsageAccepted by viewModel.isAccessibilityUsageAccepted
+                            .collectAsStateWithLifecycle()
+                        Step1(
+                            wideLayout,
+                            a11yUsageAccepted,
+                            viewModel::markAccessibilityUsageAccepted
+                        )
+                    }
 
-                2 -> Step2(wideLayout)
-                3 -> Step3(wideLayout)
-                4 -> Step4(wideLayout)
-                else -> throw IllegalArgumentException("Excess tutorial page")
+                    2 -> {
+                        val scope = rememberCoroutineScope()
+                        val scanShortcut by viewModel.scanShortcut.collectAsStateWithLifecycle()
+                        val needAgentMessage = stringResource(
+                            R.string.follow_previous_step_to_enable_service
+                        )
+                        Step2(
+                            wideLayout,
+                            rememberIsAccessibilityServiceEnabled(AgentService::class),
+                            { scope.launch { snackbarHostState.showSnackbar(needAgentMessage) } },
+                            scanShortcut,
+                            viewModel::recordScanShortcut,
+                            viewModel::setScanShortcut
+                        )
+                    }
+
+                    3 -> Step3(wideLayout)
+                    4 -> Step4(wideLayout)
+                    else -> throw IllegalArgumentException("Excess tutorial page")
+                }
             }
+            Spacer(Modifier.height(DefaultOuterSpacing))
+            PageIndicator(state, onSkip = onDone, onComplete = onDone)
         }
-        Spacer(Modifier.height(DefaultOuterSpacing))
-        PageIndicator(state, onSkip = onDone, onComplete = onDone)
     }
 }
 
@@ -349,12 +365,46 @@ private fun Step1(
 }
 
 @Composable
-private fun Step2(wideLayout: Boolean) {
+private fun Step2(
+    wideLayout: Boolean,
+    agentEnabled: Boolean,
+    onShowNeedAgentMessage: () -> Unit,
+    scanShortcut: Shortcut?,
+    onRecordScanShortcut: suspend () -> Shortcut,
+    onSaveScanShortcut: (Shortcut?) -> Unit
+) {
+    var showKeySelectionDialog by rememberSaveable(agentEnabled) { mutableStateOf(false) }
+    if (showKeySelectionDialog) {
+        ShortcutConfigurationDialog(
+            stringResource(R.string.scanner_shortcut_key),
+            scanShortcut,
+            onRecord = onRecordScanShortcut,
+            onSave = onSaveScanShortcut,
+            onHide = { showKeySelectionDialog = false }
+        )
+    }
+
+    val hasPointerInput = rememberHasPointerInput()
     TutorialCard(
         wideLayout,
         R.drawable.screenshot_frame,
         headline = stringResource(R.string.tutorial_step2_headline),
-        bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step2_body),
+        bodyParagraphs = annotatedStringArrayResource(
+            if (hasPointerInput) {
+                R.array.tutorial_step2_pointer_body
+            } else {
+                R.array.tutorial_step2_keys_body
+            }
+        ),
+        bodyLinks = listOf(
+            LinkAnnotation.Clickable("configure_shortcut") {
+                if (agentEnabled) {
+                    showKeySelectionDialog = true
+                } else {
+                    onShowNeedAgentMessage()
+                }
+            }
+        ),
         bodyInlineContent = mapOf(
             "scan_icon" to InlineTextContent(ICON_PLACEHOLDER) {
                 Icon(painterResource(R.drawable.screenshot_frame), contentDescription = null)
@@ -365,11 +415,18 @@ private fun Step2(wideLayout: Boolean) {
 
 @Composable
 private fun Step3(wideLayout: Boolean) {
+    val hasPointerInput = rememberHasPointerInput()
     TutorialCard(
         wideLayout,
         R.drawable.home_storage_outlined,
         headline = stringResource(R.string.tutorial_step3_headline),
-        bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step3_body),
+        bodyParagraphs = annotatedStringArrayResource(
+            if (hasPointerInput) {
+                R.array.tutorial_step3_pointer_body
+            } else {
+                R.array.tutorial_step3_keys_body
+            }
+        ),
         bodyInlineContent = mapOf(
             "expand_icon" to InlineTextContent(ICON_PLACEHOLDER) {
                 Icon(painterResource(R.drawable.keyboard_arrow_down), contentDescription = null)
