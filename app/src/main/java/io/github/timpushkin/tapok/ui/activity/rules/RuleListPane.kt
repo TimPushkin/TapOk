@@ -1,5 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.rules
 
+import android.content.res.Resources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -14,22 +15,24 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.result.ResultEffect
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.ui.activity.components.DeletableSegmentedListItem
@@ -39,6 +42,7 @@ import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaul
 import io.github.timpushkin.tapok.ui.activity.components.rememberDeletableItemEpochs
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
+import kotlinx.coroutines.launch
 
 @Composable
 fun RuleListPane(
@@ -50,6 +54,13 @@ fun RuleListPane(
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = retain { SnackbarHostState() }
+    val resources = LocalResources.current
+    ResultEffect<Long>(RulesModule.DELETED_RULE_EVENT_KEY) { ruleId ->
+        val rule = uiState.rules.find { it.id == ruleId } ?: return@ResultEffect
+        handleRuleDeletion(
+            rule, resources, snackbarHostState, vm::softDelete, vm::hardDelete, vm::undoDelete
+        )
+    }
 
     val listState = rememberLazyListState()
     var showFab by remember { mutableStateOf(true) } // Not savable to reset on rotation
@@ -78,6 +89,7 @@ fun RuleListPane(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        val coroutineScope = rememberCoroutineScope()
         if (uiState.rules.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.manage_rules_here),
@@ -100,34 +112,47 @@ fun RuleListPane(
                     uiState.rules,
                     key = { _, rule -> "${rule.id}-${epochs[rule.id]}" }
                 ) { index, rule ->
-                    val deletionMessage = stringResource(
-                        R.string.deleted_rule,
-                        rule.name.ifEmpty { stringResource(R.string.unnamed_rule) }
-                    )
-                    val undoString = stringResource(R.string.undo)
                     RuleItem(
                         index,
                         count,
                         rule,
                         selected = rule.id == selectedRuleId,
                         onClick = { onSelectRule(rule) },
-                        onActiveChange = { active ->
-                            assert(active != rule.isActive)
-                            vm.switchRuleActivation(rule)
-                        },
                         onDelete = {
-                            vm.launchDeleteWithUndo(rule) {
-                                snackbarHostState.showSnackbar(
-                                    deletionMessage,
-                                    undoString,
-                                    duration = SnackbarDuration.Short
-                                ) == SnackbarResult.ActionPerformed
+                            coroutineScope.launch {
+                                handleRuleDeletion(
+                                    rule, resources, snackbarHostState,
+                                    vm::softDelete, vm::hardDelete, vm::undoDelete
+                                )
                             }
                         }
                     )
                 }
             }
         }
+    }
+}
+
+private suspend fun handleRuleDeletion(
+    rule: Rule,
+    resources: Resources,
+    snackbarHostState: SnackbarHostState,
+    softDelete: (Rule) -> Unit,
+    hardDelete: (Rule) -> Unit,
+    undoDelete: (Rule) -> Unit
+) {
+    softDelete(rule)
+    val result = snackbarHostState.showSnackbar(
+        resources.getString(
+            R.string.deleted_rule,
+            rule.name.ifEmpty { resources.getString(R.string.unnamed_rule) }
+        ),
+        resources.getString(R.string.undo),
+        duration = SnackbarDuration.Short
+    )
+    when (result) {
+        SnackbarResult.Dismissed -> hardDelete(rule)
+        SnackbarResult.ActionPerformed -> undoDelete(rule)
     }
 }
 
@@ -148,7 +173,6 @@ private fun RuleItem(
     rule: Rule,
     selected: Boolean,
     onClick: () -> Unit,
-    onActiveChange: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     val colors = SegmentedListPaneDefaults.colors()
@@ -171,7 +195,6 @@ private fun RuleItem(
         leadingContent = {
             Icon(rule.action.icon(), contentDescription = rule.action.explanation())
         },
-        trailingContent = { Switch(rule.isActive, onActiveChange) },
         supportingContent = {
             Text(rule.sourcePackageName, maxLines = 1, overflow = TextOverflow.StartEllipsis)
         },

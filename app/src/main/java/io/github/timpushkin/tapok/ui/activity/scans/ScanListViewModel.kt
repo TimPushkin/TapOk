@@ -40,22 +40,24 @@ class ScanListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    fun launchDeleteWithUndo(scan: Scan, promptForUndo: suspend () -> Boolean) {
-        Log.d(TAG, "Deleting $scan - requested")
+    fun softDelete(scan: Scan) {
         viewModelScope.launch {
             scanRepo.deleteScan(scan.id, Deletion.SOFT)
-            if (promptForUndo()) {
-                val undone = scanRepo.undoDeleteScan(scan.id)
-                Log.d(TAG, "Deleting $scan - ${if (undone) "undone" else "failed to undo"}")
-            } else {
-                scanRepo.deleteScan(scan.id, Deletion.HARD_AFTER_SOFT)
-                Log.d(TAG, "Deleting $scan - done")
-            }
+            Log.d(TAG, "Deleting $scan - requested")
         }
     }
 
-    override fun onCleared() {
-        // Cleanup after possible canceled deletions
-        scanRepo.scheduleCleanupOfDeletedScans()
+    fun hardDelete(scan: Scan) {
+        viewModelScope.launch {
+            scanRepo.deleteScan(scan.id, Deletion.HARD_AFTER_SOFT)
+            Log.d(TAG, "Deleting $scan - done")
+        }
+    }
+
+    fun undoDelete(scan: Scan) {
+        viewModelScope.launch {
+            val undone = scanRepo.undoDeleteScan(scan.id)
+            Log.d(TAG, "Deleting $scan - ${if (undone) "undone" else "failed to undo"}")
+        }
     }
 }

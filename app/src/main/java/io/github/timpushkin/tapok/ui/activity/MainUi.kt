@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.timpushkin.tapok.ui.activity.components.PaneExpansionDragHandle
 import io.github.timpushkin.tapok.ui.activity.components.rememberAnchoredPaneExpansionState
@@ -74,7 +75,8 @@ fun MainUi(navigator: Navigator, entryProviderInstallers: Iterable<EntryProvider
                 entryDecoratorsProvider = {
                     listOf(
                         rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator()
+                        rememberViewModelStoreNavEntryDecorator(),
+                        rememberResultEventBusNavEntryDecorator()
                     )
                 }
             ),

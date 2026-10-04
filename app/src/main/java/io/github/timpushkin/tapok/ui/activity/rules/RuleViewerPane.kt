@@ -5,20 +5,28 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +51,7 @@ import io.github.timpushkin.tapok.data.rules.Rule
 import io.github.timpushkin.tapok.ui.activity.components.NavigateBackButton
 import io.github.timpushkin.tapok.ui.activity.components.PanePlaceholderText
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
+import io.github.timpushkin.tapok.ui.theme.DefaultInnerSpacing
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
 import io.github.timpushkin.tapok.ui.utils.isHorizontallyPartitioned
 import io.github.timpushkin.tapok.ui.utils.requiredMinPaneWidth
@@ -50,7 +60,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun RuleViewerPane(
     ruleId: Long,
-    onEdit: (Rule) -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
     onBack: () -> Unit,
     directive: PaneScaffoldDirective,
     vm: RuleViewerViewModel = hiltViewModel(
@@ -81,7 +92,7 @@ fun RuleViewerPane(
                     }
                 },
                 actions = {
-                    IconButton({ rule?.let { onEdit(it) } }, enabled = rule != null) {
+                    IconButton(onEdit, enabled = rule != null) {
                         Icon(
                             painterResource(R.drawable.edit_outlined),
                             contentDescription = stringResource(R.string.edit_rule)
@@ -104,12 +115,21 @@ fun RuleViewerPane(
                 .consumeWindowInsets(padding)
         ) {
             if (rule != null) {
-                RuleFields(rule, contentPadding = PaddingValues(DefaultOuterSpacing))
+                ViewerColumn(
+                    rule,
+                    onSwitchActivation = vm::switchActivation,
+                    onDelete = {
+                        onDelete()
+                        // Actual deletion happens only when rule list is visible
+                        onBack()
+                    },
+                    contentPadding = PaddingValues(DefaultOuterSpacing)
+                )
             }
         }
     }
 
-    // Handle rule deletion
+    // Handle concurrent rule deletion
     LaunchedEffect(state) {
         if (state is RuleViewerUiState.NotFound) {
             onBack()
@@ -118,42 +138,83 @@ fun RuleViewerPane(
 }
 
 @Composable
-private fun RuleFields(
+private fun ViewerColumn(
     rule: Rule,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues()
+    onSwitchActivation: () -> Unit,
+    onDelete: () -> Unit,
+    contentPadding: PaddingValues
 ) {
-    val fields = listOfNotNull(
-        RuleFieldDescriptor(rule.sourcePackageName, stringResource(R.string.app_package)),
-        rule.viewId?.let { RuleFieldDescriptor(it, stringResource(R.string.view_id)) },
-        rule.containedText?.let {
-            RuleFieldDescriptor(it, stringResource(R.string.contained_text))
-        },
-        rule.packageName?.let {
-            RuleFieldDescriptor(it, stringResource(R.string.element_level_package))
-        },
-        rule.className?.let { RuleFieldDescriptor(it, stringResource(R.string.view_class)) },
-        RuleFieldDescriptor(
-            rule.action.name(),
-            stringResource(R.string.action),
-            rule.action.icon(),
-            copyable = false
-        )
-    )
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
-        contentPadding = contentPadding,
-        modifier = modifier
+    val layoutDirection = LocalLayoutDirection.current
+    Column(
+        modifier = Modifier
+            .padding(
+                start = contentPadding.calculateStartPadding(layoutDirection),
+                end = contentPadding.calculateEndPadding(layoutDirection)
+            )
+            .verticalScroll(rememberScrollState())
     ) {
-        itemsIndexed(fields) { i, field ->
-            with(field) {
-                if (copyable) {
-                    CopyableRuleField(i, fields.size, text, label, leadingIcon)
-                } else {
-                    RuleField(i, fields.size, text, label, leadingIcon)
+        Spacer(Modifier.height(contentPadding.calculateTopPadding()))
+
+        Column(verticalArrangement = Arrangement.spacedBy(DefaultInnerSpacing)) {
+            val fields = listOfNotNull(
+                RuleFieldDescriptor(rule.sourcePackageName, stringResource(R.string.app_package)),
+                rule.viewId?.let { RuleFieldDescriptor(it, stringResource(R.string.view_id)) },
+                rule.containedText?.let {
+                    RuleFieldDescriptor(it, stringResource(R.string.contained_text))
+                },
+                rule.packageName?.let {
+                    RuleFieldDescriptor(it, stringResource(R.string.element_level_package))
+                },
+                rule.className?.let {
+                    RuleFieldDescriptor(it, stringResource(R.string.view_class))
+                },
+                RuleFieldDescriptor(
+                    rule.action.name(),
+                    stringResource(R.string.action),
+                    rule.action.icon(),
+                    copyable = false
+                )
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                fields.forEachIndexed { i, field ->
+                    with(field) {
+                        if (copyable) {
+                            CopyableRuleField(i, fields.size, text, label, leadingIcon)
+                        } else {
+                            RuleField(i, fields.size, text, label, leadingIcon)
+                        }
+                    }
                 }
             }
+
+            Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                ViewerItem(
+                    0, 2,
+                    "Active",
+                    trailingContent = {
+                        Switch(
+                            rule.isActive,
+                            onCheckedChange = null,
+                            //modifier = Modifier.focusProperties { canFocus = false }
+                        )
+                    },
+                    onClick = onSwitchActivation,
+                    colors = SegmentedListPaneDefaults.colors(containerColor = containerColor)
+                )
+                ViewerItem(
+                    1, 2,
+                    stringResource(R.string.delete),
+                    onClick = onDelete,
+                    colors = SegmentedListPaneDefaults.colors(
+                        containerColor = containerColor,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                )
+            }
         }
+
+        Spacer(Modifier.height(contentPadding.calculateBottomPadding()))
     }
 }
 
@@ -168,41 +229,53 @@ private data class RuleFieldDescriptor(
 private fun CopyableRuleField(
     index: Int,
     count: Int,
-    text: String,
+    value: String,
     label: String,
     leadingIcon: Painter? = null
 ) {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
-    SegmentedListItem(
-        content = { Text(text) },
-        leadingContent = leadingIcon?.let { { Icon(leadingIcon, contentDescription = null) } },
-        supportingContent = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        onClick = {
-            scope.launch {
-                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(text, text)))
-            }
-        },
-        shapes = ListItemDefaults.segmentedShapes(index, count),
-        colors = SegmentedListPaneDefaults.colors(),
-        modifier = Modifier.fillMaxWidth()
-    )
+    ViewerItem(index, count, value, label, leadingIcon) {
+        scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(value, value)))
+        }
+    }
 }
 
 @Composable
 private fun RuleField(
     index: Int,
     count: Int,
-    text: String,
+    value: String,
     label: String,
     leadingIcon: Painter? = null
 ) {
+    ViewerItem(index, count, value, label, leadingIcon)
+}
+
+@Composable
+private fun ViewerItem(
+    index: Int,
+    count: Int,
+    value: String,
+    label: String? = null,
+    leadingIcon: Painter? = null,
+    trailingContent: @Composable (() -> Unit)? = null,
+    colors: ListItemColors = SegmentedListPaneDefaults.colors(),
+    onClick: () -> Unit = {}
+) {
     SegmentedListItem(
-        content = { Text(text) },
-        leadingContent = leadingIcon?.let { { Icon(leadingIcon, contentDescription = null) } },
-        supportingContent = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        content = { Text(value) },
+        leadingContent = leadingIcon?.let {
+            { Icon(leadingIcon, contentDescription = null) }
+        },
+        supportingContent = label?.let {
+            { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        },
+        trailingContent = trailingContent,
+        onClick = onClick,
         shapes = ListItemDefaults.segmentedShapes(index, count),
-        colors = SegmentedListPaneDefaults.colors(),
+        colors = colors,
         modifier = Modifier.fillMaxWidth()
     )
 }

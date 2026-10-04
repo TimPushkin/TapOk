@@ -2,6 +2,7 @@ package io.github.timpushkin.tapok.ui.activity.rules
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.navigation3.runtime.result.LocalResultEventBus
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +33,8 @@ data class RuleEditorKey(val ruleId: Long?, val basis: RuleBasis?) :
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 object RulesModule {
+    const val DELETED_RULE_EVENT_KEY = "deleted_rule"
+
     @Provides
     @IntoSet
     fun providePrimaryKey(): PrimaryKey = RuleListKey
@@ -55,9 +58,11 @@ object RulesModule {
             )
         }
         entry<RuleViewerKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+            val resultBus = LocalResultEventBus.current
             RuleViewerPane(
                 key.ruleId,
                 onEdit = { navigator.navigateTo(RuleEditorKey(key.ruleId, basis = null)) },
+                onDelete = { resultBus.sendResult(DELETED_RULE_EVENT_KEY, key.ruleId) },
                 onBack = navigator::navigateBack,
                 directive = directive
             )

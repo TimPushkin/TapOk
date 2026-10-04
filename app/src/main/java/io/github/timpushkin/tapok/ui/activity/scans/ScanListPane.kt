@@ -1,6 +1,7 @@
 package io.github.timpushkin.tapok.ui.activity.scans
 
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
@@ -18,15 +19,18 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.result.ResultEffect
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import io.github.timpushkin.tapok.R
 import io.github.timpushkin.tapok.data.scans.Scan
@@ -36,6 +40,7 @@ import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPane
 import io.github.timpushkin.tapok.ui.activity.components.SegmentedListPaneDefaults
 import io.github.timpushkin.tapok.ui.activity.components.rememberDeletableItemEpochs
 import io.github.timpushkin.tapok.ui.theme.DefaultOuterSpacing
+import kotlinx.coroutines.launch
 import java.time.DateTimeException
 import java.time.ZoneId
 import kotlin.time.Instant
@@ -47,9 +52,19 @@ fun ScanListPane(
     onSelectScan: (Scan) -> Unit,
     vm: ScanListViewModel = hiltViewModel()
 ) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+
     val snackbarHostState = retain { SnackbarHostState() }
+    val resources = LocalResources.current
+    ResultEffect<Long>(ScansModule.DELETED_SCAN_EVENT_KEY) { scanId ->
+        val scan = uiState.scans.find { it.id == scanId } ?: return@ResultEffect
+        handleScanDeletion(
+            scan, resources, snackbarHostState, vm::softDelete, vm::hardDelete, vm::undoDelete
+        )
+    }
+
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        val uiState by vm.uiState.collectAsStateWithLifecycle()
+        val coroutineScope = rememberCoroutineScope()
         if (uiState.scans.isEmpty()) {
             PanePlaceholderText(
                 stringResource(R.string.scans_will_be_here),
@@ -69,12 +84,6 @@ fun ScanListPane(
                     scans,
                     key = { _, scan -> "${scan.id}-${epochs[scan.id]}" }
                 ) { index, scan ->
-                    val deletionMessage = stringResource(
-                        R.string.deleted_scan,
-                        scan.rootPackageName
-                            ?: stringResource(R.string.unidentifiable_app).lowercase()
-                    )
-                    val undoString = stringResource(R.string.undo)
                     ScanItem(
                         index,
                         count,
@@ -82,18 +91,40 @@ fun ScanListPane(
                         selected = scan.id == selectedScanId,
                         onClick = { onSelectScan(scan) },
                         onDelete = {
-                            vm.launchDeleteWithUndo(scan) {
-                                snackbarHostState.showSnackbar(
-                                    deletionMessage,
-                                    undoString,
-                                    duration = SnackbarDuration.Short
-                                ) == SnackbarResult.ActionPerformed
+                            coroutineScope.launch {
+                                handleScanDeletion(
+                                    scan, resources, snackbarHostState,
+                                    vm::softDelete, vm::hardDelete, vm::undoDelete
+                                )
                             }
                         }
                     )
                 }
             }
         }
+    }
+}
+
+private suspend fun handleScanDeletion(
+    scan: Scan,
+    resources: Resources,
+    snackbarHostState: SnackbarHostState,
+    softDelete: (Scan) -> Unit,
+    hardDelete: (Scan) -> Unit,
+    undoDelete: (Scan) -> Unit
+) {
+    softDelete(scan)
+    val result = snackbarHostState.showSnackbar(
+        resources.getString(
+            R.string.deleted_scan,
+            scan.rootPackageName ?: resources.getString(R.string.unidentifiable_app).lowercase()
+        ),
+        resources.getString(R.string.undo),
+        duration = SnackbarDuration.Short
+    )
+    when (result) {
+        SnackbarResult.Dismissed -> hardDelete(scan)
+        SnackbarResult.ActionPerformed -> undoDelete(scan)
     }
 }
 

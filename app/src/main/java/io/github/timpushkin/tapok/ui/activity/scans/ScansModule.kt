@@ -1,5 +1,6 @@
 package io.github.timpushkin.tapok.ui.activity.scans
 
+import androidx.navigation3.runtime.result.LocalResultEventBus
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +27,8 @@ data class ScanInspectorKey(val scanId: Long) : SecondaryKey(fullScreen = true)
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 object ScansModule {
+    const val DELETED_SCAN_EVENT_KEY = "deleted_scan"
+
     @Provides
     @IntoSet
     fun providePrimaryKey(): PrimaryKey = ScanListKey
@@ -42,8 +45,10 @@ object ScansModule {
             )
         }
         entry<ScanInspectorKey> { key ->
+            val resultBus = LocalResultEventBus.current
             ScanInspectorScreen(
                 key.scanId,
+                onDelete = { resultBus.sendResult(DELETED_SCAN_EVENT_KEY, key.scanId) },
                 onCreateRule = { prefilling ->
                     navigator.navigateTo(RuleEditorKey(null, prefilling))
                 },

@@ -117,6 +117,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 fun ScanInspectorScreen(
     scanId: Long,
+    onDelete: () -> Unit,
     onCreateRule: (RuleBasis) -> Unit,
     onClose: () -> Unit,
     vm: ScanInspectorViewModel = hiltViewModel(
@@ -179,7 +180,11 @@ fun ScanInspectorScreen(
                     visible = showBars,
                     showUnreferenceableNodes = loadedUiState?.showUnreferenceableNodes ?: false,
                     onBack = onClose,
-                    onSwitchShowUnreferenceableNodes = vm::switchShowUnreferenceableNodes
+                    onSwitchShowUnreferenceableNodes = vm::switchShowUnreferenceableNodes,
+                    onDelete = {
+                        onDelete()
+                        onClose()
+                    }
                 )
             },
             sheetContent = {
@@ -284,7 +289,8 @@ private fun TopBar(
     visible: Boolean,
     showUnreferenceableNodes: Boolean,
     onBack: () -> Unit,
-    onSwitchShowUnreferenceableNodes: () -> Unit
+    onSwitchShowUnreferenceableNodes: () -> Unit,
+    onDelete: () -> Unit
 ) {
     AnimatedVisibility(
         visible,
@@ -317,7 +323,7 @@ private fun TopBar(
                 }
             },
             navigationIcon = {
-                IconButton(onClick = onBack) {
+                IconButton(onBack) {
                     Icon(
                         painterResource(R.drawable.arrow_back),
                         contentDescription = stringResource(R.string.navigate_back)
@@ -329,6 +335,12 @@ private fun TopBar(
                     showUnreferenceableNodes,
                     onSwitchShowUnreferenceableNodes.takeIf { loaded }
                 )
+                IconButton(onDelete) {
+                    Icon(
+                        painterResource(R.drawable.delete_outlined),
+                        contentDescription = stringResource(R.string.delete)
+                    )
+                }
             },
             colors = colors,
             modifier = Modifier.background(

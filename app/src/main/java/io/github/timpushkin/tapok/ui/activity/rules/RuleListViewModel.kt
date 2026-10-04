@@ -34,22 +34,24 @@ class RuleListViewModel @Inject constructor(private val ruleRepo: RuleRepo) : Vi
             .launchIn(viewModelScope)
     }
 
-    fun switchRuleActivation(rule: Rule) {
-        Log.d(TAG, "Switching activation status of $rule")
-        viewModelScope.launch { ruleRepo.insertOrUpdateRule(rule.copy(isActive = !rule.isActive)) }
-    }
-
-    fun launchDeleteWithUndo(rule: Rule, promptForUndo: suspend () -> Boolean) {
-        Log.d(TAG, "Deleting $rule - requested")
+    fun softDelete(rule: Rule) {
         viewModelScope.launch {
             ruleRepo.deleteRule(rule.id, Deletion.SOFT)
-            if (promptForUndo()) {
-                val undone = ruleRepo.undoDeleteRule(rule.id)
-                Log.d(TAG, "Deleting $rule - ${if (undone) "undone" else "failed to undo"}")
-            } else {
-                ruleRepo.deleteRule(rule.id, Deletion.HARD_AFTER_SOFT)
-                Log.d(TAG, "Deleting $rule - done")
-            }
+            Log.d(TAG, "Deleting $rule - requested")
+        }
+    }
+
+    fun hardDelete(rule: Rule) {
+        viewModelScope.launch {
+            ruleRepo.deleteRule(rule.id, Deletion.HARD_AFTER_SOFT)
+            Log.d(TAG, "Deleting $rule - done")
+        }
+    }
+
+    fun undoDelete(rule: Rule) {
+        viewModelScope.launch {
+            val undone = ruleRepo.undoDeleteRule(rule.id)
+            Log.d(TAG, "Deleting $rule - ${if (undone) "undone" else "failed to undo"}")
         }
     }
 }
