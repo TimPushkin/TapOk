@@ -8,12 +8,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -28,6 +30,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -41,7 +44,6 @@ import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
@@ -54,15 +56,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timpushkin.tapok.R
@@ -76,7 +88,6 @@ import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import kotlinx.coroutines.launch
 
 @Composable
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun RuleEditorScreen(
     ruleId: Long?,
     basis: RuleBasis?,
@@ -311,6 +322,10 @@ private fun EditableFields(
 private fun stringResourceWithAsterisk(@StringRes id: Int, prepend: Boolean = false) =
     if (prepend) "* ${stringResource(id)}" else "${stringResource(id)} *"
 
+private val IconButtonSizeModifier = Modifier
+    .minimumInteractiveComponentSize()
+    .size(IconButtonDefaults.smallContainerSize())
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun RuleTextField(
@@ -322,84 +337,131 @@ private fun RuleTextField(
     supportingText: String? = null,
     error: String? = null
 ) {
-    var focused by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-    OutlinedTextField(
-        state = state,
-        enabled = enabled,
-        label = { Text(label) },
-        placeholder = { Text(placeholder) },
-        supportingText = { TextOrSpacer(error ?: supportingText) },
-        isError = error != null,
-        trailingIcon = when {
-            focused && state.text.isNotEmpty() -> ({
-                IconButton(
-                    onClick = {
-                        state.clearText()
-                        focusRequester.requestFocus()
-                    }
-                ) {
-                    Icon(
-                        painterResource(R.drawable.close),
-                        contentDescription = stringResource(R.string.clear)
-                    )
-                }
-            })
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val focusManager = LocalFocusManager.current
+        val fieldFocusRequester = remember { FocusRequester() }
+        val trailingButtonFocusRequester = remember { FocusRequester() }
 
-            error != null -> ({
-                Icon(
-                    painterResource(R.drawable.error_filled),
-                    contentDescription = stringResource(R.string.invalid_input),
-                    modifier = Modifier.minimumInteractiveComponentSize()
-                )
-            })
+        var anyFocused by remember { mutableStateOf(false) }
+        var trailingButtonFocused by remember { mutableStateOf(false) }
 
-            explanation != null -> ({
-                val scope = rememberCoroutineScope()
-                val tooltipState = rememberTooltipState(isPersistent = true)
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                        TooltipAnchorPosition.Below
-                    ),
-                    tooltip = { PlainTooltip { Text(explanation) } },
-                    state = tooltipState
-                ) {
+        val ltr = LocalLayoutDirection.current == LayoutDirection.Ltr
+        val startKey = if (ltr) Key.DirectionLeft else Key.DirectionRight
+        val endKey = if (ltr) Key.DirectionRight else Key.DirectionLeft
+        val endDirection = if (ltr) FocusDirection.Right else FocusDirection.Left
+
+        OutlinedTextField(
+            state = state,
+            enabled = enabled,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            supportingText = { TextOrSpacer(error ?: supportingText) },
+            isError = error != null,
+            trailingIcon = when {
+                anyFocused && state.text.isNotEmpty() -> ({
                     IconButton(
                         onClick = {
-                            if (tooltipState.isVisible) {
-                                tooltipState.dismiss()
-                            } else {
-                                scope.launch { tooltipState.show() }
+                            state.clearText()
+                            fieldFocusRequester.requestFocus()
+                        },
+                        modifier = Modifier
+                            .focusRequester(trailingButtonFocusRequester)
+                            .onFocusChanged { trailingButtonFocused = it.isFocused }
+                            // Override navigation keys' actions, otherwise the field would handle
+                            // them as if it is focused itself
+                            .onPreviewKeyEvent { e ->
+                                if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                when (e.key) {
+                                    startKey -> fieldFocusRequester.requestFocus()
+                                    endKey -> focusManager.moveFocus(endDirection)
+                                    Key.DirectionUp -> focusManager.moveFocus(FocusDirection.Up)
+                                    Key.DirectionDown -> focusManager.moveFocus(FocusDirection.Down)
+                                    else -> false
+                                }
                             }
-                        }
                     ) {
-                        if (tooltipState.isVisible) {
-                            Icon(
-                                painterResource(R.drawable.info_filled),
-                                contentDescription = stringResource(R.string.hide_field_explanation)
-                            )
-                        } else {
-                            Icon(
-                                painterResource(R.drawable.info_outlined),
-                                contentDescription = stringResource(R.string.show_field_explanation)
-                            )
-                        }
+                        Icon(
+                            painterResource(R.drawable.close),
+                            contentDescription = stringResource(R.string.clear)
+                        )
+                    }
+                })
+
+                error != null -> ({
+                    Icon(
+                        painterResource(R.drawable.error_filled),
+                        contentDescription = stringResource(R.string.invalid_input),
+                        modifier = IconButtonSizeModifier
+                    )
+                })
+
+                else -> null
+            },
+            lineLimits = TextFieldLineLimits.SingleLine,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(fieldFocusRequester)
+                .onFocusChanged { anyFocused = it.hasFocus }
+                // When at the end of the field, make the next move towards the end switch the focus
+                .onPreviewKeyEvent { e ->
+                    when {
+                        trailingButtonFocused ||
+                                e.type != KeyEventType.KeyDown ||
+                                e.key != endKey ||
+                                !state.selection.collapsed ||
+                                state.selection.end != state.text.length ->
+                            false
+
+                        state.text.isNotEmpty() -> trailingButtonFocusRequester.requestFocus()
+
+                        else -> focusManager.moveFocus(endDirection)
                     }
                 }
-            })
 
-            else -> null
-        },
-        lineLimits = TextFieldLineLimits.SingleLine,
-        modifier = Modifier
-            .fillMaxWidth()
-            .onFocusChanged { focused = it.hasFocus }
-            .focusRequester(focusRequester)
-    )
+        )
+
+        if (explanation != null) {
+            val scope = rememberCoroutineScope()
+            val tooltipState = rememberTooltipState(isPersistent = true)
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                    TooltipAnchorPosition.Below
+                ),
+                tooltip = { PlainTooltip { Text(explanation) } },
+                state = tooltipState
+            ) {
+                IconButton(
+                    onClick = {
+                        if (tooltipState.isVisible) {
+                            tooltipState.dismiss()
+                        } else {
+                            scope.launch { tooltipState.show() }
+                        }
+                    }
+                ) {
+                    if (tooltipState.isVisible) {
+                        Icon(
+                            painterResource(R.drawable.info_filled),
+                            contentDescription = stringResource(R.string.hide_field_explanation)
+                        )
+                    } else {
+                        Icon(
+                            painterResource(R.drawable.info_outlined),
+                            contentDescription = stringResource(R.string.show_field_explanation)
+                        )
+                    }
+                }
+            }
+        } else {
+            Spacer(IconButtonSizeModifier)
+        }
+    }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun <T> RuleDropdownMenu(
     selected: T,
     enabled: Boolean,
@@ -412,69 +474,80 @@ private fun <T> RuleDropdownMenu(
     label: String,
     supportingText: String? = null
 ) {
-    val textState = rememberTextFieldState(getName(selected))
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    var selectedIndex by rememberSaveable { mutableIntStateOf(options.indexOf(selected)) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = getName(selected),
-            onValueChange = {},
-            enabled = enabled,
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled)
-                .fillMaxWidth(),
-            readOnly = true,
-            label = { Text(label) },
-            leadingIcon = {
-                Icon(getIcon(selected), contentDescription = null)
-            },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            supportingText = { TextOrSpacer(supportingText) },
-            singleLine = true
-        )
-        ExposedDropdownMenu(
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(DefaultInnerSpacing),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val textState = rememberTextFieldState(getName(selected))
+        var expanded by rememberSaveable { mutableStateOf(false) }
+        var selectedIndex by rememberSaveable { mutableIntStateOf(options.indexOf(selected)) }
+        ExposedDropdownMenuBox(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-            containerColor = MenuDefaults.groupStandardContainerColor,
-            shape = MenuDefaults.standaloneGroupShape,
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.weight(1f)
         ) {
-            options.forEachIndexed { i, option ->
-                val text = getName(option)
-                SelectableDropdownMenuItem(
-                    text = { Text(text) },
-                    selected = selectedIndex == i,
-                    onClick = {
-                        textState.setTextAndPlaceCursorAtEnd(text)
-                        expanded = false
-                        selectedIndex = i
-                        onSelect(option)
-                    },
-                    shapes = MenuDefaults.itemShape(i, options.size),
-                    leadingIcon = {
-                        Icon(getIcon(option), contentDescription = null)
-                    },
-                    selectedLeadingIcon = {
-                        Icon(
-                            painterResource(R.drawable.check_box_filled),
-                            contentDescription = null
-                        )
-                    },
-                    supportingText = {
-                        Column {
-                            Text(getExplanation(option))
+            OutlinedTextField(
+                value = getName(selected),
+                onValueChange = {},
+                enabled = enabled,
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled)
+                    .fillMaxWidth(),
+                readOnly = true,
+                label = { Text(label) },
+                leadingIcon = {
+                    Icon(getIcon(selected), contentDescription = null)
+                },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                supportingText = { TextOrSpacer(supportingText) },
+                singleLine = true
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                containerColor = MenuDefaults.groupStandardContainerColor,
+                shape = MenuDefaults.standaloneGroupShape,
+            ) {
+                options.forEachIndexed { i, option ->
+                    val text = getName(option)
+                    SelectableDropdownMenuItem(
+                        text = { Text(text) },
+                        selected = selectedIndex == i,
+                        onClick = {
+                            textState.setTextAndPlaceCursorAtEnd(text)
+                            expanded = false
+                            selectedIndex = i
+                            onSelect(option)
+                        },
+                        shapes = MenuDefaults.itemShape(i, options.size),
+                        leadingIcon = {
+                            Icon(getIcon(option), contentDescription = null)
+                        },
+                        selectedLeadingIcon = {
+                            Icon(
+                                painterResource(R.drawable.check_box_filled),
+                                contentDescription = null
+                            )
+                        },
+                        supportingText = {
+                            Column {
+                                Text(getExplanation(option))
 
-                            val warning = getWarning(option)
-                            if (warning.isNotEmpty()) {
-                                Text(warning, color = MaterialTheme.colorScheme.error)
+                                val warning = getWarning(option)
+                                if (warning.isNotEmpty()) {
+                                    Text(warning, color = MaterialTheme.colorScheme.error)
+                                }
                             }
-                        }
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                )
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    )
+                }
             }
         }
+
+        Spacer(IconButtonSizeModifier)
     }
 }
 
