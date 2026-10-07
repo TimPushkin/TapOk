@@ -71,6 +71,7 @@ import io.github.timpushkin.tapok.ui.utils.openAccessibilityServiceSettings
 import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 import io.github.timpushkin.tapok.ui.utils.rememberHasPointerInput
 import io.github.timpushkin.tapok.ui.utils.rememberIsAccessibilityServiceEnabled
+import io.github.timpushkin.tapok.ui.utils.rememberTextLinkStyles
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import androidx.compose.ui.graphics.lerp as lerpGraphics
@@ -353,7 +354,7 @@ private fun Step1(
         headline = stringResource(R.string.tutorial_step1_headline),
         bodyParagraphs = annotatedStringArrayResource(R.array.tutorial_step1_body),
         bodyLinks = listOf(
-            LinkAnnotation.Clickable("agent_settings") {
+            LinkAnnotation.Clickable("agent_settings", styles = rememberTextLinkStyles()) {
                 if (updatableAccessibilityUsageAccepted) {
                     context.openAccessibilityServiceSettings(AgentService::class)
                 } else {
@@ -397,7 +398,7 @@ private fun Step2(
             }
         ),
         bodyLinks = listOf(
-            LinkAnnotation.Clickable("configure_shortcut") {
+            LinkAnnotation.Clickable("configure_shortcut", styles = rememberTextLinkStyles()) {
                 if (agentEnabled) {
                     showKeySelectionDialog = true
                 } else {

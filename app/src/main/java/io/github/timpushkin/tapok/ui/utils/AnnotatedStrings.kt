@@ -8,6 +8,7 @@ import android.text.style.CharacterStyle
 import android.text.style.StyleSpan
 import androidx.annotation.ArrayRes
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalResources
@@ -16,9 +17,11 @@ import androidx.compose.ui.text.Bullet
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.em
@@ -117,4 +120,26 @@ private fun AnnotatedString.Builder.appendAnnotated(
 
 private fun AnnotatedString.Builder.appendParagraphSpacer() {
     withStyle(ParagraphStyle(lineHeight = 0.75.em)) {}
+}
+
+@Composable
+fun rememberTextLinkStyles(): TextLinkStyles {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    return remember(primaryColor, onPrimaryColor) {
+        TextLinkStyles(
+            // Default
+            style = SpanStyle(
+                color = primaryColor,
+                textDecoration = TextDecoration.Underline
+            ),
+            // By default, this is the same as above which makes it not possible to see that it is
+            // focused
+            focusedStyle = SpanStyle(
+                color = onPrimaryColor,
+                background = primaryColor,
+                textDecoration = TextDecoration.Underline
+            )
+        )
+    }
 }
