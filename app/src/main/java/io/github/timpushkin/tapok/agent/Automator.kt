@@ -2,10 +2,11 @@ package io.github.timpushkin.tapok.agent
 
 import android.accessibilityservice.AccessibilityService
 import android.media.AudioManager
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.getSystemService
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -94,7 +95,7 @@ class Automator @AssistedInject constructor(
 
         for (node in action.nodesToClick) {
             Log.i(TAG, "Clicking $node")
-            if (!node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+            if (!node.performAction(AccessibilityNodeInfoCompat.ACTION_CLICK)) {
                 Log.w(TAG, "Failed to click $node")
             }
         }
@@ -102,8 +103,13 @@ class Automator @AssistedInject constructor(
 
     fun scheduleProcessing(event: AccessibilityEvent) {
         Log.v(TAG, "Received event ${event.id()}: $event")
-        queuedEvents.trySend(event).exceptionOrNull()?.let { exception ->
-            Log.e(TAG, "Failed to record event ${event.id()}: $exception") // Should not happen
+        val queued = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            event
+        } else {
+            AccessibilityEvent(event) // OS may recycle the original by the time we get to it
+        }
+        queuedEvents.trySend(queued).exceptionOrNull()?.let { exception ->
+            Log.e(TAG, "Failed to record event ${queued.id()}: $exception") // Should not happen
         }
     }
 
@@ -123,13 +129,13 @@ class Automator @AssistedInject constructor(
         /**
          * Returns map of window's ID to its root.
          */
-        getRootsOfAllWindows: () -> Map<Int, AccessibilityNodeInfo>
+        getRootsOfAllWindows: () -> Map<Int, AccessibilityNodeInfoCompat>
     ) {
         private val windowRoots by lazy(LazyThreadSafetyMode.NONE, getRootsOfAllWindows)
-        private val eventSource by lazy(LazyThreadSafetyMode.NONE) { event?.source }
+        private val eventSource by lazy(LazyThreadSafetyMode.NONE) { event?.sourceCompat }
 
         fun run(): Action {
-            val nodesToClick = mutableSetOf<AccessibilityNodeInfo>()
+            val nodesToClick = mutableSetOf<AccessibilityNodeInfoCompat>()
             var muteDirection = Action.AudioChange.NONE
             for (rule in rules) {
                 when (rule.action) {
@@ -168,7 +174,7 @@ class Automator @AssistedInject constructor(
          * would have to either process each event without skipping or always search the whole
          * window - either worsens the performance.
          */
-        private fun findMatchingNodes(rule: Rule): List<AccessibilityNodeInfo> {
+        private fun findMatchingNodes(rule: Rule): List<AccessibilityNodeInfoCompat> {
             Log.d(TAG, "Looking for nodes matching $rule")
 
             if (event?.packageName == rule.sourcePackageName) {
@@ -217,8 +223,8 @@ class Automator @AssistedInject constructor(
 
         private fun findMatchingNodes(
             rule: Rule,
-            source: AccessibilityNodeInfo
-        ): List<AccessibilityNodeInfo> {
+            source: AccessibilityNodeInfoCompat
+        ): List<AccessibilityNodeInfoCompat> {
             Log.d(TAG, "Inspecting subtree of $source")
             if (source.packageName != rule.sourcePackageName) {
                 Log.d(TAG, "Skipped: source's package name does not match")
@@ -251,8 +257,8 @@ class Automator @AssistedInject constructor(
 
         private fun findMatchingNodes(
             rule: Rule,
-            sources: Iterable<AccessibilityNodeInfo>
-        ): List<AccessibilityNodeInfo> {
+            sources: Iterable<AccessibilityNodeInfoCompat>
+        ): List<AccessibilityNodeInfoCompat> {
             for (source in sources) {
                 val nodes = findMatchingNodes(rule, source)
                 if (nodes.isNotEmpty()) {
@@ -263,29 +269,29 @@ class Automator @AssistedInject constructor(
         }
 
         private fun findNearestClickableAncestor(
-            node: AccessibilityNodeInfo
-        ): AccessibilityNodeInfo? {
-            var parent = node.getParent(AccessibilityNodeInfo.FLAG_PREFETCH_ANCESTORS)
+            node: AccessibilityNodeInfoCompat
+        ): AccessibilityNodeInfoCompat? {
+            var parent = node.getParent(AccessibilityNodeInfoCompat.FLAG_PREFETCH_ANCESTORS)
             while (parent != null) {
                 if (parent.isClickable) {
                     return parent
                 }
-                parent = parent.getParent(AccessibilityNodeInfo.FLAG_PREFETCH_ANCESTORS)
+                parent = parent.getParent(AccessibilityNodeInfoCompat.FLAG_PREFETCH_ANCESTORS)
             }
             return null
         }
 
         private fun findNearestClickableDescendant(
-            node: AccessibilityNodeInfo
-        ): AccessibilityNodeInfo? {
-            val queue = ArrayDeque<AccessibilityNodeInfo>().apply { addLast(node) }
+            node: AccessibilityNodeInfoCompat
+        ): AccessibilityNodeInfoCompat? {
+            val queue = ArrayDeque<AccessibilityNodeInfoCompat>().apply { addLast(node) }
             while (queue.isNotEmpty()) {
                 val dequeued = queue.removeFirst()
                 for (i in 0 until dequeued.childCount) {
                     val child = dequeued.getChild(
                         i,
-                        AccessibilityNodeInfo.FLAG_PREFETCH_SIBLINGS or
-                                AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
+                        AccessibilityNodeInfoCompat.FLAG_PREFETCH_SIBLINGS or
+                                AccessibilityNodeInfoCompat.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
                     ) ?: continue
                     if (child.isClickable) {
                         return child
@@ -299,7 +305,7 @@ class Automator @AssistedInject constructor(
     }
 
     private data class Action(
-        val nodesToClick: Set<AccessibilityNodeInfo>,
+        val nodesToClick: Set<AccessibilityNodeInfoCompat>,
         val audioChange: AudioChange
     ) {
         enum class AudioChange(val adjustmentDirection: Int) {
@@ -312,11 +318,11 @@ class Automator @AssistedInject constructor(
 
 private fun AccessibilityEvent.id() = hashCode().toHexString()
 
-private fun Iterable<AccessibilityNodeInfo>.toShortString() =
+private fun Iterable<AccessibilityNodeInfoCompat>.toShortString() =
     joinToString(prefix = "[", postfix = "]") { it.toShortString() }
 
-private fun AccessibilityNodeInfo.toShortString() =
-    this::class.simpleName + "@" + Integer.toHexString(hashCode())
+private fun AccessibilityNodeInfoCompat.toShortString() =
+    "${this::class.simpleName}@${Integer.toHexString(hashCode())}"
 
 @AssistedFactory
 interface AutomatorFactory {

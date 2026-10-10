@@ -29,7 +29,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.timpushkin.tapok"
-        minSdk = 34 // Scanning (e.g. screenshotting) is more difficult on older APIs
+        minSdk = 30 // No built-in screenshotting API below this level
         targetSdk = 37
         versionCode = Version.CODE
         versionName = Version.NAME

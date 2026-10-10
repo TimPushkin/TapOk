@@ -9,15 +9,14 @@ import android.accessibilityservice.AccessibilityService.ERROR_TAKE_SCREENSHOT_N
 import android.accessibilityservice.AccessibilityService.ERROR_TAKE_SCREENSHOT_SECURE_WINDOW
 import android.accessibilityservice.AccessibilityService.ScreenshotResult
 import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
-import android.accessibilityservice.MagnificationConfig
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.graphics.Rect
+import android.os.Build
 import android.util.Log
-import android.util.Size
-import android.view.accessibility.AccessibilityNodeInfo
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -34,15 +33,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
-import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 private const val TAG = "Scanner"
 
-private const val PREFETCH_FLAGS = AccessibilityNodeInfo.FLAG_PREFETCH_UNINTERRUPTIBLE or
-        AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
+private const val PREFETCH_FLAGS = AccessibilityNodeInfoCompat.FLAG_PREFETCH_UNINTERRUPTIBLE or
+        AccessibilityNodeInfoCompat.FLAG_PREFETCH_DESCENDANTS_BREADTH_FIRST
 
 class Scanner @AssistedInject constructor(
     @Assisted private val accessibilityService: AccessibilityService,
@@ -65,17 +62,20 @@ class Scanner @AssistedInject constructor(
                     getRootsOfAllWindows(PREFETCH_FLAGS).values
                 } else {
                     Log.i(TAG, "Scanning active window...")
-                    getRootInActiveWindow(PREFETCH_FLAGS)?.let { listOf(it) } ?: emptyList()
+                    getRootInActiveWindowCompat(PREFETCH_FLAGS)?.let { listOf(it) } ?: emptyList()
                 }
             }
+            // TODO: on API levels before 34 we take whole-display screenshot for every window on
+            //  the display which is redundant and is likely to hit screenshot rate limit.
             for (root in roots) {
                 launch {
-                    val tree = async { captureAccessibilityState(root) }
-                    val screenshot = async { captureScreenshot(root) }
+                    val magnification = accessibilityService.magnification
+                    val nodes = async { captureNodes(root) }
+                    val screenshot = async { captureScreenshot(root, magnification) }
                     withContext(Dispatchers.IO) {
-                        saveScan(time, tree.await(), screenshot.await())
+                        saveScan(time, nodes.await(), screenshot.await(), magnification)
                     }
-                    Log.i(TAG, "Scanned ${tree.await().nodes.size} nodes of ${root.packageName}")
+                    Log.i(TAG, "Scanned ${nodes.await().size} nodes of ${root.packageName}")
                 }
             }
         }
@@ -86,16 +86,9 @@ class Scanner @AssistedInject constructor(
     suspend fun shouldScanAllWindows() =
         withContext(Dispatchers.IO) { preferencesRepo.shouldScanAllWindows().first() }
 
-    private fun captureAccessibilityState(root: AccessibilityNodeInfo): AccessibilityState {
-        val windowBounds = Rect()
-        root.window.getBoundsInScreen(windowBounds)
-
-        // Would be better to use getMagnificationController(root.window.displayId) but it is hidden
-        val magnification = accessibilityService.magnificationController
-            .magnificationConfig?.toMagnification() ?: Magnification(1f, Offset.Zero)
-
+    private fun captureNodes(root: AccessibilityNodeInfoCompat): List<AccessibilityNodeInfoCompat> {
         val nodes = mutableListOf(root)
-        val queue = ArrayDeque<AccessibilityNodeInfo>().apply { addLast(root) }
+        val queue = ArrayDeque<AccessibilityNodeInfoCompat>().apply { addLast(root) }
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()
             for (i in 0 until node.childCount) {
@@ -106,22 +99,33 @@ class Scanner @AssistedInject constructor(
                 }
             }
         }
-
-        return AccessibilityState(nodes, windowBounds, magnification)
+        return nodes
     }
 
-    private data class AccessibilityState(
-        val nodes: List<AccessibilityNodeInfo>,
-        val windowBounds: Rect,
-        val magnification: Magnification
-    )
+    private suspend fun captureScreenshot(
+        root: AccessibilityNodeInfoCompat,
+        magnification: Magnification
+    ): Screenshot? {
+        val bitmap = takeScreenshot(root) ?: return null
 
-    private data class Magnification(val scale: Float, val center: Offset)
+        val windowBounds = Rect()
+        root.window.getBoundsInScreen(windowBounds)
 
-    private fun MagnificationConfig.toMagnification() =
-        Magnification(scale, Offset(centerX, centerY))
+        val normalized = normalizeScreenshot(bitmap, windowBounds, magnification)
+        if (normalized !== bitmap) {
+            bitmap.recycle()
+        }
+        if (normalized == null) {
+            return null
+        }
 
-    private suspend fun captureScreenshot(root: AccessibilityNodeInfo): Bitmap? =
+        return Screenshot(
+            bitmap = normalized,
+            originOnScreen = IntOffset(windowBounds.left, windowBounds.top)
+        )
+    }
+
+    private suspend fun takeScreenshot(root: AccessibilityNodeInfoCompat): Bitmap? =
         suspendCancellableCoroutine { continuation ->
             val executor = Dispatchers.Default.asExecutor()
             val callback = object : TakeScreenshotCallback {
@@ -140,7 +144,18 @@ class Scanner @AssistedInject constructor(
                     continuation.resume(bitmap)
                 }
             }
-            accessibilityService.takeScreenshotOfWindow(root.windowId, executor, callback)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                accessibilityService.takeScreenshotOfWindow(root.windowId, executor, callback)
+            } else {
+                val window = checkNotNull(root.window.unwrap())
+                val displayId = accessibilityService.getWindowDisplayIdCompat(window)
+                if (displayId == null) {
+                    Log.e(TAG, "Cannot take screenshot: could not determine display of $window")
+                    continuation.resume(null)
+                    return@suspendCancellableCoroutine
+                }
+                accessibilityService.takeScreenshot(displayId, executor, callback)
+            }
         }
 
     private fun screenshotErrorReason(code: Int) = when (code) {
@@ -153,19 +168,86 @@ class Scanner @AssistedInject constructor(
         else -> "unknown error (code $code)"
     }
 
+    /**
+     * Crops [bitmap] to [windowBounds] and brings it to the demagnified scale, so that its pixels
+     * match screen coordinates.
+     */
+    private fun normalizeScreenshot(
+        bitmap: Bitmap,
+        windowBounds: Rect,
+        magnification: Magnification
+    ): Bitmap? {
+        val bitmapBounds: Rect // Part of the screen shown by the bitmap, in screen coordinates
+        val windowBoundsInBitmap: Rect // Window within the bitmap, in bitmap coordinates
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // - Window screenshots are not affected by magnification
+            // - At least for dialogs, screenshots contain transparent padding which we strip
+            //   assuming the window is centered.
+            val bitmapOrigin = IntOffset(
+                x = windowBounds.left - (bitmap.width - windowBounds.width()) / 2,
+                y = windowBounds.top - (bitmap.height - windowBounds.height()) / 2
+            )
+            bitmapBounds = with(bitmapOrigin) { Rect(x, y, x + bitmap.width, y + bitmap.height) }
+            windowBoundsInBitmap = Rect(windowBounds).apply {
+                offset(-bitmapOrigin.x, -bitmapOrigin.y)
+            }
+        } else {
+            // - Display screenshots are affected by magnification
+            // - Need to strip the parts of the screenshot around the window
+            bitmapBounds = Rect(
+                magnification.demagnifyX(0),
+                magnification.demagnifyY(0),
+                magnification.demagnifyX(bitmap.width),
+                magnification.demagnifyY(bitmap.height)
+            )
+            windowBoundsInBitmap = Rect(
+                magnification.magnifyX(windowBounds.left),
+                magnification.magnifyY(windowBounds.top),
+                magnification.magnifyX(windowBounds.right),
+                magnification.magnifyY(windowBounds.bottom)
+            )
+        }
+
+        if (!Rect(0, 0, bitmap.width, bitmap.height).contains(windowBoundsInBitmap)) {
+            Log.e(
+                TAG,
+                "Not saving screenshot ${bitmapBounds.toShortString()}: it " +
+                        "does not cover the whole window ${windowBounds.toShortString()}"
+            )
+            return null
+        }
+
+        val demagnify = Matrix().apply {
+            setScale(
+                windowBounds.width().toFloat() / windowBoundsInBitmap.width(),
+                windowBounds.height().toFloat() / windowBoundsInBitmap.height()
+            )
+        }
+        return with(windowBoundsInBitmap) {
+            Bitmap.createBitmap(bitmap, left, top, width(), height(), demagnify, true)
+        }
+    }
+
+    private class Screenshot(
+        val bitmap: Bitmap,
+        /**
+         * Screen coordinates of the top-left corner of the screenshot.
+         */
+        val originOnScreen: IntOffset
+    )
+
     private suspend fun saveScan(
         timestamp: Instant,
-        a11yState: AccessibilityState,
-        screenshot: Bitmap?
+        nodes: List<AccessibilityNodeInfoCompat>,
+        screenshot: Screenshot?,
+        magnification: Magnification
     ) {
-        val scan = Scan(0, a11yState.nodes.first().packageName?.toString(), timestamp)
+        val scan = Scan(0, nodes.first().packageName?.toString(), timestamp)
 
-        val nodeOffset = screenshot?.run {
-            calculateScreenToScreenshotOffset(a11yState.windowBounds, Size(width, height))
-        } ?: IntOffset.Zero
+        val screenshotOrigin = screenshot?.originOnScreen ?: IntOffset.Zero
         val nodeBounds = Rect()
-        val nodes = a11yState.nodes.map { node ->
-            node.calculateBoundsInScreenshot(nodeOffset, a11yState.magnification, nodeBounds)
+        val nodes = nodes.map { node ->
+            node.getBoundsInScreenshot(screenshotOrigin, magnification, nodeBounds)
             Node(
                 0,
                 0,
@@ -180,27 +262,11 @@ class Scanner @AssistedInject constructor(
             )
         }
 
-        scanRepo.insertScan(scan, nodes, screenshot)
+        scanRepo.insertScan(scan, nodes, screenshot?.bitmap)
     }
 
-    private fun calculateScreenToScreenshotOffset(
-        windowBounds: Rect,
-        screenshotSize: Size
-    ): IntOffset {
-        val screenToWindow = IntOffset(
-            x = -windowBounds.left,
-            y = -windowBounds.top
-        )
-        // For some windows, at least for dialogs, screenshots contain transparent padding
-        val windowToScreenshot = IntOffset(
-            x = (screenshotSize.width - windowBounds.width()) / 2,
-            y = (screenshotSize.height - windowBounds.height()) / 2
-        )
-        return screenToWindow + windowToScreenshot
-    }
-
-    private fun AccessibilityNodeInfo.calculateBoundsInScreenshot(
-        screenToScreenshotOffset: IntOffset,
+    private fun AccessibilityNodeInfoCompat.getBoundsInScreenshot(
+        screenshotOrigin: IntOffset,
         magnification: Magnification,
         outBounds: Rect
     ) {
@@ -208,17 +274,13 @@ class Scanner @AssistedInject constructor(
         // not empty. getBoundsInScreen does not seem to have this issue so we use it.
         getBoundsInScreen(outBounds)
         // getBoundsInScreen is affected by magnification, so de-magnify
-        if ((magnification.scale - 1f).absoluteValue > 1e-7f) {
-            outBounds.apply {
-                magnification.let { m ->
-                    left = ((left - m.center.x) / m.scale + m.center.x).roundToInt()
-                    top = ((top - m.center.y) / m.scale + m.center.y).roundToInt()
-                    right = ((right - m.center.x) / m.scale + m.center.x).roundToInt()
-                    bottom = ((bottom - m.center.y) / m.scale + m.center.y).roundToInt()
-                }
-            }
-        }
-        outBounds.offset(screenToScreenshotOffset.x, screenToScreenshotOffset.y)
+        outBounds.set(
+            magnification.demagnifyX(outBounds.left),
+            magnification.demagnifyY(outBounds.top),
+            magnification.demagnifyX(outBounds.right),
+            magnification.demagnifyY(outBounds.bottom)
+        )
+        outBounds.offset(-screenshotOrigin.x, -screenshotOrigin.y)
     }
 }
 
