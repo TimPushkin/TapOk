@@ -88,7 +88,9 @@ fun TutorialScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             horizontalAlignment = Alignment.CenterHorizontally,
             // Not applying DefaultOuterSpacing here because it needs to be inside HorizontalPager
             // to separate the pages from each other
-            modifier = Modifier.consumeWindowInsets(padding)
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
         ) {
             val state = rememberPagerState { TUTORIAL_PAGES_NUM }
             val wideLayout = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
