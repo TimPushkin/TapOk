@@ -33,8 +33,8 @@ class ScanRepoImpl @Inject constructor(
         scheduleCleanupOfDeletedScans() // Cleanup in case something was left because of a crash
         coroutineScope.launch {
             for (request in cleanupRequestChannel) {
-                for (scan in dao.loadSoftDeletedScans()) {
-                    hardDeleteScan(scan.id, onlyIfSoftDeleted = true)
+                for ((id) in dao.loadSoftDeletedScans()) {
+                    hardDeleteScan(id, onlyIfSoftDeleted = true)
                 }
             }
         }

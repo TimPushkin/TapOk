@@ -19,8 +19,8 @@ class RuleRepoImpl @Inject constructor(private val dao: RuleDao) : RuleRepo {
         scheduleCleanupOfDeletedRules() // Cleanup in case something was left because of a crash
         coroutineScope.launch {
             for (request in cleanupRequestChannel) {
-                for (rule in dao.loadSoftDeletedRules()) {
-                    dao.deleteRuleIfSoftDeleted(rule.id)
+                for ((id) in dao.loadSoftDeletedRules()) {
+                    dao.deleteRuleIfSoftDeleted(id)
                 }
             }
         }

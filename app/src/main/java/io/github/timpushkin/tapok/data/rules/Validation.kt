@@ -209,7 +209,7 @@ fun validateRulePackageName(str: CharSequence): RuleInputValidity.PackageName {
 }
 
 fun validateRuleClassName(str: CharSequence): RuleInputValidity.ClassName {
-    if (!str.isEmpty()) {
+    if (str.isNotEmpty()) {
         for (segment in str.splitToSequence('.')) {
             return when (validateJavaIdentifier(segment)) {
                 JavaIdentifierInputValidity.OK -> continue

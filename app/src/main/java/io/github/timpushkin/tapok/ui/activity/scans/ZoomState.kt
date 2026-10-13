@@ -343,7 +343,7 @@ fun Modifier.zoomable(state: ZoomState, onClick: (Offset) -> Unit = {}): Modifie
         var animationJob: Job = Job().apply { complete() }
         var clickJob = animationJob
         var pendingDown: PointerInputChange? = null
-        coroutineScope {
+        coroutineScope{
             awaitEachGesture {
                 // Take consumed events too: they may start a gesture that itself won't be consumed
                 val down = awaitFirstDown(requireUnconsumed = false)
@@ -355,16 +355,20 @@ fun Modifier.zoomable(state: ZoomState, onClick: (Offset) -> Unit = {}): Modifie
                 if (doubleClick) {
                     clickJob.cancel() // That click was a part of this double-click
                     if (!tryHandleDoubleClickAndDrag(state, down)) {
-                        animationJob = launch { performDoubleClickToZoom(state, down.position) }
+                        animationJob = this@coroutineScope.launch {
+                            performDoubleClickToZoom(state, down.position)
+                        }
                     }
                 } else {
                     val panVelocity = tryHandlePanAndZoom(state)
                     if (panVelocity != null) {
-                        animationJob = launch { performFling(state, panVelocity, decay) }
+                        animationJob = this@coroutineScope.launch {
+                            performFling(state, panVelocity, decay)
+                        }
                     } else {
                         val downPositionInContent = state.containerToContent(down.position)
                         pendingDown = down
-                        clickJob = launch {
+                        clickJob = this@coroutineScope.launch {
                             // To be canceled if another down event arrives before the timeout
                             delay(viewConfiguration.doubleTapTimeoutMillis.milliseconds)
                             onClick(downPositionInContent)
