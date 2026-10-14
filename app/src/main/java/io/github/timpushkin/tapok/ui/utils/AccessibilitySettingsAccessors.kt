@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.seconds
 private const val TAG = "AccessibilitySettingsAccessors"
 
 fun Context.openAccessibilityServiceSettings(serviceClass: KClass<*>) {
-    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).run {
+    val accessibilityIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).run {
         if (this@openAccessibilityServiceSettings !is Activity) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
@@ -46,9 +46,18 @@ fun Context.openAccessibilityServiceSettings(serviceClass: KClass<*>) {
         )
     }
     try {
-        startActivity(intent)
+        startActivity(accessibilityIntent)
+        return
     } catch (ex: ActivityNotFoundException) {
-        Log.e(TAG, "Failed to open accessibility settings: $ex")
+        Log.w(TAG, "Failed to open accessibility settings: $ex")
+    }
+
+    // Fall back to general settings
+    val generalIntent = Intent(Settings.ACTION_SETTINGS)
+    try {
+        startActivity(generalIntent)
+    } catch (ex: ActivityNotFoundException) {
+        Log.e(TAG, "Failed to open general settings: $ex")
     }
 }
 
