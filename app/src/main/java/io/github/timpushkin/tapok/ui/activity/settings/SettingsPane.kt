@@ -1,3 +1,18 @@
+// Copyright (C) 2026  Timofei Pushkin
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package io.github.timpushkin.tapok.ui.activity.settings
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -108,7 +123,18 @@ fun SettingsPane(openTutorial: () -> Unit, viewModel: SettingsViewModel = hiltVi
 
             item { SegmentedListPaneDefaults.GroupSpacer() }
 
-            item { ClickItem(0, 1, stringResource(R.string.view_tutorial), onClick = openTutorial) }
+            item { ClickItem(0, 2, stringResource(R.string.view_tutorial), onClick = openTutorial) }
+            item {
+                var showAboutDialog by rememberSaveable { mutableStateOf(false) }
+                if (showAboutDialog) {
+                    AboutDialog { showAboutDialog = false }
+                }
+                ClickItem(
+                    1, 2,
+                    stringResource(R.string.about_app),
+                    onClick = { showAboutDialog = true }
+                )
+            }
         }
     }
 }
