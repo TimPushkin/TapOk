@@ -51,23 +51,29 @@ android {
     }
 
     signingConfigs {
-        val keystorePropertiesFile = rootProject.file("keystore.properties")
-        if (keystorePropertiesFile.exists()) {
-            val keystoreProperties = keystorePropertiesFile.inputStream().use {
-                Properties().apply { load(it) }
+        val keystoreProperties = rootProject.file("keystore.properties").takeIf { it.exists() }
+            ?.inputStream()?.use { Properties().apply { load(it) } }
+
+        fun signingValue(property: String, env: String) =
+            requireNotNull(keystoreProperties?.getProperty(property) ?: System.getenv(env)) {
+                "Missing '$property' keystore property and $env environment variable"
             }
+
+        if (keystoreProperties != null || System.getenv("STORE_FILE") != null) {
             create("release") {
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = rootProject.file(signingValue("storeFile", "STORE_FILE"))
+                storePassword = signingValue("storePassword", "STORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "KEY_PASSWORD")
             }
+        } else {
+            logger.warn("No signing info found, debug key will be used for release builds")
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.findByName("release")
+            signingConfig = with(signingConfigs) { findByName("release") ?: getByName("debug") }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
