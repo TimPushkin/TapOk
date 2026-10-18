@@ -123,8 +123,9 @@
         <item>Open source automation tool for Android based on accessibility API.</item>
         <item>Copyright © 2026 Timofei Pushkin.</item>
     </string-array>
-    <string name="source_code">Source code</string>
+    <string name="privacy_notice">Privacy notice</string>
     <string name="license">License</string>
+    <string name="source_code">Source code</string>
 
     <!-- Rules -->
     <string name="rules">Rules</string>

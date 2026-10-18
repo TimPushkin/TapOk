@@ -31,8 +31,9 @@ import io.github.timpushkin.tapok.ui.utils.annotatedStringArrayResource
 import io.github.timpushkin.tapok.ui.utils.appendAnnotatedParagraphs
 import io.github.timpushkin.tapok.ui.utils.rememberAnnotatedString
 
-private const val SOURCE_URL = "https://github.com/TimPushkin/TapOk"
+private const val PRIVACY_URL = "https://github.com/TimPushkin/TapOk/wiki/Privacy-notice"
 private const val LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
+private const val SOURCE_URL = "https://github.com/TimPushkin/TapOk"
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
@@ -51,11 +52,14 @@ fun AboutDialog(onDismiss: () -> Unit) {
 
                 Spacer(Modifier.height(DefaultInnerSpacing))
 
-                TextButton(onClick = { uriHandler.openUri(SOURCE_URL) }) {
-                    Text(stringResource(R.string.source_code))
+                TextButton(onClick = { uriHandler.openUri(PRIVACY_URL) }) {
+                    Text(stringResource(R.string.privacy_notice))
                 }
                 TextButton(onClick = { uriHandler.openUri(LICENSE_URL) }) {
                     Text(stringResource(R.string.license))
+                }
+                TextButton(onClick = { uriHandler.openUri(SOURCE_URL) }) {
+                    Text(stringResource(R.string.source_code))
                 }
             }
         },
