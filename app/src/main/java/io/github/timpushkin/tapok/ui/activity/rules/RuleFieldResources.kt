@@ -53,26 +53,7 @@ fun RuleInputValidity.SourcePackageName.errorText(): String? {
 fun RuleInputValidity.ViewId.errorText(): String? {
     val resId = when (this) {
         RuleInputValidity.ViewId.OK -> return null
-
         RuleInputValidity.ViewId.EMPTY_WITH_NO_ALTERNATIVE -> R.string.error_no_search_criteria
-
-        RuleInputValidity.ViewId.NO_DIVIDER -> R.string.error_no_view_id_divider
-
-        RuleInputValidity.ViewId.PACKAGE_EMPTY -> R.string.error_empty_package
-
-        RuleInputValidity.ViewId.PACKAGE_EMPTY_SEGMENT -> R.string.error_empty_package_segment
-
-        RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_START ->
-            R.string.error_illegal_package_segment_start
-
-        RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_PART ->
-            R.string.error_illegal_package_segment_part
-
-        RuleInputValidity.ViewId.VIEW_EMPTY -> R.string.error_empty_view_name
-
-        RuleInputValidity.ViewId.VIEW_ILLEGAL_START -> R.string.error_illegal_view_name_start
-
-        RuleInputValidity.ViewId.VIEW_ILLEGAL_PART -> R.string.error_illegal_view_name_part
     }
     return stringResource(resId)
 }

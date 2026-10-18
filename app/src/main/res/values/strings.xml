@@ -184,14 +184,6 @@
     <string name="error_segments_can_only_start_with">Segments can start only with a letter</string>
     <string name="error_segments_can_only_contain">Segments can contain only letters, numbers and underscores</string>
     <string name="error_at_least_two_segments_required">At least two dot-separated segments required</string>
-    <string name="error_no_view_id_divider">Missing :id/</string>
-    <string name="error_empty_package">Package cannot be empty</string>
-    <string name="error_empty_package_segment">Empty package segments are not allowed</string>
-    <string name="error_illegal_package_segment_start">Illegal first symbol in package segment</string>
-    <string name="error_illegal_package_segment_part">Illegal symbol in package segment</string>
-    <string name="error_empty_view_name">View name cannot be empty</string>
-    <string name="error_illegal_view_name_start">Illegal first symbol in view name</string>
-    <string name="error_illegal_view_name_part">Illegal symbol in view name</string>
     <string name="error_illegal_package_segment_or_class_start">Illegal first symbol in package segment or class name</string>
     <string name="error_illegal_package_segment_or_class_part">Illegal symbol in package segment or class name</string>
 

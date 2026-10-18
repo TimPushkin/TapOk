@@ -267,6 +267,10 @@ class Automator @AssistedInject constructor(
                     return nodes
                 }
             }
+            // TODO: Compose does not properly implement findAccessibilityNodeInfosByViewId and
+            //  findAccessibilityNodeInfosByText (see
+            //  https://issuetracker.google.com/u/2/issues/303074344). Implement an optional (off by
+            //  default) fallback to manual tree iteration.
             return emptyList()
         }
 

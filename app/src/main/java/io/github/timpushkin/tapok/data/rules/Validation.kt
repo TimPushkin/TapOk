@@ -65,19 +65,7 @@ data class RuleInputValidity(
 
     enum class ViewId {
         OK,
-
-        EMPTY_WITH_NO_ALTERNATIVE,
-
-        NO_DIVIDER,
-
-        PACKAGE_EMPTY,
-        PACKAGE_EMPTY_SEGMENT,
-        PACKAGE_ILLEGAL_SEGMENT_START,
-        PACKAGE_ILLEGAL_SEGMENT_PART,
-
-        VIEW_EMPTY,
-        VIEW_ILLEGAL_START,
-        VIEW_ILLEGAL_PART
+        EMPTY_WITH_NO_ALTERNATIVE
     }
 
     enum class ContainedText {
@@ -158,39 +146,10 @@ fun validateRuleSourcePackageName(str: CharSequence): RuleInputValidity.SourcePa
 }
 
 fun validateRuleViewId(str: CharSequence): RuleInputValidity.ViewId {
-    if (str.isEmpty()) {
-        return RuleInputValidity.ViewId.OK // Depends on other fields
-    }
-
-    val (packageName, viewName) = str.split(":id/", limit = 2).apply {
-        if (size < 2) {
-            return RuleInputValidity.ViewId.NO_DIVIDER
-        }
-    }
-
-    if (packageName.isEmpty()) {
-        return RuleInputValidity.ViewId.PACKAGE_EMPTY
-    }
-    for (segment in packageName.splitToSequence('.')) {
-        return when (validateJavaIdentifier(segment)) {
-            JavaIdentifierInputValidity.OK -> continue
-            JavaIdentifierInputValidity.EMPTY ->
-                RuleInputValidity.ViewId.PACKAGE_EMPTY_SEGMENT
-
-            JavaIdentifierInputValidity.ILLEGAL_START ->
-                RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_START
-
-            JavaIdentifierInputValidity.ILLEGAL_PART ->
-                RuleInputValidity.ViewId.PACKAGE_ILLEGAL_SEGMENT_PART
-        }
-    }
-
-    return when (validateJavaIdentifier(viewName)) {
-        JavaIdentifierInputValidity.OK -> RuleInputValidity.ViewId.OK
-        JavaIdentifierInputValidity.EMPTY -> RuleInputValidity.ViewId.VIEW_EMPTY
-        JavaIdentifierInputValidity.ILLEGAL_START -> RuleInputValidity.ViewId.VIEW_ILLEGAL_START
-        JavaIdentifierInputValidity.ILLEGAL_PART -> RuleInputValidity.ViewId.VIEW_ILLEGAL_PART
-    }
+    // - Not requiring the com.example.app:id/example_view format because it is not enforced by
+    //   Android. E.g. Compose allows setting arbitrary strings via testTag.
+    // - Not requiring to be non-empty because it depends on other fields
+    return RuleInputValidity.ViewId.OK
 }
 
 fun validateRuleContainedText(str: CharSequence): RuleInputValidity.ContainedText =
