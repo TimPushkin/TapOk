@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -406,11 +407,12 @@ private fun RuleTextField(
                 })
 
                 error != null -> ({
-                    Icon(
-                        painterResource(R.drawable.error_filled),
-                        contentDescription = stringResource(R.string.invalid_input),
-                        modifier = IconButtonSizeModifier
-                    )
+                    Box(contentAlignment = Alignment.Center, modifier = IconButtonSizeModifier) {
+                        Icon(
+                            painterResource(R.drawable.error_filled),
+                            contentDescription = stringResource(R.string.invalid_input)
+                        )
+                    }
                 })
 
                 else -> null
