@@ -4,6 +4,8 @@
 
 **TapOk** is an Android application that allows automating tasks such as clicks and muting.
 
+It is based on Android's official Accessibility API making it a relatively light-weight solution.
+
 ## Features
 
 - Scanning the screen to find UI elements that can be detected by TapOk
@@ -11,6 +13,9 @@
 - Performing an action when a certain element appears: clicking it, its ancestors or descendants, muting the device audio
 
 Supports Android 11+, including Android TV.
+
+| ![Main screen](https://i.imgur.com/2ySq9lC.png) | ![Scan inspector](https://i.imgur.com/aDuMhpT.png) | ![Rule editor 1](https://i.imgur.com/79Q2M3d.png) | ![Rule editor 2](https://i.imgur.com/pzikGvJ.png) |
+|:-----------------------------------------------:|:--------------------------------------------------:|:-------------------------------------------------:|:-------------------------------------------------:|
 
 ## Downloads
 
